@@ -1,0 +1,37 @@
+{
+   "title": "User Management",
+   "table": {
+     "name": "Name",
+     "email": "Email",
+     "phone": "Phone Number",
+     "role": "Role",
+     "status": "Status",
+     "actions": "Actions"
+   },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "edit_view": "View & Edit",
+      "reset_password": "Reset Password",
+      "toggle_status": "Toggle Status"
+    },
+    "loading": "Loading data...",
+    "no_data": "No users to display.",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    },
+    "reset_password_modal": {
+    "title": "Reset Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm Password",
+    "cancel": "Cancel",
+    "submit": "Save Changes",
+    "validation_required": "Password is required",
+    "validation_min": "Password must be at least 6 characters",
+    "validation_match": "Passwords do not match"
+  }
+}

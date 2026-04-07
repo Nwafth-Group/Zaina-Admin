@@ -4,32 +4,54 @@ import Operations from './pages/Operations.jsx';
 import LoginPage from './pages/auth/LoginPage.jsx';
 import AdminLayout from './layouts/AdminLayout.jsx';
 import AuthLayout from './layouts/AuthLayout.jsx';
+import ProtectedRoute from './component/ProtectedRoute.jsx';
+import GuestRoute from './component/GuestRoute.jsx';
+import Users from './pages/Users/Users.jsx';
 
 export const router = createBrowserRouter([
   {
-    path: '/login',
-    element: <AuthLayout />,
-    children: [
+    element: <GuestRoute />,
+    children : [
       {
-        index: true,
-        element: <LoginPage />,
+        path: '/auth',
+        element: <AuthLayout />,
+        children: [
+          {
+            index: true,
+            element: <LoginPage />,
+          },
+          {
+            path: 'login',
+            element: <LoginPage />,
+          },
+        ],
       },
-    ],
+    ]
   },
+   
   {
+    element: <ProtectedRoute />,
+    children : [
+      {
+      path: '/',
+      element: <AdminLayout />,
+      children: [
+        {
+          index: true, // يعني لما نفتح / رح يفتح الـ Dashboard
+          element: <Dashboard />,
+        },
+        {
+          path: 'operations', // يعني المسار /operations
+          element: <Operations />,
+        },
+        {
+          path: 'users', // يعني المسار /operations
+          element: <Users />,
+        },
+      ],
+      }
+    ]
     // مسارات لوحة التحكم (التي تتطلب تسجيل دخول لاحقاً)
-    path: '/',
-    element: <AdminLayout />,
-    children: [
-      {
-        index: true, // يعني لما نفتح / رح يفتح الـ Dashboard
-        element: <Dashboard />,
-      },
-      {
-        path: 'operations', // يعني المسار /operations
-        element: <Operations />,
-      },
-    ],
   },
   {
     // في حال دخل اليوزر رابط غير موجود (صفحة 404)

@@ -1,0 +1,14 @@
+{
+  "sidebar": {
+    "title":  "مسؤول زينة",
+    "subtitle": "بوابة المشرف العام",
+    "dashboard": "لوحة التحكم",
+    "user_management": "إدارة المستخدمين",
+    "logout": "تسجيل الخروج",
+    "logout_loading": "جاري الخروج..."
+  },
+  "header": {
+    "welcome": "مرحباً",
+    "super_admin": "سوبر أدمن"
+  }
+}
