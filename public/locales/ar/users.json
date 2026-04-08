@@ -8,6 +8,7 @@
     "status": "الحالة",
     "actions": "الإجراءات"
   },
+ 
   "status": {
     "active": "نشط",
     "inactive": "غير نشط"
@@ -33,5 +34,19 @@
     "validation_required": "كلمة المرور مطلوبة",
     "validation_min": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
     "validation_match": "كلمتا المرور غير متطابقتين"
+  },
+  "action_modal": {
+    "title": "تعديل بيانات المستخدم",
+    "first_name": "الاسم الأول",
+    "last_name": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "role": "الدور (الصلاحية)",
+    "status": "حالة الحساب",
+    "cancel": "إلغاء",
+    "submit": "حفظ التغييرات",
+    "fetching_data": "جاري جلب البيانات...",
+    "validation_required": "هذا الحقل مطلوب",
+    "personal_info": "المعلومات الشخصية"
   }
 }

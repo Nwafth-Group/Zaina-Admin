@@ -7,6 +7,7 @@ import AuthLayout from './layouts/AuthLayout.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
 import GuestRoute from './component/GuestRoute.jsx';
 import Users from './pages/Users/Users.jsx';
+import Categories from './pages/Categories/Categories.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
         {
           path: 'users', // يعني المسار /operations
           element: <Users />,
+        },
+        {
+          path: 'categories', // يعني المسار /operations
+          element: <Categories />,
         },
       ],
       }

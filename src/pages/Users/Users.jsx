@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../api/axios';
 import ResetPasswordModal from './ResetPasswordModal.jsx';
+import UserActionModal from './UserActionModal.jsx';
 
 // لاحقاً سنستدعي المكونات هنا
 // import UserActionModal from './components/UserActionModal';
@@ -35,7 +36,7 @@ export default function Users() {
         },
         onSuccess: () => {
             // تحديث الجدول فوراً بعد نجاح العملية
-            queryClient.invalidateQueries({ queryKey: ['users', currentPage] });
+            queryClient.invalidateQueries({ queryKey: ['users', currentPage]});
         },
         onError: (error) => {
             console.error("Error toggling status:", error);
@@ -47,7 +48,7 @@ export default function Users() {
     const meta = data?.meta;
 
     if (isError) {
-        return <div className="p-8 text-red-500 font-bold">حدث خطأ: {error.message}</div>;
+        return <div className="p-8 text-red-500 font-bold"> error happend {error.message}</div>;
     }
 
     return (
@@ -55,7 +56,7 @@ export default function Users() {
             
             <div className="p-6 border-b border-gray-50">
                 <h2 className="text-2xl font-bold text-gray-800">{t('title')}</h2>
-                {/* تم إزالة زر الإضافة من هنا */}
+               
             </div>
 
             <div className="overflow-x-auto">
@@ -175,7 +176,7 @@ export default function Users() {
             )}
 
             {/* سيتم إضافة الـ Modals هنا لاحقاً بحيث تفتح بناءً على الـ State */}
-            {/* {selectedUserId && <UserActionModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />} */}
+            {selectedUserId && <UserActionModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />}
             {resetPasswordUserId && <ResetPasswordModal userId={resetPasswordUserId} onClose={() => setResetPasswordUserId(null)} />}
 
         </div>

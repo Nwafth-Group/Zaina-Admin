@@ -8,7 +8,8 @@
      "status": "Status",
      "actions": "Actions"
    },
-    "status": {
+  
+   "status": {
       "active": "Active",
       "inactive": "Inactive"
     },
@@ -33,5 +34,19 @@
     "validation_required": "Password is required",
     "validation_min": "Password must be at least 6 characters",
     "validation_match": "Passwords do not match"
+  },
+  "action_modal": {
+    "title": "Edit User Data",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "role": "Role",
+    "status": "Account Status",
+    "cancel": "Cancel",
+    "submit": "Save Changes",
+    "fetching_data": "Fetching data...",
+    "validation_required": "This field is required",
+    "personal_info": "Personal Information"
   }
 }

@@ -5,7 +5,8 @@
     "dashboard": "Dashboard",
     "user_management": "User Management",
     "logout": "Logout",
-    "logout_loading": "Logging out..."
+    "logout_loading": "Logging out...",
+    "category_management": "Category Management"
   },
   "header": {
     "welcome": "Welcome",

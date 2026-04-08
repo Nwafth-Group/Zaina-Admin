@@ -1,0 +1,42 @@
+{
+  "title": "Category Management",
+  "add_new": "Add New Category",
+  "table": {
+    "image": "Image",
+    "name": "Category Name",
+    "type": "Type",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "types": {
+    "main": "Main Category",
+    "sub": "Subcategory"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "loading": "Loading categories...",
+  "no_data": "No categories found.",
+  "action_modal": {
+    "title_add": "Add New Category",
+    "title_edit": "Edit Category",
+    "name_ar": "Name (Arabic)",
+    "name_en": "Name (English)",
+    "parent_category": "Parent Category",
+    "none": "None (Main Category)",
+    "status": "Status",
+    "image": "Category Image",
+    "image_hint": "Preferably square image (PNG, JPG)",
+    "cancel": "Cancel",
+    "submit": "Save",
+    "validation_required": "This field is required"
+  },
+  "delete_modal": {
+    "title": "Confirm Deletion",
+    "warning": "Are you sure you want to delete the category",
+    "sub_warning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Yes, Delete"
+  }
+}

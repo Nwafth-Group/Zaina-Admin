@@ -5,7 +5,8 @@
     "dashboard": "لوحة التحكم",
     "user_management": "إدارة المستخدمين",
     "logout": "تسجيل الخروج",
-    "logout_loading": "جاري الخروج..."
+    "logout_loading": "جاري الخروج...",
+    "category_management": "إدارة الفئات"
   },
   "header": {
     "welcome": "مرحباً",
