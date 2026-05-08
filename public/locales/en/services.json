@@ -1,0 +1,72 @@
+{
+  "title": "Service Management",
+  "add_new": "Add New Service",
+  "table": {
+    "image": "Image",
+    "name": "Service Name",
+    "category": "Category",
+    "type": "Service Type",
+    "rating": "Rating",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "types": {
+    "hourly": "Hourly",
+    "moqema": "Live-in",
+    "both": "Hourly / Live-in"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "toggle_status": "Toggle Status",
+    "edit": "Edit Service",
+    "delete": "Delete Service"
+  },
+  "loading": "Loading services...",
+  "no_data": "No services found.",
+  "form": {
+    "title_add": "Add New Service",
+    "title_edit": "Edit Service",
+    "section_basic": "Basic Information",
+    "section_duration": "Duration Settings",
+    "section_rules": "Booking & Cancellation Policies",
+    "section_prices": "Pricing, Coverage & Features",
+    "name_ar": "Name (Arabic)",
+    "name_en": "Name (English)",
+    "desc_ar": "Description (Arabic)",
+    "desc_en": "Description (English)",
+    "category": "Category",
+    "type": "Service Type",
+    "status": "Status",
+    "image": "Service Image",
+    "min_duration": "Minimum Duration (Hours)",
+    "allowed_durations": "Allowed Durations (Hours) e.g., 2,4,6",
+    "min_contract": "Minimum Contract (Months)",
+    "allowed_contracts": "Allowed Contracts (Months) e.g., 1,2,3",
+    "free_cancel": "Free Cancellation (Hours)",
+    "reschedule_cutoff": "Rescheduling Cutoff (Hours)",
+    "lead_time_min": "Minimum Lead Time (Hours)",
+    "lead_time_max": "Maximum Lead Time (Days)",
+    "cancel_action": "Cancellation Action",
+    "cancel_fee_type": "Fee Type",
+    "cancel_fee_value": "Fee Value",
+    "no_show": "No-Show Policy",
+    "max_changes": "Maximum Allowed Changes",
+    "pricing_scope": "Pricing Scope",
+    "base_price": "Base Price",
+    "price_per_hour": "Hourly Rate",
+    "currency": "Currency",
+    "workers": "Worker Numbers (Comma-separated)",
+    "feature_ar": "Feature 1 (Arabic)",
+    "feature_en": "Feature 1 (English)",
+    "cancel": "Cancel",
+    "submit": "Save Service"
+},
+  "validation": {
+    "required": "This field is required",
+    "min_1": "Must be at least 1",
+    "min_0": "Cannot be less than 0"
+  }
+}

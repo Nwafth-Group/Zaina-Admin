@@ -1,0 +1,46 @@
+{
+  "title": "Employees Management",
+  "add_new": "Add New Employee",
+  "table": {
+    "image": "Image",
+    "name": "Name",
+    "contact": "Contact",
+    "role": "Role",
+    "type": "Type",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "toggle_status": "Toggle Status",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "title_add": "Add New Employee",
+    "title_edit": "Edit Employee Details",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "password": "Password",
+    "password_hint": "Leave blank if you don't want to change",
+    "type": "Employee Type",
+    "job_title": "Job Title",
+    "gender": "Gender",
+    "status": "Status",
+    "roles": "Roles (Select one or more)",
+    "cancel": "Cancel",
+    "submit": "Save Details"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Invalid email format",
+    "min_password": "Password must be at least 6 characters"
+  },
+  "loading": "Loading employees...",
+  "no_data": "No employees available."
+}

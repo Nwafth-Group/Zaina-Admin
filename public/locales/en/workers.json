@@ -1,0 +1,37 @@
+{
+  "title": "Workers Management",
+  "add_new": "Add New Worker",
+  "table": {
+    "image": "Image",
+    "name": "Name",
+    "nationality": "Nationality",
+    "rating": "Rating",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "toggle_status": "Toggle Status",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "title_add": "Add New Worker",
+    "title_edit": "Edit Worker Details",
+    "name": "Worker Name",
+    "nationality": "Nationality",
+    "status": "Status",
+    "image": "Worker Image",
+    "services": "Provided Services (Select one or more)",
+    "cancel": "Cancel",
+    "submit": "Save Details"
+  },
+  "validation": {
+    "required": "This field is required"
+  },
+  "loading": "Loading workers...",
+  "no_data": "No workers available."
+}

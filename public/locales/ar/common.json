@@ -6,7 +6,10 @@
     "user_management": "إدارة المستخدمين",
     "logout": "تسجيل الخروج",
     "logout_loading": "جاري الخروج...",
-    "category_management": "إدارة الفئات"
+    "category_management": "إدارة الفئات",
+    "services": "الخدمات",
+    "workers": "العمال",
+    "employees": "الموظفين"
   },
   "header": {
     "welcome": "مرحباً",

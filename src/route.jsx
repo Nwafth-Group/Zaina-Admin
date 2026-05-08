@@ -8,6 +8,9 @@ import ProtectedRoute from './component/ProtectedRoute.jsx';
 import GuestRoute from './component/GuestRoute.jsx';
 import Users from './pages/Users/Users.jsx';
 import Categories from './pages/Categories/Categories.jsx';
+import Services from './pages/Services/Services.jsx';
+import Workers from './pages/Workers/Workers.jsx';
+import Employees from './pages/Employees/Employess.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +55,18 @@ export const router = createBrowserRouter([
         {
           path: 'categories', // يعني المسار /operations
           element: <Categories />,
+        },
+        {
+          path: 'services', // يعني المسار /operations
+          element: <Services />,
+        },
+        {
+          path: 'workers', // يعني المسار /operations
+          element: <Workers />,
+        },
+        {
+          path: 'employees', // يعني المسار /operations
+          element: <Employees />,
         },
       ],
       }

@@ -6,7 +6,10 @@
     "user_management": "User Management",
     "logout": "Logout",
     "logout_loading": "Logging out...",
-    "category_management": "Category Management"
+    "category_management": "Category Management",
+    "services": "Services",
+    "workers": "Workers",
+    "employees": "Employees"
   },
   "header": {
     "welcome": "Welcome",
