@@ -3,13 +3,15 @@ import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../component/LanguageSwitcher.jsx';
 import Sidebar from '../component/Sidebar.jsx';
+import ProfileModal from '../component/ProfileModal.jsx';
 
 const AdminLayout = () => {
   const { t } = useTranslation('common');
   const [adminName, setAdminName] = useState('');
-  
+
   // حالة للتحكم بفتح وإغلاق القائمة الجانبية على شاشات الموبايل
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // جلب اسم الأدمن من التخزين المحلي عند تحميل الهيكل
   useEffect(() => {
@@ -55,18 +57,23 @@ const AdminLayout = () => {
           <div className="flex items-center gap-4 md:gap-6">
             <LanguageSwitcher />
             
-            {/* معلومات المستخدم */}
-            <div className="flex items-center gap-3 border-l rtl:border-l-0 rtl:border-r border-gray-200 pl-4 rtl:pr-4 rtl:pl-0">
+            {/* معلومات المستخدم — تفتح الملف الشخصي */}
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(true)}
+              title={t('profile.title')}
+              className="flex items-center gap-3 border-l rtl:border-l-0 rtl:border-r border-gray-200 pl-4 rtl:pr-4 rtl:pl-0 hover:opacity-80 transition-opacity focus:outline-none"
+            >
               <div className="text-right rtl:text-left hidden sm:block">
                 <p className="text-sm font-bold text-gray-800">{adminName || t('header.super_admin')}</p>
                 <p className="text-xs text-gray-500">{t('header.welcome')}</p>
               </div>
-              
+
               {/* صورة رمزية أو الحرف الأول من اسم الأدمن */}
               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#E91E63] to-[#F4A9BC] text-white flex items-center justify-center font-bold shadow-md text-lg">
                 {adminName ? adminName.charAt(0).toUpperCase() : 'Z'}
               </div>
-            </div>
+            </button>
           </div>
         </header>
         
@@ -75,6 +82,10 @@ const AdminLayout = () => {
           <Outlet />
         </div>
       </main>
+
+      {isProfileOpen && (
+        <ProfileModal onClose={() => setIsProfileOpen(false)} onUpdated={(name) => setAdminName(name)} />
+      )}
     </div>
   );
 };
