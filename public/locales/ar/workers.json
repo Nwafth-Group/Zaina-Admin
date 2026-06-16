@@ -1,10 +1,15 @@
 {
+  "sections": {
+    "details": { "title": "بيانات العامل", "desc": "اسم العامل وجنسيته وحالته وصورته." },
+    "services": { "title": "الخدمات المقدمة", "desc": "اختر الخدمات التي يستطيع هذا العامل تقديمها." }
+  },
   "title": "إدارة العمال",
   "add_new": "إضافة عامل جديد",
   "table": {
     "image": "الصورة",
     "name": "الاسم",
     "nationality": "الجنسية",
+    "services": "الخدمات",
     "rating": "التقييم",
     "status": "الحالة",
     "actions": "الإجراءات"
@@ -15,8 +20,7 @@
   },
   "actions": {
     "toggle_status": "تغيير الحالة",
-    "edit": "تعديل",
-    "delete": "حذف"
+    "edit": "تعديل"
   },
   "form": {
     "title_add": "إضافة عامل جديد",
@@ -25,6 +29,8 @@
     "nationality": "الجنسية",
     "status": "الحالة",
     "image": "صورة العامل",
+    "upload_image": "رفع صورة",
+    "change_image": "تغيير الصورة",
     "services": "الخدمات المقدمة (اختر خدمة أو أكثر)",
     "cancel": "إلغاء",
     "submit": "حفظ البيانات"
@@ -33,5 +39,66 @@
     "required": "هذا الحقل مطلوب"
   },
   "loading": "جاري جلب العمال...",
-  "no_data": "لا يوجد عمال متاحين."
+  "no_data": "لا يوجد عمال متاحين.",
+  "details": {
+    "title": "ملف العامل",
+    "close": "إغلاق",
+    "loading": "جاري تحميل الملف...",
+    "tabs": {
+      "profile": "الملف الشخصي",
+      "bookings": "أحدث الحجوزات",
+      "reviews": "التقييمات والمراجعات"
+    },
+    "stats": {
+      "rating": "التقييم",
+      "total_bookings": "الحجوزات",
+      "completed": "المكتملة",
+      "reviews": "المراجعات"
+    },
+    "services_title": "الخدمات المقدمة",
+    "services_empty": "لا توجد خدمات مسندة.",
+    "info_title": "بيانات العامل",
+    "nationality": "الجنسية",
+    "status": "الحالة",
+    "bookings_title": "أحدث الحجوزات",
+    "bookings_empty": "لا توجد حجوزات لهذا العامل بعد.",
+    "reviews_title": "التقييمات والمراجعات",
+    "reviews_empty": "لا توجد مراجعات لهذا العامل بعد.",
+    "col": {
+      "ref": "المرجع",
+      "customer": "العميل",
+      "service": "الخدمة",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "amount": "المبلغ"
+    },
+    "booking_status": {
+      "Upcoming": "قادم",
+      "inService": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "cancelled": "ملغي"
+    }
+  },
+  "filters": {
+    "button": "تصفية",
+    "title": "تصفية العمّال",
+    "search_placeholder": "ابحث بالاسم...",
+    "status_label": "الحالة",
+    "all_statuses": "كل الحالات",
+    "nationality_label": "الجنسية",
+    "all_nationalities": "كل الجنسيات",
+    "service_label": "الخدمة",
+    "all_services": "كل الخدمات",
+    "no_services": "بلا خدمات",
+    "rating_label": "التقييم",
+    "any_rating": "أي تقييم",
+    "sort_label": "الترتيب",
+    "sort_newest": "الأحدث",
+    "sort_oldest": "الأقدم",
+    "sort_top_rated": "الأعلى تقييماً",
+    "sort_name": "الاسم (أ - ي)",
+    "reset": "إعادة تعيين",
+    "done": "تطبيق",
+    "active_count": "{{count}} فلتر نشط"
+  }
 }

@@ -1,6 +1,15 @@
 {
+  "sections": {
+    "account": { "title": "البيانات الشخصية والحساب", "desc": "بيانات الدخول ووسائل التواصل الخاصة بالموظف." },
+    "job": { "title": "الوظيفة والحالة", "desc": "نوع الموظف والمسمى الوظيفي والجنس وحالة الحساب." },
+    "roles": { "title": "الأدوار والصلاحيات", "desc": "امنح دوراً واحداً أو أكثر يحدد ما يمكن لهذا الموظف الوصول إليه." }
+  },
   "title": "إدارة الموظفين",
   "add_new": "إضافة موظف جديد",
+  "access_denied": {
+    "title": "الوصول مقيّد",
+    "message": "ليس لديك صلاحية لإدارة الموظفين."
+  },
   "table": {
     "image": "الصورة",
     "name": "الاسم",
@@ -12,12 +21,47 @@
   },
   "status": {
     "active": "نشط",
-    "inactive": "غير نشط"
+    "inactive": "غير نشط",
+    "suspended": "موقوف"
   },
+  "types": {
+    "operation": "تشغيل",
+    "super_admin": "مدير عام",
+    "driver": "سائق"
+  },
+  "gender": {
+    "male": "ذكر",
+    "female": "أنثى"
+  },
+  "roles_map": {
+    "Super Admin": "مدير عام",
+    "Operations Manager": "مدير العمليات",
+    "Customer": "عميل"
+  },
+  "tabs": {
+    "all": "الكل"
+  },
+  "filters": {
+    "button": "تصفية",
+    "title": "تصفية الموظفين",
+    "search_placeholder": "ابحث بالاسم أو البريد أو الهاتف...",
+    "status_label": "الحالة",
+    "all_statuses": "كل الحالات",
+    "type_label": "النوع",
+    "all_types": "كل الأنواع",
+    "role_label": "الدور",
+    "all_roles": "كل الأدوار",
+    "sort_label": "الترتيب",
+    "sort_newest": "الأحدث",
+    "sort_oldest": "الأقدم",
+    "sort_name": "الاسم (أ - ي)",
+    "reset": "إعادة تعيين",
+    "done": "تطبيق"
+  },
+  "pagination_showing": "عرض {{from}} إلى {{to}} من {{total}}",
   "actions": {
     "toggle_status": "تغيير الحالة",
-    "edit": "تعديل",
-    "delete": "حذف"
+    "edit": "تعديل"
   },
   "form": {
     "title_add": "إضافة موظف جديد",

@@ -3,7 +3,9 @@
     "title":  "مسؤول زينة",
     "subtitle": "بوابة المشرف العام",
     "dashboard": "لوحة التحكم",
-    "user_management": "إدارة المستخدمين",
+    "bookings": "الحجوزات",
+    "clients": "العملاء",
+    "user_management": "حسابات الإدارة",
     "logout": "تسجيل الخروج",
     "logout_loading": "جاري الخروج...",
     "category_management": "إدارة الفئات",
@@ -14,5 +16,32 @@
   "header": {
     "welcome": "مرحباً",
     "super_admin": "سوبر أدمن"
+  },
+  "pagination": {
+    "showing": "عرض {{from}}–{{to}} من {{total}}",
+    "previous": "السابق",
+    "next": "التالي"
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "tab_account": "الحساب",
+    "tab_password": "كلمة المرور",
+    "first_name": "الاسم الأول",
+    "last_name": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "current_password": "كلمة المرور الحالية",
+    "new_password": "كلمة المرور الجديدة",
+    "confirm_password": "تأكيد كلمة المرور الجديدة",
+    "save": "حفظ التغييرات",
+    "cancel": "إغلاق",
+    "loading": "جاري التحميل...",
+    "account_updated": "تم تحديث الملف الشخصي بنجاح",
+    "password_changed": "تم تغيير كلمة المرور بنجاح",
+    "error": "حدث خطأ، يرجى المحاولة مرة أخرى.",
+    "validation_required": "هذا الحقل مطلوب",
+    "validation_email": "البريد الإلكتروني غير صالح",
+    "validation_min": "يجب أن تتكون من 8 أحرف على الأقل",
+    "validation_match": "كلمتا المرور غير متطابقتين"
   }
 }

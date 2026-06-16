@@ -1,0 +1,33 @@
+{
+  "title": "لوحة التحكم",
+  "cards": {
+    "revenue": "الإيرادات",
+    "bookings_total": "إجمالي الحجوزات",
+    "upcoming": "القادمة",
+    "active_services": "الخدمات النشطة",
+    "workers": "العمال النشطون",
+    "customers": "العملاء"
+  },
+  "charts": {
+    "bookings_trend": "الحجوزات (آخر 14 يوماً)",
+    "revenue_trend": "الإيرادات (آخر 14 يوماً)",
+    "by_status": "الحجوزات حسب الحالة",
+    "top_services": "أكثر الخدمات حجزاً",
+    "upcoming_title": "الحجوزات القادمة"
+  },
+  "status": {
+    "Upcoming": "قادم",
+    "inService": "قيد التنفيذ",
+    "completed": "مكتمل",
+    "cancelled": "ملغي"
+  },
+  "table": {
+    "ref": "المرجع",
+    "customer": "العميل",
+    "service": "الخدمة",
+    "schedule": "الموعد",
+    "amount": "المبلغ"
+  },
+  "empty_upcoming": "لا توجد حجوزات قادمة.",
+  "empty_services": "لا توجد بيانات خدمات بعد."
+}

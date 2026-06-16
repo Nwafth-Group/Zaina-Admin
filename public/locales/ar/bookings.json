@@ -1,0 +1,102 @@
+{
+  "title": "الحجوزات",
+  "table": {
+    "ref": "المرجع",
+    "customer": "العميل",
+    "service": "الخدمة",
+    "schedule": "الموعد",
+    "workers": "العمال",
+    "amount": "المبلغ",
+    "status": "الحالة",
+    "payment": "الدفع",
+    "actions": "الإجراءات"
+  },
+  "tabs": {
+    "all": "الكل"
+  },
+  "actions": {
+    "show_details": "عرض التفاصيل",
+    "cancel": "إلغاء الحجز"
+  },
+  "menu": {
+    "details": "تفاصيل الحجز",
+    "history": "سجل الحجز"
+  },
+  "details": {
+    "title": "حجز",
+    "close": "إغلاق",
+    "more": "المزيد",
+    "mark_completed": "وضع كمكتمل",
+    "booking_activity": "نشاط الحجز",
+    "cancel_booking": "إلغاء الحجز",
+    "customer": "العميل",
+    "name": "الاسم",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "service": "الخدمة والموعد",
+    "service_name": "الخدمة",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "workers": "العمال",
+    "address": "العنوان",
+    "label": "التسمية",
+    "address_line": "العنوان",
+    "price": "ملخص السعر",
+    "subtotal": "المجموع الفرعي",
+    "tax": "الضريبة",
+    "discount": "الخصم",
+    "total": "الإجمالي",
+    "notes": "ملاحظات العميل",
+    "activity_title": "سجل الحالات",
+    "no_activity": "لا توجد تغييرات على الحالة بعد.",
+    "system": "النظام",
+    "confirm_cancel": "هل أنت متأكد من إلغاء هذا الحجز؟",
+    "cancel_reason": "سبب الإلغاء (اختياري)",
+    "keep": "إبقاء الحجز",
+    "confirm_cancel_btn": "نعم، إلغاء"
+  },
+  "status": {
+    "Upcoming": "قادم",
+    "inService": "قيد التنفيذ",
+    "completed": "مكتمل",
+    "cancelled": "ملغي"
+  },
+  "payment": {
+    "unpaid": "غير مدفوع",
+    "paid": "مدفوع",
+    "refunded": "مسترجع"
+  },
+  "filters": {
+    "button": "تصفية",
+    "title": "تصفية الحجوزات",
+    "search_placeholder": "ابحث بالمرجع أو العميل أو الخدمة...",
+    "status_label": "الحالة",
+    "all_statuses": "كل الحالات",
+    "payment_label": "حالة الدفع",
+    "all_payments": "كل حالات الدفع",
+    "service_label": "الخدمة",
+    "all_services": "كل الخدمات",
+    "category_label": "الفئات",
+    "all_categories": "لا توجد فئات متاحة",
+    "selected_count": "{{count}} محددة",
+    "price_label": "نطاق السعر",
+    "price_min": "الأدنى",
+    "price_max": "الأعلى",
+    "location_label": "الموقع",
+    "all_cities": "كل المدن",
+    "all_areas": "كل المناطق",
+    "select_city_first": "اختر مدينة أولاً",
+    "date_from_label": "من تاريخ",
+    "date_to_label": "إلى تاريخ",
+    "sort_label": "الترتيب",
+    "sort_newest": "الأحدث",
+    "sort_oldest": "الأقدم",
+    "sort_date": "تاريخ الحجز",
+    "sort_amount_high": "المبلغ (الأعلى)",
+    "sort_amount_low": "المبلغ (الأقل)",
+    "reset": "إعادة تعيين",
+    "done": "تطبيق"
+  },
+  "loading": "جاري جلب الحجوزات...",
+  "no_data": "لا توجد حجوزات."
+}

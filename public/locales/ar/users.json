@@ -1,11 +1,19 @@
 {
-  "title": "إدارة المستخدمين",
+  "sections": {
+    "personal": { "desc": "بيانات الحساب للقراءة فقط، مُزامنة من ملف المستخدم." },
+    "access": { "title": "الصلاحية والحالة", "desc": "تحكّم في دور المستخدم وحالة تفعيل الحساب." }
+  },
+  "title": "حسابات الإدارة",
+  "clients": {
+    "title": "العملاء"
+  },
   "table": {
     "name": "الاسم",
     "email": "البريد الإلكتروني",
     "phone": "رقم الهاتف",
     "role": "الدور",
     "status": "الحالة",
+    "verification": "التوثيق",
     "actions": "الإجراءات"
   },
  
@@ -13,10 +21,67 @@
     "active": "نشط",
     "inactive": "غير نشط"
   },
+  "types": {
+    "customer": "عميل",
+    "operation": "تشغيل",
+    "super_admin": "مدير عام",
+    "driver": "سائق"
+  },
+  "tabs": {
+    "all": "الكل"
+  },
+  "filters": {
+    "button": "تصفية",
+    "title": "تصفية المستخدمين",
+    "search_placeholder": "ابحث بالاسم أو البريد أو الهاتف...",
+    "status_label": "الحالة",
+    "all_statuses": "كل الحالات",
+    "type_label": "النوع",
+    "all_types": "كل الأنواع",
+    "role_label": "الدور",
+    "all_roles": "كل الأدوار",
+    "sort_label": "الترتيب",
+    "sort_newest": "الأحدث",
+    "sort_oldest": "الأقدم",
+    "sort_name": "الاسم (أ - ي)",
+    "reset": "إعادة تعيين",
+    "done": "تطبيق"
+  },
   "actions": {
+    "review": "مراجعة التوثيق",
     "edit_view": "عرض وتعديل",
     "reset_password": "تغيير كلمة المرور",
     "toggle_status": "تغيير الحالة"
+  },
+  "verification": {
+    "unverified": "غير موثّق",
+    "pending": "قيد المراجعة",
+    "approved": "مقبول",
+    "rejected": "مرفوض"
+  },
+  "review_modal": {
+    "title": "توثيق العميل",
+    "subtitle": "راجع المستندات المرفوعة، ثم اقبل الطلب أو ارفضه.",
+    "loading": "جاري تحميل التفاصيل...",
+    "id_number": "رقم الهوية",
+    "email": "البريد الإلكتروني",
+    "documents": "المستندات المرفقة",
+    "id_front": "الهوية - الأمام",
+    "id_back": "الهوية - الخلف",
+    "selfie": "صورة شخصية",
+    "no_document": "لم يتم الرفع",
+    "view_full": "عرض بالحجم الكامل",
+    "previous_reason": "سبب الرفض السابق",
+    "approve": "قبول",
+    "reject": "رفض",
+    "reject_reason_label": "سبب الرفض",
+    "reject_reason_placeholder": "اشرح سبب رفض هذا الطلب…",
+    "reject_reason_required": "يجب إدخال سبب لرفض الطلب.",
+    "confirm_reject": "تأكيد الرفض",
+    "cancel": "إلغاء",
+    "approve_success": "تم قبول العميل بنجاح",
+    "reject_success": "تم رفض العميل بنجاح",
+    "error": "حدث خطأ، يرجى المحاولة مرة أخرى."
   },
   "loading": "جاري جلب البيانات...",
   "no_data": "لا يوجد مستخدمين لعرضهم.",

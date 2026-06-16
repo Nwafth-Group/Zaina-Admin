@@ -1,10 +1,15 @@
 {
+  "sections": {
+    "details": { "title": "Worker Details", "desc": "The worker's name, nationality, status and photo." },
+    "services": { "title": "Provided Services", "desc": "Select the services this worker is qualified to perform." }
+  },
   "title": "Workers Management",
   "add_new": "Add New Worker",
   "table": {
     "image": "Image",
     "name": "Name",
     "nationality": "Nationality",
+    "services": "Services",
     "rating": "Rating",
     "status": "Status",
     "actions": "Actions"
@@ -15,8 +20,7 @@
   },
   "actions": {
     "toggle_status": "Toggle Status",
-    "edit": "Edit",
-    "delete": "Delete"
+    "edit": "Edit"
   },
   "form": {
     "title_add": "Add New Worker",
@@ -25,6 +29,8 @@
     "nationality": "Nationality",
     "status": "Status",
     "image": "Worker Image",
+    "upload_image": "Upload image",
+    "change_image": "Change image",
     "services": "Provided Services (Select one or more)",
     "cancel": "Cancel",
     "submit": "Save Details"
@@ -33,5 +39,66 @@
     "required": "This field is required"
   },
   "loading": "Loading workers...",
-  "no_data": "No workers available."
+  "no_data": "No workers available.",
+  "details": {
+    "title": "Worker Profile",
+    "close": "Close",
+    "loading": "Loading profile...",
+    "tabs": {
+      "profile": "Profile",
+      "bookings": "Latest Bookings",
+      "reviews": "Ratings & Reviews"
+    },
+    "stats": {
+      "rating": "Rating",
+      "total_bookings": "Bookings",
+      "completed": "Completed",
+      "reviews": "Reviews"
+    },
+    "services_title": "Provided Services",
+    "services_empty": "No services assigned.",
+    "info_title": "Worker Information",
+    "nationality": "Nationality",
+    "status": "Status",
+    "bookings_title": "Latest Bookings",
+    "bookings_empty": "This worker has no bookings yet.",
+    "reviews_title": "Ratings & Reviews",
+    "reviews_empty": "This worker has no reviews yet.",
+    "col": {
+      "ref": "Reference",
+      "customer": "Customer",
+      "service": "Service",
+      "date": "Date",
+      "status": "Status",
+      "amount": "Amount"
+    },
+    "booking_status": {
+      "Upcoming": "Upcoming",
+      "inService": "In Service",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "filters": {
+    "button": "Filters",
+    "title": "Filter Workers",
+    "search_placeholder": "Search by name…",
+    "status_label": "Status",
+    "all_statuses": "All statuses",
+    "nationality_label": "Nationality",
+    "all_nationalities": "All nationalities",
+    "service_label": "Service",
+    "all_services": "All services",
+    "no_services": "No services",
+    "rating_label": "Rating",
+    "any_rating": "Any rating",
+    "sort_label": "Sort by",
+    "sort_newest": "Newest",
+    "sort_oldest": "Oldest",
+    "sort_top_rated": "Top rated",
+    "sort_name": "Name (A–Z)",
+    "reset": "Reset",
+    "done": "Apply",
+    "active_count": "{{count}} active"
+  }
 }

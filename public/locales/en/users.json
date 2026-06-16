@@ -1,11 +1,19 @@
 {
-   "title": "User Management",
+   "sections": {
+     "personal": { "desc": "Read-only account details synced from the user's profile." },
+     "access": { "title": "Access & Status", "desc": "Manage the user's role and whether the account is active." }
+   },
+   "title": "Admin Accounts",
+   "clients": {
+     "title": "Clients"
+   },
    "table": {
      "name": "Name",
      "email": "Email",
      "phone": "Phone Number",
      "role": "Role",
      "status": "Status",
+     "verification": "Verification",
      "actions": "Actions"
    },
   
@@ -13,10 +21,67 @@
       "active": "Active",
       "inactive": "Inactive"
     },
+    "types": {
+      "customer": "Customer",
+      "operation": "Operations",
+      "super_admin": "Super Admin",
+      "driver": "Driver"
+    },
+    "tabs": {
+      "all": "All"
+    },
+    "filters": {
+      "button": "Filters",
+      "title": "Filter Users",
+      "search_placeholder": "Search by name, email or phone…",
+      "status_label": "Status",
+      "all_statuses": "All statuses",
+      "type_label": "Type",
+      "all_types": "All types",
+      "role_label": "Role",
+      "all_roles": "All roles",
+      "sort_label": "Sort by",
+      "sort_newest": "Newest",
+      "sort_oldest": "Oldest",
+      "sort_name": "Name (A–Z)",
+      "reset": "Reset",
+      "done": "Apply"
+    },
     "actions": {
+      "review": "Review verification",
       "edit_view": "View & Edit",
       "reset_password": "Reset Password",
       "toggle_status": "Toggle Status"
+    },
+    "verification": {
+      "unverified": "Unverified",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "review_modal": {
+      "title": "Customer Verification",
+      "subtitle": "Review the submitted documents, then approve or reject the request.",
+      "loading": "Loading details...",
+      "id_number": "ID Number",
+      "email": "Email",
+      "documents": "Attached Documents",
+      "id_front": "ID — Front",
+      "id_back": "ID — Back",
+      "selfie": "Selfie",
+      "no_document": "Not uploaded",
+      "view_full": "View full size",
+      "previous_reason": "Previous rejection reason",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reject_reason_label": "Rejection reason",
+      "reject_reason_placeholder": "Explain why this request is being rejected…",
+      "reject_reason_required": "A reason is required to reject the request.",
+      "confirm_reject": "Confirm rejection",
+      "cancel": "Cancel",
+      "approve_success": "Customer approved successfully",
+      "reject_success": "Customer rejected successfully",
+      "error": "Something went wrong, please try again."
     },
     "loading": "Loading data...",
     "no_data": "No users to display.",

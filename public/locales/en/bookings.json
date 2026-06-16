@@ -1,0 +1,102 @@
+{
+  "title": "Bookings",
+  "table": {
+    "ref": "Reference",
+    "customer": "Customer",
+    "service": "Service",
+    "schedule": "Schedule",
+    "workers": "Workers",
+    "amount": "Amount",
+    "status": "Status",
+    "payment": "Payment",
+    "actions": "Actions"
+  },
+  "tabs": {
+    "all": "All"
+  },
+  "actions": {
+    "show_details": "Show details",
+    "cancel": "Cancel booking"
+  },
+  "menu": {
+    "details": "Booking details",
+    "history": "Booking history"
+  },
+  "details": {
+    "title": "Booking",
+    "close": "Close",
+    "more": "More",
+    "mark_completed": "Mark as completed",
+    "booking_activity": "Booking activity",
+    "cancel_booking": "Cancel booking",
+    "customer": "Customer",
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "service": "Service & Schedule",
+    "service_name": "Service",
+    "date": "Date",
+    "time": "Time",
+    "workers": "Workers",
+    "address": "Address",
+    "label": "Label",
+    "address_line": "Address",
+    "price": "Price Summary",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "discount": "Discount",
+    "total": "Total",
+    "notes": "Customer Notes",
+    "activity_title": "Status Activity",
+    "no_activity": "No status changes yet.",
+    "system": "System",
+    "confirm_cancel": "Are you sure you want to cancel this booking?",
+    "cancel_reason": "Cancellation reason (optional)",
+    "keep": "Keep booking",
+    "confirm_cancel_btn": "Yes, cancel"
+  },
+  "status": {
+    "Upcoming": "Upcoming",
+    "inService": "In Service",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "payment": {
+    "unpaid": "Unpaid",
+    "paid": "Paid",
+    "refunded": "Refunded"
+  },
+  "filters": {
+    "button": "Filters",
+    "title": "Filter Bookings",
+    "search_placeholder": "Search by reference, customer or service…",
+    "status_label": "Status",
+    "all_statuses": "All statuses",
+    "payment_label": "Payment status",
+    "all_payments": "All payment statuses",
+    "service_label": "Service",
+    "all_services": "All services",
+    "category_label": "Categories",
+    "all_categories": "No categories available",
+    "selected_count": "{{count}} selected",
+    "price_label": "Price range",
+    "price_min": "Min",
+    "price_max": "Max",
+    "location_label": "Location",
+    "all_cities": "All cities",
+    "all_areas": "All areas",
+    "select_city_first": "Select a city first",
+    "date_from_label": "From date",
+    "date_to_label": "To date",
+    "sort_label": "Sort by",
+    "sort_newest": "Newest",
+    "sort_oldest": "Oldest",
+    "sort_date": "Booking date",
+    "sort_amount_high": "Amount (high → low)",
+    "sort_amount_low": "Amount (low → high)",
+    "reset": "Reset",
+    "done": "Apply"
+  },
+  "loading": "Loading bookings...",
+  "no_data": "No bookings found."
+}

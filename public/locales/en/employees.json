@@ -1,6 +1,15 @@
 {
+  "sections": {
+    "account": { "title": "Personal & Account", "desc": "Login credentials and contact details for the staff member." },
+    "job": { "title": "Job & Status", "desc": "Employee type, job title, gender and account status." },
+    "roles": { "title": "Roles & Permissions", "desc": "Grant one or more roles that define what this employee can access." }
+  },
   "title": "Employees Management",
   "add_new": "Add New Employee",
+  "access_denied": {
+    "title": "Access restricted",
+    "message": "You don't have permission to manage employees."
+  },
   "table": {
     "image": "Image",
     "name": "Name",
@@ -12,12 +21,47 @@
   },
   "status": {
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "suspended": "Suspended"
   },
+  "types": {
+    "operation": "Operations",
+    "super_admin": "Super Admin",
+    "driver": "Driver"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "roles_map": {
+    "Super Admin": "Super Admin",
+    "Operations Manager": "Operations Manager",
+    "Customer": "Customer"
+  },
+  "tabs": {
+    "all": "All"
+  },
+  "filters": {
+    "button": "Filters",
+    "title": "Filter Employees",
+    "search_placeholder": "Search by name, email or phone…",
+    "status_label": "Status",
+    "all_statuses": "All statuses",
+    "type_label": "Type",
+    "all_types": "All types",
+    "role_label": "Role",
+    "all_roles": "All roles",
+    "sort_label": "Sort by",
+    "sort_newest": "Newest",
+    "sort_oldest": "Oldest",
+    "sort_name": "Name (A–Z)",
+    "reset": "Reset",
+    "done": "Apply"
+  },
+  "pagination_showing": "Showing {{from}} to {{to}} of {{total}}",
   "actions": {
     "toggle_status": "Toggle Status",
-    "edit": "Edit",
-    "delete": "Delete"
+    "edit": "Edit"
   },
   "form": {
     "title_add": "Add New Employee",

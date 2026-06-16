@@ -1,4 +1,8 @@
 {
+  "sections": {
+    "identity": { "title": "اسم القسم", "desc": "الاسم الظاهر للعملاء بالعربية والإنجليزية." },
+    "settings": { "title": "التصنيف والوسائط", "desc": "القسم الرئيسي وحالة الظهور وصورة القسم." }
+  },
   "title": "إدارة الأقسام",
   "add_new": "إضافة قسم جديد",
   "table": {
@@ -16,8 +20,30 @@
     "active": "نشط",
     "inactive": "غير نشط"
   },
+  "actions": {
+    "edit": "تعديل",
+    "toggle_status": "تغيير الحالة"
+  },
+  "toggle_success": "تم تحديث الحالة بنجاح",
+  "toggle_error": "فشل تحديث الحالة",
   "loading": "جاري جلب الأقسام...",
   "no_data": "لا يوجد أقسام لعرضها.",
+  "filters": {
+    "button": "تصفية",
+    "title": "تصفية الأقسام",
+    "search_placeholder": "ابحث بالاسم...",
+    "status_label": "الحالة",
+    "all_statuses": "كل الحالات",
+    "type_label": "النوع",
+    "all_types": "كل الأنواع",
+    "sort_label": "الترتيب",
+    "sort_default": "الترتيب الافتراضي",
+    "sort_newest": "الأحدث",
+    "sort_oldest": "الأقدم",
+    "sort_name": "الاسم (أ - ي)",
+    "reset": "إعادة تعيين",
+    "done": "تطبيق"
+  },
   "action_modal": {
     "title_add": "إضافة قسم جديد",
     "title_edit": "تعديل القسم",
@@ -28,15 +54,10 @@
     "status": "الحالة",
     "image": "صورة القسم",
     "image_hint": "يُفضل أن تكون الصورة مربعة (PNG, JPG)",
+    "upload_image": "رفع صورة",
+    "change_image": "تغيير الصورة",
     "cancel": "إلغاء",
     "submit": "حفظ",
     "validation_required": "هذا الحقل مطلوب"
-  },
-  "delete_modal": {
-    "title": "تأكيد الحذف",
-    "warning": "هل أنت متأكد أنك تريد حذف القسم",
-    "sub_warning": "لا يمكن التراجع عن هذه العملية.",
-    "cancel": "تراجع",
-    "confirm": "نعم، احذف"
   }
 }

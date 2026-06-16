@@ -1,4 +1,8 @@
 {
+  "sections": {
+    "identity": { "title": "Category Name", "desc": "The display name shown to customers in Arabic and English." },
+    "settings": { "title": "Classification & Media", "desc": "Parent category, visibility status and the category image." }
+  },
   "title": "Category Management",
   "add_new": "Add New Category",
   "table": {
@@ -16,8 +20,30 @@
     "active": "Active",
     "inactive": "Inactive"
   },
+  "actions": {
+    "edit": "Edit",
+    "toggle_status": "Toggle Status"
+  },
+  "toggle_success": "Status updated successfully",
+  "toggle_error": "Failed to update status",
   "loading": "Loading categories...",
   "no_data": "No categories found.",
+  "filters": {
+    "button": "Filters",
+    "title": "Filter Categories",
+    "search_placeholder": "Search by name…",
+    "status_label": "Status",
+    "all_statuses": "All statuses",
+    "type_label": "Type",
+    "all_types": "All types",
+    "sort_label": "Sort by",
+    "sort_default": "Default order",
+    "sort_newest": "Newest",
+    "sort_oldest": "Oldest",
+    "sort_name": "Name (A–Z)",
+    "reset": "Reset",
+    "done": "Apply"
+  },
   "action_modal": {
     "title_add": "Add New Category",
     "title_edit": "Edit Category",
@@ -28,15 +54,10 @@
     "status": "Status",
     "image": "Category Image",
     "image_hint": "Preferably square image (PNG, JPG)",
+    "upload_image": "Upload image",
+    "change_image": "Change image",
     "cancel": "Cancel",
     "submit": "Save",
     "validation_required": "This field is required"
-  },
-  "delete_modal": {
-    "title": "Confirm Deletion",
-    "warning": "Are you sure you want to delete the category",
-    "sub_warning": "This action cannot be undone.",
-    "cancel": "Cancel",
-    "confirm": "Yes, Delete"
   }
 }

@@ -1,0 +1,33 @@
+{
+  "title": "Dashboard",
+  "cards": {
+    "revenue": "Revenue",
+    "bookings_total": "Total Bookings",
+    "upcoming": "Upcoming",
+    "active_services": "Active Services",
+    "workers": "Active Workers",
+    "customers": "Customers"
+  },
+  "charts": {
+    "bookings_trend": "Bookings (last 14 days)",
+    "revenue_trend": "Revenue (last 14 days)",
+    "by_status": "Bookings by Status",
+    "top_services": "Top Services",
+    "upcoming_title": "Upcoming Bookings"
+  },
+  "status": {
+    "Upcoming": "Upcoming",
+    "inService": "In Service",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "table": {
+    "ref": "Reference",
+    "customer": "Customer",
+    "service": "Service",
+    "schedule": "Schedule",
+    "amount": "Amount"
+  },
+  "empty_upcoming": "No upcoming bookings.",
+  "empty_services": "No service data yet."
+}

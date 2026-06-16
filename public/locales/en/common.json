@@ -3,7 +3,9 @@
     "title": "Zaina Admin",
     "subtitle": "Super Admin Portal",
     "dashboard": "Dashboard",
-    "user_management": "User Management",
+    "bookings": "Bookings",
+    "clients": "Clients",
+    "user_management": "Admin Accounts",
     "logout": "Logout",
     "logout_loading": "Logging out...",
     "category_management": "Category Management",
@@ -14,5 +16,32 @@
   "header": {
     "welcome": "Welcome",
     "super_admin": "Super Admin"
+  },
+  "pagination": {
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "profile": {
+    "title": "My Profile",
+    "tab_account": "Account",
+    "tab_password": "Password",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm New Password",
+    "save": "Save Changes",
+    "cancel": "Close",
+    "loading": "Loading...",
+    "account_updated": "Profile updated successfully",
+    "password_changed": "Password changed successfully",
+    "error": "Something went wrong, please try again.",
+    "validation_required": "This field is required",
+    "validation_email": "Invalid email address",
+    "validation_min": "Must be at least 8 characters",
+    "validation_match": "Passwords do not match"
   }
 }
