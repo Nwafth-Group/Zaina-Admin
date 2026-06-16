@@ -9,7 +9,7 @@ i18n
   .use(initReactI18next) // لربطها مع React
   .init({
     fallbackLng: 'en', // اللغة الافتراضية
-    ns: ['auth','common' , 'users' , 'services' , 'employees' ,'workers'], // أسماء الملفات (Namespaces) اللي عملناها
+    ns: ['auth','common' , 'users' , 'services' , 'employees' ,'workers' , 'categories' , 'bookings' , 'dashboard'], // أسماء الملفات (Namespaces) اللي عملناها
     defaultNS: 'common',
     backend: {
       // المسار الصحيح لقراءة الملفات في Vite
