@@ -27,6 +27,9 @@ const StatCard = ({ label, value, accent = 'text-gray-800' }) => (
     </div>
 );
 
+// Full name from a review's nested customer object.
+const reviewerName = (r) => [r.customer?.first_name, r.customer?.last_name].filter(Boolean).join(' ') || '—';
+
 export default function WorkerDetailsModal({ workerId, onClose }) {
     const { t, i18n } = useTranslation('workers');
     const isArabic = i18n.language?.startsWith('ar');
@@ -209,11 +212,11 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                                                     <div className="flex items-center justify-between gap-3">
                                                         <div className="flex items-center gap-2 min-w-0">
                                                             <div className="w-9 h-9 rounded-full bg-[#FDF0F3] text-[#E91E63] flex items-center justify-center font-bold shrink-0">
-                                                                {r.customer_name?.charAt(0) || '?'}
+                                                                {r.customer?.first_name?.charAt(0) || '?'}
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <p className="text-sm font-bold text-gray-800 truncate">{r.customer_name || '—'}</p>
-                                                                <p className="text-xs text-gray-400">{r.created_at}{r.booking_ref ? ` · ${r.booking_ref}` : ''}</p>
+                                                                <p className="text-sm font-bold text-gray-800 truncate">{reviewerName(r)}</p>
+                                                                <p className="text-xs text-gray-400">{r.created_since}{r.booking_ref ? ` · ${r.booking_ref}` : ''}</p>
                                                             </div>
                                                         </div>
                                                         <StarRow value={r.rating} />
