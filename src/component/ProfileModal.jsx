@@ -10,9 +10,9 @@ import axiosInstance from '../api/axios.js';
 const INPUT = 'w-full px-4 py-2.5 border rounded-xl text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#E91E63] outline-none transition-all';
 const LABEL = 'block text-sm font-medium text-gray-700 mb-1.5';
 
-export default function ProfileModal({ onClose, onUpdated }) {
+export default function ProfileModal({ onClose, onUpdated, initialTab = 'account' }) {
     const { t } = useTranslation('common');
-    const [tab, setTab] = useState('account');
+    const [tab, setTab] = useState(initialTab);
 
     // ---- Current profile ----
     const { data: profile, isLoading } = useQuery({

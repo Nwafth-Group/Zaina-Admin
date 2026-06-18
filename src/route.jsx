@@ -5,6 +5,7 @@ import LoginPage from './pages/auth/LoginPage.jsx';
 import AdminLayout from './layouts/AdminLayout.jsx';
 import AuthLayout from './layouts/AuthLayout.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
+import PermissionRoute from './component/PermissionRoute.jsx';
 import GuestRoute from './component/GuestRoute.jsx';
 import Users from './pages/Users/Users.jsx';
 import Clients from './pages/Clients/Clients.jsx';
@@ -13,6 +14,12 @@ import Services from './pages/Services/Services.jsx';
 import Workers from './pages/Workers/Workers.jsx';
 import Employees from './pages/Employees/Employess.jsx';
 import Bookings from './pages/Bookings/Bookings.jsx';
+import Banners from './pages/Banners/Banners.jsx';
+import Announcements from './pages/Announcements/Announcements.jsx';
+import Settings from './pages/Settings/Settings.jsx';
+import Countries from './pages/Settings/Countries.jsx';
+import Cities from './pages/Settings/Cities.jsx';
+import Areas from './pages/Settings/Areas.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -77,6 +84,25 @@ export const router = createBrowserRouter([
         {
           path: 'bookings',
           element: <Bookings />,
+        },
+        {
+          path: 'banners',
+          element: <Banners />,
+        },
+        {
+          path: 'announcements',
+          element: <Announcements />,
+        },
+        {
+          // Location management is gated behind the location.edit permission
+          // (super-admin only). Direct URL access redirects to the dashboard.
+          element: <PermissionRoute permission="location.edit" />,
+          children: [
+            { path: 'settings', element: <Settings /> },
+            { path: 'settings/countries', element: <Countries /> },
+            { path: 'settings/cities', element: <Cities /> },
+            { path: 'settings/areas', element: <Areas /> },
+          ],
         },
       ],
       }

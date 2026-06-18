@@ -63,7 +63,9 @@ export default function ReviewUserModal({ userId, onClose }) {
                 response.data.message ||
                     t(payload.action === 'approve' ? 'review_modal.approve_success' : 'review_modal.reject_success'),
             );
+            // Refresh both the admin Users list and the Clients table.
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
             onClose();
         },
         onError: (error) => {
