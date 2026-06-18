@@ -1,6 +1,6 @@
 {
   "sidebar": {
-    "title": "Zaina Admin",
+    "title": "Zaina",
     "subtitle": "Super Admin Portal",
     "dashboard": "Dashboard",
     "bookings": "Bookings",
@@ -11,11 +11,24 @@
     "category_management": "Category Management",
     "services": "Services",
     "workers": "Workers",
-    "employees": "Employees"
+    "banners": "Banners",
+    "announcements": "Announcements",
+    "employees": "Employees",
+    "settings": "Settings"
   },
   "header": {
     "welcome": "Welcome",
     "super_admin": "Super Admin"
+  },
+  "roles": {
+    "Super Admin": "Super Admin",
+    "Operations Manager": "Operations Manager",
+    "Customer": "Customer",
+    "Driver": "Driver"
+  },
+  "user_menu": {
+    "update_profile": "Update my profile",
+    "change_password": "Change my password"
   },
   "pagination": {
     "showing": "Showing {{from}}–{{to}} of {{total}}",

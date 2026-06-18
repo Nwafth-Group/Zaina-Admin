@@ -1,0 +1,12 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your platform's locations and configuration.",
+  "cards": {
+    "countries": "Countries",
+    "cities": "Cities",
+    "areas": "Areas"
+  },
+  "coming_soon": "This section is coming soon.",
+  "back": "Back to Settings",
+  "forbidden": "You don't have permission to access settings."
+}

@@ -1,0 +1,49 @@
+{
+  "title": "Announcements",
+  "subtitle": "Announcements delivered to selected customers in the app notifications tab.",
+  "add_new": "Add Announcement",
+  "loading": "Loading announcements...",
+  "no_data": "No announcements yet. Add your first one.",
+  "saved": "Announcement saved successfully",
+  "error": "Something went wrong, please try again.",
+  "card": {
+    "recipients": "{{num}} recipients"
+  },
+  "actions": {
+    "title": "Actions",
+    "edit": "Edit"
+  },
+  "sections": {
+    "details": {
+      "title": "Announcement",
+      "desc": "The title and message customers will read."
+    },
+    "audience": {
+      "title": "Recipients",
+      "desc": "Choose which customers receive this announcement."
+    }
+  },
+  "picker": {
+    "search_placeholder": "Search customers…",
+    "select_all": "Select all customers",
+    "selected": "{{num}} selected",
+    "all_selected": "All customers",
+    "load_more": "Load more",
+    "loading": "Loading customers…",
+    "no_customers": "No customers found."
+  },
+  "form": {
+    "title_add": "Add Announcement",
+    "title_edit": "Edit Announcement",
+    "title_field": "Title",
+    "title_placeholder": "e.g. Summer sale is live",
+    "body": "Message",
+    "body_placeholder": "Write the announcement details customers will read…",
+    "cancel": "Cancel",
+    "submit": "Save Announcement"
+  },
+  "validation": {
+    "required": "This field is required",
+    "recipients_required": "Select at least one customer."
+  }
+}

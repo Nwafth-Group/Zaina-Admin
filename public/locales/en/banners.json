@@ -1,0 +1,41 @@
+{
+  "title": "Banners",
+  "subtitle": "Promotional banners shown on the customer app home screen.",
+  "add_new": "Add Banner",
+  "loading": "Loading banners...",
+  "no_data": "No banners yet. Add your first one.",
+  "no_link": "No link",
+  "saved": "Banner saved successfully",
+  "toggled": "Banner status updated",
+  "error": "Something went wrong, please try again.",
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "title": "Actions",
+    "edit": "Edit",
+    "toggle_status": "Toggle Status"
+  },
+  "sections": {
+    "details": {
+      "title": "Banner",
+      "desc": "The image shown to customers and an optional link it opens when tapped."
+    }
+  },
+  "form": {
+    "title_add": "Add Banner",
+    "title_edit": "Edit Banner",
+    "image": "Banner Image",
+    "upload_image": "Upload image",
+    "change_image": "Change image",
+    "link": "Link (optional)",
+    "link_placeholder": "https://…",
+    "status": "Status",
+    "cancel": "Cancel",
+    "submit": "Save Banner"
+  },
+  "validation": {
+    "required": "This field is required"
+  }
+}

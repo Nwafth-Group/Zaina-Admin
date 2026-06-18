@@ -1,6 +1,6 @@
 {
   "sidebar": {
-    "title":  "مسؤول زينة",
+    "title":  "زينة",
     "subtitle": "بوابة المشرف العام",
     "dashboard": "لوحة التحكم",
     "bookings": "الحجوزات",
@@ -11,11 +11,24 @@
     "category_management": "إدارة الفئات",
     "services": "الخدمات",
     "workers": "العمال",
-    "employees": "الموظفين"
+    "banners": "البانرات",
+    "announcements": "الإعلانات",
+    "employees": "الموظفين",
+    "settings": "الإعدادات"
   },
   "header": {
     "welcome": "مرحباً",
     "super_admin": "سوبر أدمن"
+  },
+  "roles": {
+    "Super Admin": "مشرف عام",
+    "Operations Manager": "مدير العمليات",
+    "Customer": "عميل",
+    "Driver": "سائق"
+  },
+  "user_menu": {
+    "update_profile": "تعديل ملفي الشخصي",
+    "change_password": "تغيير كلمة المرور"
   },
   "pagination": {
     "showing": "عرض {{from}}–{{to}} من {{total}}",

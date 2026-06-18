@@ -1,0 +1,68 @@
+{
+  "back_to_settings": "Settings",
+  "common": {
+    "name": "Name",
+    "name_ar": "Name (Arabic)",
+    "name_en": "Name (English)",
+    "code": "Code",
+    "status": "Status",
+    "actions": "Actions",
+    "edit": "Edit",
+    "toggle_status": "Toggle Status",
+    "cancel": "Cancel",
+    "save": "Save",
+    "select": "Select",
+    "active": "Active",
+    "inactive": "Inactive",
+    "loading": "Loading...",
+    "no_data": "No records yet.",
+    "error": "Something went wrong, please try again.",
+    "saved": "Saved successfully",
+    "toggled": "Status updated",
+    "required": "This field is required",
+    "forbidden": "You don't have permission to manage locations."
+  },
+  "countries": {
+    "title": "Countries",
+    "subtitle": "Countries available across the platform.",
+    "add": "Add Country",
+    "col_flag": "Flag",
+    "col_currency": "Currency",
+    "col_cities": "Cities",
+    "form": {
+      "add_title": "Add Country",
+      "edit_title": "Edit Country",
+      "currency_code": "Currency code",
+      "phone_code": "Phone code",
+      "flag": "Flag",
+      "upload": "Upload flag",
+      "change": "Change flag"
+    }
+  },
+  "cities": {
+    "title": "Cities",
+    "subtitle": "Cities grouped under their governorate and country.",
+    "add": "Add City",
+    "col_governorate": "Governorate",
+    "col_country": "Country",
+    "form": {
+      "add_title": "Add City",
+      "edit_title": "Edit City",
+      "country": "Country",
+      "governorate": "Governorate",
+      "select_country": "Select a country first"
+    }
+  },
+  "areas": {
+    "title": "Areas",
+    "subtitle": "Areas that belong to a city.",
+    "add": "Add Area",
+    "col_city": "City",
+    "col_country": "Country",
+    "form": {
+      "add_title": "Add Area",
+      "edit_title": "Edit Area",
+      "city": "City"
+    }
+  }
+}
