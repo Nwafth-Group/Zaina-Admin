@@ -1,37 +1,15 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '../api/axios';
-import { hasPermission } from '../utils/permissions.js';
+import { hasPermission, getRoles } from '../utils/permissions.js';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
     const { t } = useTranslation('common');
     const location = useLocation();
-    const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
-    const logoutMutation = useMutation({
-        mutationFn: () => {
-            return axiosInstance.post('/admin/auth/logout');
-        },
-        onSuccess: () => {
-            localStorage.removeItem('zaina_admin_token');
-            localStorage.removeItem('zaina_admin_user');
-            queryClient.clear();
-            navigate('/auth/login', { replace: true });
-        },
-        onError: (error) => {
-            console.error('Logout failed:', error);
-            localStorage.removeItem('zaina_admin_token');
-            localStorage.removeItem('zaina_admin_user');
-            navigate('/auth/login', { replace: true });
-        }
-    });
-
-    const handleLogout = () => {
-        logoutMutation.mutate();
-    };
+    // Show the logged-in admin's (translated) role under the brand name.
+    const role = getRoles()[0];
+    const roleLabel = role ? t(`roles.${role}`, { defaultValue: role }) : '';
 
     const isActive = (path) => {
         if (path === '/' && location.pathname === '/') return true;
@@ -77,7 +55,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                         Z
                     </div>
                     <h2 className="text-xl font-bold text-gray-800">{t('sidebar.title')}</h2>
-                    <p className="text-xs text-gray-500 mt-1">{t('sidebar.subtitle')}</p>
+                    {roleLabel && <p className="text-xs text-gray-500 mt-1">{roleLabel}</p>}
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -171,6 +149,36 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                         {t('sidebar.workers')}
                     </Link>
 
+                    <Link
+                        to="/banners"
+                        onClick={handleLinkClick}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                            isActive('/banners')
+                            ? 'bg-[#E91E63] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                        }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        {t('sidebar.banners')}
+                    </Link>
+
+                    <Link
+                        to="/announcements"
+                        onClick={handleLinkClick}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                            isActive('/announcements')
+                            ? 'bg-[#E91E63] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                        }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
+                        </svg>
+                        {t('sidebar.announcements')}
+                    </Link>
+
                     {hasPermission('employees.view') && (
                         <Link
                             to="/employees"
@@ -192,25 +200,25 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
                 </nav>
 
-                <div className="p-4 border-t border-gray-50">
-                    <button
-                        onClick={handleLogout}
-                        disabled={logoutMutation.isPending}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 font-medium disabled:opacity-50"
-                    >
-                        {logoutMutation.isPending ? (
-                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-                                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
-                            </svg>
-                        ) : (
+                {hasPermission('location.edit') && (
+                    <div className="p-4 border-t border-gray-50">
+                        <Link
+                            to="/settings"
+                            onClick={handleLinkClick}
+                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                                isActive('/settings')
+                                ? 'bg-[#E91E63] text-white shadow-md'
+                                : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                            }`}
+                        >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                        )}
-                        {logoutMutation.isPending ? t('sidebar.logout_loading') : t('sidebar.logout')}
-                    </button>
-                </div>
+                            {t('sidebar.settings')}
+                        </Link>
+                    </div>
+                )}
             </aside>
         </>
     );

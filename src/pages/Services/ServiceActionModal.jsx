@@ -300,7 +300,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             city_id: yup.string().required(t('validation.required')),
             price_per_service_period: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(0, t('validation.min_0')),
         })).min(1, t('validation.required')),
-        workers: yup.array().of(yup.string()).min(1, t('validation.required')),
+        workers: yup.array().of(yup.string()),
     });
 
     const { register, handleSubmit, watch, reset, setValue, control, formState: { errors } } = useForm({

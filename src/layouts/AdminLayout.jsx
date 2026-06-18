@@ -1,23 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import axiosInstance from '../api/axios.js';
 import LanguageSwitcher from '../component/LanguageSwitcher.jsx';
 import Sidebar from '../component/Sidebar.jsx';
 import ProfileModal from '../component/ProfileModal.jsx';
+import UserMenu from '../component/UserMenu.jsx';
 
 const AdminLayout = () => {
   const { t } = useTranslation('common');
   const [adminName, setAdminName] = useState('');
+  // Bumped whenever the cached user is refreshed, to force the sidebar to
+  // re-evaluate permission-gated links against the fresh data.
+  const [authVersion, setAuthVersion] = useState(0);
 
   // حالة للتحكم بفتح وإغلاق القائمة الجانبية على شاشات الموبايل
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  // null = closed; otherwise the tab to open the profile modal on.
+  const [profileTab, setProfileTab] = useState(null);
 
   // جلب اسم الأدمن من التخزين المحلي عند تحميل الهيكل
   useEffect(() => {
     const userString = localStorage.getItem('zaina_admin_user');
     if (userString) {
-      console.log("Admin user data found in localStorage:", userString);
       try {
         const user = JSON.parse(userString);
         setAdminName(user.name);
@@ -27,11 +33,41 @@ const AdminLayout = () => {
     }
   }, []);
 
+  // Refresh the cached identity/roles/permissions from the server on load so
+  // the UI reflects the actually-logged-in account (e.g. an operations user
+  // never sees Super-Admin-only links from a stale login snapshot).
+  const { data: me } = useQuery({
+    queryKey: ['current-admin'],
+    queryFn: async () => (await axiosInstance.get('/admin/me')).data.data,
+    staleTime: 0,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!me) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem('zaina_admin_user') || '{}');
+      localStorage.setItem('zaina_admin_user', JSON.stringify({
+        ...stored,
+        type: me.type,
+        roles: me.roles,
+        permissions: me.permissions,
+        name: me.name ?? stored.name,
+        email: me.email ?? stored.email,
+      }));
+      if (me.name) setAdminName(me.name);
+      setAuthVersion((v) => v + 1);
+    } catch (error) {
+      console.error("Error syncing current admin", error);
+    }
+  }, [me]);
+
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden font-main">
       
       {/* تمرير خصائص الفتح والإغلاق للسايدبار */}
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      {/* key forces a re-render once the cached permissions are refreshed */}
+      <Sidebar key={authVersion} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       {/* المحتوى الرئيسي */}
       <main className="flex-1 flex flex-col overflow-hidden relative w-full">
@@ -56,24 +92,9 @@ const AdminLayout = () => {
           
           <div className="flex items-center gap-4 md:gap-6">
             <LanguageSwitcher />
-            
-            {/* معلومات المستخدم — تفتح الملف الشخصي */}
-            <button
-              type="button"
-              onClick={() => setIsProfileOpen(true)}
-              title={t('profile.title')}
-              className="flex items-center gap-3 border-l rtl:border-l-0 rtl:border-r border-gray-200 pl-4 rtl:pr-4 rtl:pl-0 hover:opacity-80 transition-opacity focus:outline-none"
-            >
-              <div className="text-right rtl:text-left hidden sm:block">
-                <p className="text-sm font-bold text-gray-800">{adminName || t('header.super_admin')}</p>
-                <p className="text-xs text-gray-500">{t('header.welcome')}</p>
-              </div>
 
-              {/* صورة رمزية أو الحرف الأول من اسم الأدمن */}
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#E91E63] to-[#F4A9BC] text-white flex items-center justify-center font-bold shadow-md text-lg">
-                {adminName ? adminName.charAt(0).toUpperCase() : 'Z'}
-              </div>
-            </button>
+            {/* معلومات المستخدم — قائمة منسدلة عند المرور بالماوس */}
+            <UserMenu adminName={adminName} onOpenProfile={(tab) => setProfileTab(tab)} />
           </div>
         </header>
         
@@ -83,8 +104,12 @@ const AdminLayout = () => {
         </div>
       </main>
 
-      {isProfileOpen && (
-        <ProfileModal onClose={() => setIsProfileOpen(false)} onUpdated={(name) => setAdminName(name)} />
+      {profileTab && (
+        <ProfileModal
+          initialTab={profileTab}
+          onClose={() => setProfileTab(null)}
+          onUpdated={(name) => setAdminName(name)}
+        />
       )}
     </div>
   );
