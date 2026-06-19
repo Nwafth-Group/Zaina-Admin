@@ -114,4 +114,10 @@ export const router = createBrowserRouter([
     path: '*',
     element: <div className="p-10 text-center text-2xl text-red-500">الصفحة غير موجودة 404</div>
   }
-]);
+],
+// ===> التعديل الجديد يبدأ من هنا <===
+{
+  basename: '/admin' // هذا السطر بيحكي للرياكت إن كل مشروعك بيبدأ من مجلد /admin
+}
+
+);
