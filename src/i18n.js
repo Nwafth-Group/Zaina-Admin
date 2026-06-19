@@ -13,7 +13,7 @@ i18n
     defaultNS: 'common',
     backend: {
       // المسار الصحيح لقراءة الملفات في Vite
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      loadPath: '/admin/locales/{{lng}}/{{ns}}.json',
     },
     interpolation: {
       escapeValue: false,
