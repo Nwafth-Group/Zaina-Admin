@@ -6,126 +6,53 @@ import axiosInstance from '../../api/axios';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { FormSection } from '../../components/form/FormKit';
+import FullScreenFormModal from '../../components/form/FullScreenFormModal';
+import { INPUT_CLASS, LABEL_CLASS, SelectField, OptionCards, ImageDropzone, FormSection } from '../../components/form/FormKit';
 
-const EMPTY_PRICE = { city_id: '', area_id: '', price_per_service_period: '', currency: 'EGP', effective_start: '', effective_end: '' };
-
-// Weekly availability. The form always renders all seven days; the `is_active`
-// flag decides whether the service is bookable on that day, and each day can
-// hold one or more time shifts (e.g. morning + evening).
+// Weekly days options
 const WEEK_DAYS = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-const DEFAULT_START = '09:00';
-const DEFAULT_END = '17:00';
-const EMPTY_SHIFT = { start_time: DEFAULT_START, end_time: DEFAULT_END };
+const DEFAULT_START_TIME = '09:00';
 
-// Group flat saved schedule rows by day onto the fixed seven-day template. Each
-// day keeps a list of shifts; days without saved rows fall back to a single
-// default shift and `fallbackActive` (active for a brand-new service).
-const buildSchedules = (saved = [], { fallbackActive = false } = {}) => {
-    const byDay = {};
-    (saved || []).forEach((row) => {
-        (byDay[row.day] ||= []).push(row);
-    });
-    return WEEK_DAYS.map((day) => {
-        const rows = byDay[day] || [];
-        return {
-            day,
-            is_active: rows.length ? rows.some((r) => !!r.is_active) : fallbackActive,
-            shifts: rows.length
-                ? rows.map((r) => ({ start_time: String(r.start_time).slice(0, 5), end_time: String(r.end_time).slice(0, 5) }))
-                : [{ ...EMPTY_SHIFT }],
-        };
-    });
+const calculateEndTime = (startTimeStr, durationHours) => {
+    if (!startTimeStr || !durationHours) return '';
+    try {
+        const [h, m] = startTimeStr.split(':').map(Number);
+        const totalMinutes = h * 60 + m + Math.round(Number(durationHours) * 60);
+        const endH = Math.floor(totalMinutes / 60) % 24;
+        const endM = totalMinutes % 60;
+        return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+    } catch (e) {
+        return '';
+    }
 };
 
-// Shared field styling — keeps the single-column form visually consistent.
-const INPUT_CLASS = 'w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] transition-colors bg-white';
-const LABEL_CLASS = 'block text-sm font-medium text-gray-700 mb-1.5';
-
-/**
- * Styled <select>: the native browser arrow is removed and replaced with a
- * custom chevron placed on the trailing edge (logical `end-*`), so it lands on
- * the correct side in both RTL (Arabic) and LTR. Forwards a react-hook-form
- * registration object onto the select.
- */
-function SelectField({ registration, children, className = '', disabled = false }) {
-    return (
-        <div className="relative">
-            <select
-                {...registration}
-                disabled={disabled}
-                className={`${INPUT_CLASS} appearance-none pe-10 ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
-            >
-                {children}
-            </select>
-            <svg className="pointer-events-none absolute top-1/2 -translate-y-1/2 end-3 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-        </div>
-    );
-}
-
-/**
- * Status selector — radio cards that show every option at once (no dropdown).
- * Each card has a radio dot plus a status colour, so the look is distinct from
- * plain toggle buttons.
- */
-function StatusRadioGroup({ value, onChange, options }) {
-    return (
-        <div className="grid grid-cols-2 gap-2" role="radiogroup">
-            {options.map((opt) => {
-                const active = value === opt.value;
-                return (
-                    <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => onChange(opt.value)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${active ? 'border-[#E91E63] bg-[#FDF0F3]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                    >
-                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${active ? 'border-[#E91E63]' : 'border-gray-300'}`}>
-                            {active && <span className="h-2 w-2 rounded-full bg-[#E91E63]" />}
-                        </span>
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${opt.dot}`} />
-                        <span className={active ? 'text-[#E91E63]' : 'text-gray-600'}>{opt.label}</span>
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-
-/**
- * One location-based price row. Owns its own area query, scoped to the row's
- * selected city, so each price can target a different city/area. Fields are
- * stacked in a single column to match the rest of the form.
- */
-function ServicePriceRow({ index, register, control, setValue, errors, citiesList, isArabic, t, onRemove, canRemove }) {
-    const cityId = useWatch({ control, name: `prices.${index}.city_id` });
+function ServiceCoverageRow({ index, register, control, setValue, errors, citiesList, isArabic, t, onRemove, canRemove }) {
+    const cityId = useWatch({ control, name: `coverages.${index}.city_id` });
+    
+    // Fetch areas for the selected city
     const { data: areas = [] } = useQuery({
         queryKey: ['areas', cityId],
         queryFn: async () => (await axiosInstance.get(`/admin/areas?city_id=${cityId}`)).data.data.items || [],
         enabled: !!cityId,
     });
 
-    const rowErrors = errors?.prices?.[index] || {};
-    const cityField = register(`prices.${index}.city_id`);
+    const rowErrors = errors?.coverages?.[index] || {};
+    const cityField = register(`coverages.${index}.city_id`);
 
     return (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3">
             <div className="flex justify-between items-center">
-                <span className="text-xs font-semibold text-gray-500">{t('form.price_per_period')} #{index + 1}</span>
+                <span className="text-xs font-semibold text-gray-500">{t('form.coverages')} #{index + 1}</span>
                 {canRemove && (
                     <button type="button" onClick={onRemove} className="text-xs font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors">
                         {t('form.remove')}
                     </button>
                 )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <label className={LABEL_CLASS}>{t('form.city')}</label>
-                    <SelectField registration={{ ...cityField, onChange: (e) => { cityField.onChange(e); setValue(`prices.${index}.area_id`, ''); } }}>
+                    <SelectField registration={{ ...cityField, onChange: (e) => { cityField.onChange(e); setValue(`coverages.${index}.area_id`, ''); } }}>
                         <option value="">{t('form.select_city')}</option>
                         {citiesList.map((c) => <option key={c.id} value={c.id}>{isArabic ? c.name_ar : c.name_en}</option>)}
                     </SelectField>
@@ -133,92 +60,20 @@ function ServicePriceRow({ index, register, control, setValue, errors, citiesLis
                 </div>
                 <div>
                     <label className={LABEL_CLASS}>{t('form.area')}</label>
-                    <SelectField registration={register(`prices.${index}.area_id`)} disabled={!cityId}>
+                    <SelectField registration={register(`coverages.${index}.area_id`)} disabled={!cityId}>
                         <option value="">{t('form.select_area')}</option>
                         {areas.map((a) => <option key={a.id} value={a.id}>{isArabic ? a.name_ar : a.name_en}</option>)}
                     </SelectField>
                 </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                    <label className={LABEL_CLASS}>{t('form.price_per_period')}</label>
-                    <input type="number" step="0.01" {...register(`prices.${index}.price_per_service_period`)} className={INPUT_CLASS} />
-                    {rowErrors.price_per_service_period && <p className="text-red-500 text-xs mt-1">{rowErrors.price_per_service_period.message}</p>}
-                </div>
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.currency')}</label>
-                    <input type="text" {...register(`prices.${index}.currency`)} className={INPUT_CLASS} />
+                    <label className={LABEL_CLASS}>{t('form.status')}</label>
+                    <SelectField registration={register(`coverages.${index}.status`)}>
+                        <option value="active">{t('status.active')}</option>
+                        <option value="inactive">{t('status.inactive')}</option>
+                        <option value="coming_soon">{isArabic ? 'قريباً' : 'Coming Soon'}</option>
+                    </SelectField>
                 </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.effective_start')}</label>
-                    <input type="date" {...register(`prices.${index}.effective_start`)} className={INPUT_CLASS} />
-                </div>
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.effective_end')}</label>
-                    <input type="date" {...register(`prices.${index}.effective_end`)} className={INPUT_CLASS} />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/**
- * One weekday row of the weekly schedule: an active toggle plus a list of time
- * shifts (start/end) that can be added or removed independently.
- */
-function ServiceDayShifts({ dayIndex, day, control, register, t }) {
-    const { fields, append, remove } = useFieldArray({ control, name: `schedules.${dayIndex}.shifts` });
-    const active = useWatch({ control, name: `schedules.${dayIndex}.is_active` });
-
-    return (
-        <div className="p-3 border border-gray-100 rounded-lg bg-gray-50/60">
-            <input type="hidden" {...register(`schedules.${dayIndex}.day`)} />
-            <div className="flex items-center justify-between gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" {...register(`schedules.${dayIndex}.is_active`)} className="w-4 h-4 text-[#E91E63] rounded focus:ring-[#E91E63]" />
-                    <span className="text-sm font-medium text-gray-700">{t(`days.${day}`)}</span>
-                </label>
-                {active && (
-                    <button
-                        type="button"
-                        onClick={() => append({ ...EMPTY_SHIFT })}
-                        className="text-sm font-medium text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded-lg transition-colors"
-                    >
-                        + {t('form.add_shift')}
-                    </button>
-                )}
-            </div>
-
-            {active && (
-                <div className="mt-2.5 space-y-2">
-                    {fields.map((field, sIndex) => (
-                        <div key={field.id} className="flex items-end gap-2">
-                            <div>
-                                <label className="block text-[11px] text-gray-400 mb-0.5">{t('form.schedule_from')}</label>
-                                <input type="time" {...register(`schedules.${dayIndex}.shifts.${sIndex}.start_time`)} className={`${INPUT_CLASS} !w-auto py-2`} />
-                            </div>
-                            <div>
-                                <label className="block text-[11px] text-gray-400 mb-0.5">{t('form.schedule_to')}</label>
-                                <input type="time" {...register(`schedules.${dayIndex}.shifts.${sIndex}.end_time`)} className={`${INPUT_CLASS} !w-auto py-2`} />
-                            </div>
-                            {fields.length > 1 && (
-                                <button
-                                    type="button"
-                                    onClick={() => remove(sIndex)}
-                                    className="mb-1 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                    aria-label={t('form.remove')}
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
@@ -228,8 +83,9 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const queryClient = useQueryClient();
     const isEditMode = !!serviceToEdit;
     const isArabic = i18n.language === 'ar';
+    const [activeTab, setActiveTab] = useState('basic');
 
-    // Assigned-workers picker: searchable + paged so large worker lists stay light.
+    // Filterable Workers Picker
     const [workerSearchInput, setWorkerSearchInput] = useState('');
     const [workerSearch, setWorkerSearch] = useState('');
     useEffect(() => {
@@ -246,7 +102,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     } = useInfiniteQuery({
         queryKey: ['modal-workers', workerSearch],
         queryFn: async ({ pageParam = 1 }) => {
-            const params = new URLSearchParams({ page: String(pageParam), per_page: '15' });
+            const params = new URLSearchParams({ page: String(pageParam), per_page: '15', status: 'active' });
             if (workerSearch) params.append('search', workerSearch);
             return (await axiosInstance.get(`/admin/workers?${params.toString()}`)).data.data;
         },
@@ -258,7 +114,6 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     });
     const workersList = useMemo(() => (workersData?.pages || []).flatMap((p) => p?.items || []), [workersData]);
 
-    // Auto-load more workers when the sentinel scrolls into the picker's own box.
     const workerScrollRef = useRef(null);
     const workerSentinelRef = useRef(null);
     useEffect(() => {
@@ -273,49 +128,166 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         return () => observer.disconnect();
     }, [hasMoreWorkers, isFetchingMoreWorkers, fetchMoreWorkers, workersList.length]);
 
+    // Fetch Cities for Coverage tab
     const { data: citiesList = [] } = useQuery({
-        queryKey: ['cities'],
+        queryKey: ['citiesList'],
         queryFn: async () => (await axiosInstance.get('/admin/cities')).data.data.items || [],
     });
 
     const schema = yup.object().shape({
-        category_id: yup.string().required(t('validation.required')),
+        category_id: yup.string().nullable().notRequired(),
         type: yup.string().required(t('validation.required')),
-        name_ar: yup.string().required(t('validation.required')),
-        name_en: yup.string().required(t('validation.required')),
+        name_ar: yup.string().required(t('validation.required')).max(100),
+        name_en: yup.string().required(t('validation.required')).max(100),
+        description_ar: yup.string().required(t('validation.required')).max(500),
+        description_en: yup.string().required(t('validation.required')).max(500),
         status: yup.string().required(t('validation.required')),
-
-        service_period_hours: yup.number().transform((value) => (isNaN(value) ? undefined : value)).when('type', {
-            is: (val) => val === 'hourly' || val === 'both',
-            then: (s) => s.required(t('validation.required')).min(1, t('validation.min_1')),
+        service_code: yup.string().nullable().max(50),
+        base_price: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(0, t('validation.min_0')),
+        
+        single_visit_checked: yup.boolean(),
+        three_days_checked: yup.boolean(),
+        single_visit_discount: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('single_visit_checked', {
+            is: true,
+            then: (s) => s.required(t('validation.required')).min(0).max(100),
             otherwise: (s) => s.nullable(),
         }),
-        min_contract_months: yup.number().transform((value) => (isNaN(value) ? undefined : value)).when('type', {
-            is: (val) => val === 'moqema' || val === 'both',
-            then: (s) => s.required(t('validation.required')).min(1, t('validation.min_1')),
+        three_days_discount: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('three_days_checked', {
+            is: true,
+            then: (s) => s.required(t('validation.required')).min(0).max(100),
             otherwise: (s) => s.nullable(),
         }),
 
-        prices: yup.array().of(yup.object().shape({
+        coverages: yup.array().of(yup.object().shape({
             city_id: yup.string().required(t('validation.required')),
-            price_per_service_period: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(0, t('validation.min_0')),
+            area_id: yup.string().nullable(),
+            status: yup.string().required(t('validation.required'))
         })).min(1, t('validation.required')),
+
+        start_time: yup.string().nullable(),
+        end_time: yup.string().nullable(),
+        duration_unit: yup.string().required(t('validation.required')),
+        default_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1, t('validation.min_1')),
+        
+        min_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('has_duration_range', {
+            is: true,
+            then: (s) => s.required(t('validation.required')).min(1),
+            otherwise: (s) => s.nullable(),
+        }),
+        max_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('has_duration_range', {
+            is: true,
+            then: (s) => s.required(t('validation.required')).min(1).test('max_greater', 'Max must be >= Min', function(value) {
+                const { min_duration } = this.parent;
+                return value >= min_duration;
+            }),
+            otherwise: (s) => s.nullable(),
+        }),
+
+        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
+        max_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1).test('max_workers_greater', 'Max workers must be >= Min workers', function(value) {
+            const { min_workers } = this.parent;
+            return value >= min_workers;
+        }),
+
+        working_days: yup.array().of(yup.string()),
+        shifts: yup.array().of(yup.object().shape({
+            start_time: yup.string().required(t('validation.required'))
+        })),
+
+        terms_ar: yup.string().nullable().max(5000),
+        terms_en: yup.string().nullable().max(5000),
+        acceptance_required: yup.boolean(),
+
         workers: yup.array().of(yup.string()),
+
+        rules: yup.object().shape({
+            allow_cancel: yup.boolean(),
+            free_cancel_cutoff_hours: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('allow_cancel', {
+                is: true,
+                then: (s) => s.required(t('validation.required')).min(0),
+                otherwise: (s) => s.nullable(),
+            }),
+            allow_reschedule: yup.boolean(),
+            reschedule_cutoff_hours: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('allow_reschedule', {
+                is: true,
+                then: (s) => s.required(t('validation.required')).min(0),
+                otherwise: (s) => s.nullable(),
+            }),
+            allow_same_day: yup.boolean(),
+            max_advance_booking_days: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
+            arrival_buffer_minutes: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
+            late_arrival_grace_minutes: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
+        })
+    }).test('at-least-one-visit-type', function(value) {
+        if (!value.single_visit_checked && !value.three_days_checked) {
+            return this.createError({
+                path: 'visit_types',
+                message: isArabic ? 'يجب اختيار نوع زيارة واحد على الأقل' : 'At least one visit type must be selected'
+            });
+        }
+        return true;
     });
 
     const { register, handleSubmit, watch, reset, setValue, control, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            status: 'active', type: 'hourly', cancel_action: 'fee', cancel_fee_type: 'fixed', no_show_policy: 'consumed',
-            workers: [], features: [], prices: [{ ...EMPTY_PRICE }], schedules: buildSchedules([], { fallbackActive: true }),
+            status: 'active',
+            type: 'hourly',
+            single_visit_checked: false,
+            single_visit_discount: 0,
+            three_days_checked: false,
+            three_days_discount: 0,
+            coverages: [{ city_id: '', area_id: '', status: 'active' }],
+            base_price: '',
+            start_time: '',
+            end_time: '',
+            duration_unit: 'Hours',
+            default_duration: 1,
+            has_duration_range: false,
+            min_duration: '',
+            max_duration: '',
+            min_workers: 1,
+            max_workers: 1,
+            working_days: [],
+            shifts: [{ start_time: '09:00', end_time: '' }],
+            features: [],
+            terms_ar: '',
+            terms_en: '',
+            acceptance_required: false,
+            workers: [],
+            rules: {
+                allow_cancel: false,
+                free_cancel_cutoff_hours: '',
+                allow_reschedule: false,
+                reschedule_cutoff_hours: '',
+                allow_same_day: false,
+                max_advance_booking_days: '',
+                arrival_buffer_minutes: 15,
+                late_arrival_grace_minutes: 15,
+            }
         },
     });
 
-    const watchType = watch('type');
     const { fields: featureFields, append: appendFeature, remove: removeFeature } = useFieldArray({ control, name: 'features' });
-    const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({ control, name: 'prices' });
+    const { fields: coverageFields, append: appendCoverage, remove: removeCoverage } = useFieldArray({ control, name: 'coverages' });
+    const { fields: shiftFields, append: appendShift, remove: removeShift } = useFieldArray({ control, name: 'shifts' });
 
-    // Live preview for a freshly-picked image file (revoked on change/unmount).
+    const watchType = watch('type');
+    const watchHasDurationRange = watch('has_duration_range');
+    const watchAllowCancel = watch('rules.allow_cancel');
+    const watchAllowReschedule = watch('rules.allow_reschedule');
+    const watchSingleVisitChecked = watch('single_visit_checked');
+    const watchThreeDaysChecked = watch('three_days_checked');
+    const statusValue = watch('status');
+    const watchServiceCode = watch('service_code');
+
+    useEffect(() => {
+        if (watchServiceCode === 'DOMESTIC_HELPER_HOURLY') {
+            setValue('has_duration_range', false);
+        }
+    }, [watchServiceCode, setValue]);
+
+    // Handle Image Preview
     const imageList = watch('image');
     const [imagePreview, setImagePreview] = useState(null);
     useEffect(() => {
@@ -327,56 +299,91 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         setImagePreview(null);
     }, [imageList]);
 
-    // Which language the name/description fields currently edit, and the live
-    // status value for the inline option buttons.
-    const [textLang, setTextLang] = useState(isArabic ? 'ar' : 'en');
-    const statusValue = watch('status');
 
+    // Fetch Details for Editing
     const { data: fullServiceData, isLoading: isServiceLoading } = useQuery({
         queryKey: ['serviceDetails', serviceToEdit?.id],
         queryFn: async () => (await axiosInstance.get(`/admin/services/${serviceToEdit.id}`)).data.data,
         enabled: isEditMode,
     });
 
+    // Populate edit data
     useEffect(() => {
         if (isEditMode && fullServiceData) {
-            const prices = (fullServiceData.prices || []).map((p) => ({
-                city_id: String(p.city_id || ''),
-                area_id: p.area_id ? String(p.area_id) : '',
-                price_per_service_period: p.price_per_service_period || '',
-                currency: p.currency || 'EGP',
-                effective_start: p.effective_start || '',
-                effective_end: p.effective_end || '',
+            const singleVisit = (fullServiceData.available_visit_types || []).find(vt => vt.type === 'single_visit');
+            const threeDays = (fullServiceData.available_visit_types || []).find(vt => vt.type === '3_days_per_week');
+            
+            const coverages = (fullServiceData.coverages || []).map((c) => ({
+                city_id: String(c.city?.id || ''),
+                area_id: c.area?.id ? String(c.area.id) : '',
+                status: c.status || 'active',
             }));
 
+            // Map working days from schedules
+            const workingDays = (fullServiceData.schedules || [])
+                .filter((s) => s.is_active)
+                .map((s) => s.day);
+            const workingDaysSet = Array.from(new Set(workingDays));
+
+            // Map shift times
+            const shiftTimes = {};
+            (fullServiceData.schedules || []).forEach((sch) => {
+                if (sch.is_active && sch.start_time) {
+                    const sTime = sch.start_time.slice(0, 5);
+                    const eTime = sch.end_time ? sch.end_time.slice(0, 5) : '';
+                    shiftTimes[sTime] = eTime;
+                }
+            });
+            const shifts = Object.keys(shiftTimes).map((sTime) => ({ start_time: sTime, end_time: shiftTimes[sTime] }));
+
             reset({
-                category_id: String(fullServiceData.category?.id || ''),
+                category_id: fullServiceData.category?.id ? String(fullServiceData.category.id) : '',
                 type: fullServiceData.type || 'hourly',
                 name_ar: fullServiceData.name_ar || '',
                 name_en: fullServiceData.name_en || '',
                 description_ar: fullServiceData.description_ar || '',
                 description_en: fullServiceData.description_en || '',
                 status: fullServiceData.status || 'active',
-
-                service_period_hours: fullServiceData.duration?.service_period_hours || '',
-                min_contract_months: fullServiceData.duration?.min_contract_months || '',
-                allowed_contract_durations: fullServiceData.duration?.allowed_contract_durations?.join(', ') || '',
-
-                free_cancel_cutoff_hours: fullServiceData.rules?.free_cancel_cutoff_hours ?? '',
-                reschedule_cutoff_hours: fullServiceData.rules?.reschedule_cutoff_hours ?? '',
-                lead_time_min_hours: fullServiceData.rules?.lead_time_min_hours ?? '',
-                lead_time_max_days: fullServiceData.rules?.lead_time_max_days ?? '',
-                cancel_action: fullServiceData.rules?.late_cancel_action || 'fee',
-                cancel_fee_type: fullServiceData.rules?.late_cancel_fee_type || 'fixed',
-                cancel_fee_value: fullServiceData.rules?.late_cancel_fee_value || '',
-                no_show_policy: fullServiceData.rules?.no_show_policy || 'consumed',
-                max_changes_per_booking: fullServiceData.rules?.max_changes_per_booking ?? '',
-
+                service_code: fullServiceData.service_code || '',
+                
+                base_price: fullServiceData.base_price || '',
+                
+                single_visit_checked: !!singleVisit,
+                single_visit_discount: singleVisit ? singleVisit.discount : 0,
+                three_days_checked: !!threeDays,
+                three_days_discount: threeDays ? threeDays.discount : 0,
+                
+                coverages: coverages.length ? coverages : [{ city_id: '', area_id: '', status: 'active' }],
+                
+                start_time: fullServiceData.start_time ? fullServiceData.start_time.slice(0, 5) : '',
+                end_time: fullServiceData.end_time ? fullServiceData.end_time.slice(0, 5) : '',
+                duration_unit: fullServiceData.duration_unit || 'Hours',
+                default_duration: fullServiceData.default_duration || 1,
+                has_duration_range: !!fullServiceData.has_duration_range,
+                min_duration: fullServiceData.min_duration || '',
+                max_duration: fullServiceData.max_duration || '',
+                min_workers: fullServiceData.min_workers || 1,
+                max_workers: fullServiceData.max_workers || 1,
+                
+                working_days: workingDaysSet,
+                shifts: shifts.length ? shifts : [{ start_time: '09:00', end_time: '' }],
+                
                 features: (fullServiceData.features || []).map((f) => ({ ar: f.ar || '', en: f.en || '' })),
-                prices: prices.length ? prices : [{ ...EMPTY_PRICE }],
-
+                terms_ar: fullServiceData.terms_ar || '',
+                terms_en: fullServiceData.terms_en || '',
+                acceptance_required: !!fullServiceData.acceptance_required,
+                
                 workers: fullServiceData.workers?.map((w) => String(w.id)) || [],
-                schedules: buildSchedules(fullServiceData.schedules),
+                rules: {
+                    allow_cancel: !!fullServiceData.rules?.allow_cancel,
+                    free_cancel_cutoff_hours: fullServiceData.rules?.free_cancel_cutoff_hours ?? '',
+                    allow_reschedule: !!fullServiceData.rules?.allow_reschedule,
+                    reschedule_cutoff_hours: fullServiceData.rules?.reschedule_cutoff_hours ?? '',
+                    allow_same_day: !!fullServiceData.rules?.allow_same_day,
+                    max_advance_booking_days: fullServiceData.rules?.max_advance_booking_days ?? '',
+                    arrival_buffer_minutes: fullServiceData.rules?.arrival_buffer_minutes ?? 15,
+                    late_arrival_grace_minutes: fullServiceData.rules?.late_arrival_grace_minutes ?? 15,
+                }
             });
         }
     }, [fullServiceData, isEditMode, reset]);
@@ -386,84 +393,107 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             const payload = new FormData();
             if (isEditMode) payload.append('_method', 'PUT');
 
-            payload.append('category_id', data.category_id);
-            payload.append('type', data.type);
+            payload.append('category_id', data.category_id || '');
             payload.append('name_ar', data.name_ar);
             payload.append('name_en', data.name_en);
-            if (data.description_ar) payload.append('description_ar', data.description_ar);
-            if (data.description_en) payload.append('description_en', data.description_en);
+            payload.append('description_ar', data.description_ar);
+            payload.append('description_en', data.description_en);
+            payload.append('type', data.type);
             payload.append('status', data.status);
-            if (data.image && data.image[0]) payload.append('image', data.image[0]);
+            if (data.service_code) payload.append('service_code', data.service_code);
 
-            // Durations (DB-aligned)
-            if (data.type === 'hourly' || data.type === 'both') {
-                payload.append('durations[service_period_hours]', data.service_period_hours);
-            }
-            if (data.type === 'moqema' || data.type === 'both') {
-                payload.append('durations[min_contract_months]', data.min_contract_months);
-                data.allowed_contract_durations?.split(',').forEach((d) => {
-                    if (d.trim()) payload.append('durations[allowed_contract_durations][]', d.trim());
-                });
+            if (data.image && data.image[0]) {
+                payload.append('image', data.image[0]);
             }
 
-            // Rules
-            const appendRule = (key, val) => { if (val !== '' && val !== undefined && val !== null) payload.append(`rules[${key}]`, val); };
-            appendRule('free_cancel_cutoff_hours', data.free_cancel_cutoff_hours);
-            appendRule('reschedule_cutoff_hours', data.reschedule_cutoff_hours);
-            appendRule('lead_time_min_hours', data.lead_time_min_hours);
-            appendRule('lead_time_max_days', data.lead_time_max_days);
-            appendRule('late_cancel_action', data.cancel_action);
-            appendRule('late_cancel_fee_type', data.cancel_fee_type);
-            appendRule('late_cancel_fee_value', data.cancel_fee_value);
-            appendRule('no_show_policy', data.no_show_policy);
-            appendRule('max_changes_per_booking', data.max_changes_per_booking);
+            payload.append('base_price', data.base_price);
 
-            // Prices (one row per location) + coverages derived from the distinct locations
-            const seenCoverage = new Set();
-            let coverageIndex = 0;
-            (data.prices || []).forEach((p, i) => {
-                const areaId = p.area_id || null;
-                payload.append(`prices[${i}][pricing_scope]`, areaId ? 'area' : 'city');
-                payload.append(`prices[${i}][city_id]`, p.city_id);
-                if (areaId) payload.append(`prices[${i}][area_id]`, areaId);
-                payload.append(`prices[${i}][price_per_service_period]`, p.price_per_service_period);
-                payload.append(`prices[${i}][currency]`, p.currency || 'EGP');
-                if (p.effective_start) payload.append(`prices[${i}][effective_start]`, p.effective_start);
-                if (p.effective_end) payload.append(`prices[${i}][effective_end]`, p.effective_end);
+            // Visit Types
+            let vtIndex = 0;
+            if (data.single_visit_checked) {
+                payload.append(`available_visit_types[${vtIndex}][type]`, 'single_visit');
+                const discVal = (data.single_visit_discount === '' || data.single_visit_discount == null) ? 0 : data.single_visit_discount;
+                payload.append(`available_visit_types[${vtIndex}][discount]`, String(discVal));
+                vtIndex++;
+            }
+            if (data.three_days_checked) {
+                payload.append(`available_visit_types[${vtIndex}][type]`, '3_days_per_week');
+                const discVal = (data.three_days_discount === '' || data.three_days_discount == null) ? 0 : data.three_days_discount;
+                payload.append(`available_visit_types[${vtIndex}][discount]`, String(discVal));
+                vtIndex++;
+            }
 
-                const coverageKey = `${p.city_id}-${areaId || ''}`;
-                if (!seenCoverage.has(coverageKey)) {
-                    seenCoverage.add(coverageKey);
-                    payload.append(`coverages[${coverageIndex}][city_id]`, p.city_id);
-                    if (areaId) payload.append(`coverages[${coverageIndex}][area_id]`, areaId);
-                    payload.append(`coverages[${coverageIndex}][status]`, 'active');
-                    coverageIndex += 1;
+            // Coverages
+            (data.coverages || []).forEach((cov, i) => {
+                payload.append(`coverages[${i}][city_id]`, cov.city_id);
+                if (cov.area_id) payload.append(`coverages[${i}][area_id]`, cov.area_id);
+                payload.append(`coverages[${i}][status]`, cov.status || 'active');
+            });
+
+            // Start & End Windows
+            if (data.start_time) payload.append('start_time', data.start_time);
+            if (data.end_time) payload.append('end_time', data.end_time);
+            payload.append('duration_unit', data.duration_unit || 'Hours');
+            payload.append('default_duration', data.default_duration);
+            payload.append('has_duration_range', data.has_duration_range ? '1' : '0');
+            if (data.has_duration_range) {
+                if (data.min_duration) payload.append('min_duration', data.min_duration);
+                if (data.max_duration) payload.append('max_duration', data.max_duration);
+            }
+            payload.append('min_workers', data.min_workers || 1);
+            payload.append('max_workers', data.max_workers || 1);
+
+            // Working Days
+            (data.working_days || []).forEach((day) => {
+                payload.append('working_days[]', day);
+            });
+
+            // Shifts
+            (data.shifts || []).forEach((shift, i) => {
+                if (shift.start_time) {
+                    payload.append(`shifts[${i}][start_time]`, shift.start_time);
+                    const endTime = calculateEndTime(shift.start_time, data.default_duration);
+                    payload.append(`shifts[${i}][end_time]`, endTime || '');
                 }
             });
 
-            // Features (multiple, stored as JSON) — skip fully-empty rows
+            // Features
             let featureIndex = 0;
             (data.features || []).forEach((f) => {
                 if (!f.ar && !f.en) return;
                 if (f.ar) payload.append(`features[${featureIndex}][ar]`, f.ar);
                 if (f.en) payload.append(`features[${featureIndex}][en]`, f.en);
-                featureIndex += 1;
+                featureIndex++;
             });
+
+            // Terms
+            if (data.terms_ar) payload.append('terms_ar', data.terms_ar);
+            if (data.terms_en) payload.append('terms_en', data.terms_en);
+            payload.append('acceptance_required', data.acceptance_required ? '1' : '0');
 
             // Workers
-            (data.workers || []).forEach((workerId) => payload.append('workers[]', workerId));
-
-            // Weekly schedule — each day's shifts flattened into one row per shift.
-            let scheduleRow = 0;
-            (data.schedules || []).forEach((d) => {
-                (d.shifts || []).forEach((shift) => {
-                    payload.append(`schedules[${scheduleRow}][day]`, d.day);
-                    payload.append(`schedules[${scheduleRow}][is_active]`, d.is_active ? 1 : 0);
-                    payload.append(`schedules[${scheduleRow}][start_time]`, shift.start_time || DEFAULT_START);
-                    payload.append(`schedules[${scheduleRow}][end_time]`, shift.end_time || DEFAULT_END);
-                    scheduleRow += 1;
-                });
+            (data.workers || []).forEach((wId) => {
+                payload.append('workers[]', wId);
             });
+
+            // Rules
+            const appendRule = (key, val) => {
+                if (val !== undefined && val !== null && val !== '') {
+                    payload.append(`rules[${key}]`, val);
+                }
+            };
+            payload.append('rules[allow_cancel]', data.rules?.allow_cancel ? '1' : '0');
+            if (data.rules?.allow_cancel) {
+                appendRule('free_cancel_cutoff_hours', data.rules.free_cancel_cutoff_hours);
+            }
+            payload.append('rules[allow_reschedule]', data.rules?.allow_reschedule ? '1' : '0');
+            if (data.rules?.allow_reschedule) {
+                appendRule('reschedule_cutoff_hours', data.rules.reschedule_cutoff_hours);
+            }
+            payload.append('rules[allow_same_day]', data.rules?.allow_same_day ? '1' : '0');
+            appendRule('max_advance_booking_days', data.rules?.max_advance_booking_days);
+            appendRule('arrival_buffer_minutes', data.rules?.arrival_buffer_minutes);
+            appendRule('late_arrival_grace_minutes', data.rules?.late_arrival_grace_minutes);
 
             const url = isEditMode ? `/admin/services/${serviceToEdit.id}` : '/admin/services';
             return axiosInstance.post(url, payload, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -478,130 +508,163 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         },
     });
 
+    const onFormError = (formErrors) => {
+        console.error('Form Validation Errors:', formErrors);
+        const firstErrorKey = Object.keys(formErrors)[0];
+        if (formErrors[firstErrorKey]) {
+            let errorObj = formErrors[firstErrorKey];
+            if (Array.isArray(errorObj)) {
+                const firstNested = errorObj.find(e => e);
+                if (firstNested) {
+                    const subKey = Object.keys(firstNested)[0];
+                    errorObj = firstNested[subKey];
+                }
+            } else if (errorObj && typeof errorObj === 'object' && !errorObj.message) {
+                const subKey = Object.keys(errorObj)[0];
+                errorObj = errorObj[subKey];
+            }
+            if (errorObj?.message) {
+                toast.error(`${isArabic ? 'خطأ في المدخلات:' : 'Validation Error:'} ${errorObj.message}`);
+            } else {
+                toast.error(isArabic ? 'يرجى التحقق من الحقول المطلوبة' : 'Please check required fields.');
+            }
+        }
+    };
+
     const onSubmit = (data) => submitMutation.mutate(data);
     const ErrorMsg = ({ name }) => errors[name] ? <p className="text-red-500 text-xs mt-1">{errors[name].message}</p> : null;
-    // Prefer the freshly-picked file preview, otherwise the existing saved image.
     const displayImage = imagePreview || (isEditMode ? fullServiceData?.image : null);
 
-    return (
-        <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col font-main">
+    const tabs = [
+        { id: 'basic', label: t('form.tab_basic') },
+        { id: 'locations', label: t('form.tab_locations') },
+        { id: 'durations', label: t('form.tab_durations') },
+        { id: 'shifts', label: t('form.tab_shifts') },
+        { id: 'rules', label: t('form.tab_rules') },
+        { id: 'workers', label: t('form.tab_workers') },
+    ];
 
-            {/* Sticky header */}
-            <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-white border-b border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800">{isEditMode ? t('form.title_edit') : t('form.title_add')}</h3>
-                <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors" aria-label={t('form.cancel')}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+    return (
+        <FullScreenFormModal
+            title={isEditMode ? t('form.title_edit') : t('form.title_add')}
+            onClose={onClose}
+            formId="service-form"
+            onSubmit={handleSubmit(onSubmit, onFormError)}
+            isSubmitting={submitMutation.isPending || (isEditMode && isServiceLoading)}
+            cancelLabel={t('form.cancel')}
+            submitLabel={t('form.submit')}
+        >
+            {/* Horizontal Navigation Tabs */}
+            <div className="flex border-b border-gray-100 overflow-x-auto whitespace-nowrap bg-white -mx-6 px-6 -mt-6 mb-6">
+                {tabs.map((tab) => {
+                    const active = activeTab === tab.id;
+                    const hasErr = (tab.id === 'basic' && (errors.name_ar || errors.name_en || errors.description_ar || errors.description_en || errors.type)) ||
+                                   (tab.id === 'locations' && (errors.base_price || errors.coverages)) ||
+                                   (tab.id === 'durations' && (errors.default_duration || errors.min_duration || errors.max_duration || errors.min_workers || errors.max_workers)) ||
+                                   (tab.id === 'shifts' && errors.shifts) ||
+                                   (tab.id === 'rules' && errors.rules);
+                    return (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`py-3 px-4 border-b-2 font-semibold text-sm transition-colors relative ${active ? 'border-[#E91E63] text-[#E91E63]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            {tab.label}
+                            {hasErr && <span className="absolute top-2.5 end-1.5 w-2 h-2 rounded-full bg-red-500" />}
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* Scrollable body — form is a single centered column at 50% width */}
-            <div className="flex-1 overflow-y-auto">
-                {isEditMode && isServiceLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                        <div className="flex flex-col items-center gap-3 text-[#E91E63]">
-                            <svg className="animate-spin h-8 w-8" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                            <span className="font-medium text-gray-600">جاري تحميل بيانات الخدمة...</span>
-                        </div>
-                    </div>
-                ) : (
-                    <form id="service-form" onSubmit={handleSubmit(onSubmit)} className="w-full md:w-1/2 mx-auto px-4 py-6 space-y-6">
-
-                        {/* 1. Basic Info */}
-                        <FormSection icon="info" title={t('sections.basic.title')} description={t('sections.basic.desc')}>
-
-                            {/* Language of the name & description — left aligned, no label */}
-                            <div className="flex">
-                                <div className="flex gap-2 mr-auto">
-                                    {[{ v: 'ar', l: 'العربية' }, { v: 'en', l: 'English' }].map(({ v, l }) => {
-                                        const active = textLang === v;
-                                        const hasErr = !!errors[`name_${v}`];
-                                        return (
-                                            <button
-                                                key={v}
-                                                type="button"
-                                                onClick={() => setTextLang(v)}
-                                                className={`relative px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${active ? 'bg-[#E91E63] text-white border-[#E91E63]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#E91E63]'}`}
-                                            >
-                                                {l}
-                                                {hasErr && <span className="absolute -top-1 -end-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white" />}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Image + (name above description) grouped together. The image
-                                stretches from the top of the name to the bottom of the
-                                description. In RTL it sits on the right, the text on the left. */}
-                            <div className="flex flex-col sm:flex-row gap-4 sm:items-stretch">
+            {isEditMode && isServiceLoading ? (
+                <div className="flex justify-center items-center h-64">
+                    <svg className="animate-spin h-8 w-8 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    
+                    {/* TAB 1: BASIC INFORMATION */}
+                    {activeTab === 'basic' && (
+                        <FormSection icon="info" title={t('form.tab_basic')} description={t('sections.basic.desc')}>
+                            <div className="flex flex-col sm:flex-row gap-5 items-stretch">
                                 <div className="sm:w-44 shrink-0">
+                                    <label className={LABEL_CLASS}>{t('form.image')}</label>
                                     <label
-                                        htmlFor="service-image"
-                                        className={`relative cursor-pointer flex items-center justify-center rounded-xl border-2 overflow-hidden h-full min-h-[160px] transition-colors ${displayImage ? 'border-solid border-gray-200' : 'border-dashed border-gray-200 hover:border-[#E91E63] hover:bg-[#FDF0F3]/30'}`}
+                                        htmlFor="service-icon"
+                                        className={`relative cursor-pointer flex items-center justify-center rounded-xl border-2 overflow-hidden h-40 transition-colors ${displayImage ? 'border-solid border-gray-200' : 'border-dashed border-gray-200 hover:border-[#E91E63] hover:bg-[#FDF0F3]/30'}`}
                                     >
                                         {displayImage ? (
                                             <>
                                                 <img src={displayImage} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
-                                                <span className="absolute bottom-0 inset-x-0 bg-black/45 text-white text-xs py-1 text-center">{t('form.change_image')}</span>
+                                                <span className="absolute bottom-0 inset-x-0 bg-black/40 text-white text-[10px] py-1 text-center">{t('form.change_image')}</span>
                                             </>
                                         ) : (
-                                            <span className="flex flex-col items-center gap-2 p-4 text-center">
-                                                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FDF0F3] text-[#E91E63]">
-                                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                                                    </svg>
-                                                </span>
-                                                <span className="text-xs font-medium text-[#E91E63]">{t('form.upload_image')}</span>
+                                            <span className="flex flex-col items-center gap-1.5 p-3 text-center">
+                                                <svg className="w-6 h-6 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                </svg>
+                                                <span className="text-[10px] font-semibold text-[#E91E63]">{t('form.upload_image')}</span>
+                                                <span className="text-[9px] text-gray-400">SVG Only</span>
                                             </span>
                                         )}
                                     </label>
-                                    <input id="service-image" type="file" accept="image/*" {...register('image')} className="hidden" />
+                                    <input id="service-icon" type="file" accept="image/svg+xml" {...register('image')} className="hidden" />
                                 </div>
+                                
                                 <div className="flex-1 space-y-4">
-                                    <div>
-                                        <label className={LABEL_CLASS}>{t('form.name')}</label>
-                                        {textLang === 'ar' ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={LABEL_CLASS}>{t('form.name_ar')}</label>
                                             <input key="name_ar" {...register('name_ar')} dir="rtl" className={`${INPUT_CLASS} ${errors.name_ar ? 'border-red-500' : ''}`} />
-                                        ) : (
+                                            <ErrorMsg name="name_ar" />
+                                        </div>
+                                        <div>
+                                            <label className={LABEL_CLASS}>{t('form.name_en')}</label>
                                             <input key="name_en" {...register('name_en')} dir="ltr" className={`${INPUT_CLASS} ${errors.name_en ? 'border-red-500' : ''}`} />
-                                        )}
-                                        <ErrorMsg name={`name_${textLang}`} />
+                                            <ErrorMsg name="name_en" />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className={LABEL_CLASS}>{t('form.description')}</label>
-                                        {textLang === 'ar' ? (
-                                            <textarea key="desc_ar" {...register('description_ar')} dir="rtl" rows="3" className={INPUT_CLASS}></textarea>
-                                        ) : (
-                                            <textarea key="desc_en" {...register('description_en')} dir="ltr" rows="3" className={INPUT_CLASS}></textarea>
-                                        )}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={LABEL_CLASS}>{t('form.desc_ar')}</label>
+                                            <textarea key="desc_ar" {...register('description_ar')} dir="rtl" rows="3" className={`${INPUT_CLASS} ${errors.description_ar ? 'border-red-500' : ''}`}></textarea>
+                                            <ErrorMsg name="description_ar" />
+                                        </div>
+                                        <div>
+                                            <label className={LABEL_CLASS}>{t('form.desc_en')}</label>
+                                            <textarea key="desc_en" {...register('description_en')} dir="ltr" rows="3" className={`${INPUT_CLASS} ${errors.description_en ? 'border-red-500' : ''}`}></textarea>
+                                            <ErrorMsg name="description_en" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Two dropdowns beside each other */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
                                     <label className={LABEL_CLASS}>{t('form.category')}</label>
                                     <SelectField registration={register('category_id')}>
                                         <option value="">-- {t('form.category')} --</option>
                                         {categories.map((cat) => <option key={cat.id} value={cat.id}>{isArabic ? cat.name_ar : cat.name_en}</option>)}
                                     </SelectField>
-                                    <ErrorMsg name="category_id" />
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.service_code')}</label>
+                                    <input type="text" {...register('service_code')} readOnly className={`${INPUT_CLASS} bg-gray-100 text-gray-500 cursor-not-allowed`} />
+                                    <ErrorMsg name="service_code" />
                                 </div>
                                 <div>
                                     <label className={LABEL_CLASS}>{t('form.type')}</label>
                                     <SelectField registration={register('type')}>
                                         <option value="hourly">{t('types.hourly')}</option>
-                                        <option value="moqema">{t('types.moqema')}</option>
-                                        <option value="both">{t('types.both')}</option>
+                                        <option value="other">{t('types.other')}</option>
                                     </SelectField>
                                 </div>
                             </div>
 
-                            {/* Status — radio cards, all options shown at once (not a dropdown) */}
                             <div>
                                 <label className={LABEL_CLASS}>{t('form.status')}</label>
-                                <StatusRadioGroup
+                                <OptionCards
                                     value={statusValue}
                                     onChange={(v) => setValue('status', v, { shouldValidate: true })}
                                     options={[
@@ -610,72 +673,438 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                     ]}
                                 />
                             </div>
-                        </FormSection>
 
-                        {/* 2. Durations */}
-                        <FormSection icon="clock" title={t('sections.duration.title')} description={t('sections.duration.desc')}>
+                            {/* Features list builder */}
+                            <div className="space-y-3 pt-3 border-t border-gray-100">
+                                <div className="flex justify-between items-center">
+                                    <h5 className="text-sm font-bold text-gray-700">{t('form.section_features')}</h5>
+                                    <button type="button" onClick={() => appendFeature({ ar: '', en: '' })} className="text-xs font-semibold text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded transition-colors">+ {t('form.add_feature')}</button>
+                                </div>
+                                {featureFields.length === 0 && <p className="text-xs text-gray-400 italic">{t('form.no_features')}</p>}
+                                <div className="space-y-2">
+                                    {featureFields.map((field, index) => (
+                                        <div key={field.id} className="flex gap-2 items-center bg-gray-50/50 p-2 border border-gray-100 rounded-lg">
+                                            <input type="text" placeholder={t('form.feature_ar')} {...register(`features.${index}.ar`)} dir="rtl" className={`${INPUT_CLASS} !py-1.5 text-xs`} />
+                                            <input type="text" placeholder={t('form.feature_en')} {...register(`features.${index}.en`)} dir="ltr" className={`${INPUT_CLASS} !py-1.5 text-xs`} />
+                                            <button type="button" onClick={() => removeFeature(index)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors" aria-label={t('form.remove')}>
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </FormSection>
+                    )}
+
+                    {/* TAB 2: GEOGRAPHIC LOCATIONS & PRICING */}
+                    {activeTab === 'locations' && (
+                        <div className="space-y-6">
+                            <FormSection
+                                icon="location"
+                                title={t('form.coverages')}
+                                description={isArabic ? 'اختر المدن والمناطق التي تغطيها هذه الخدمة وحالتها.' : 'Configure city and area coverage scopes for this service.'}
+                                action={<button type="button" onClick={() => appendCoverage({ city_id: '', area_id: '', status: 'active' })} className="text-xs font-semibold text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded transition-colors">+ {t('form.add_coverage')}</button>}
+                            >
+                                {errors.coverages?.message && <p className="text-red-500 text-xs">{errors.coverages.message}</p>}
+                                <div className="space-y-3">
+                                    {coverageFields.map((field, index) => (
+                                        <ServiceCoverageRow
+                                            key={field.id}
+                                            index={index}
+                                            register={register}
+                                            control={control}
+                                            setValue={setValue}
+                                            errors={errors}
+                                            citiesList={citiesList}
+                                            isArabic={isArabic}
+                                            t={t}
+                                            onRemove={() => removeCoverage(index)}
+                                            canRemove={coverageFields.length > 1}
+                                        />
+                                    ))}
+                                </div>
+                            </FormSection>
+
+                            <FormSection icon="sparkles" title={isArabic ? 'الأسعار والزيارات' : 'Prices & Visit Options'}>
+                                <div className="mb-4">
+                                    <label className={LABEL_CLASS}>{t('form.base_price')}</label>
+                                    <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
+                                    <ErrorMsg name="base_price" />
+                                </div>
+
+                                <div className="space-y-3 pt-3 border-t border-gray-100">
+                                    <div className="flex justify-between items-center">
+                                        <label className={LABEL_CLASS}>{t('form.visit_types')}</label>
+                                        <span className="text-[10px] text-gray-400 font-semibold">{isArabic ? 'يجب اختيار نوع واحد على الأقل' : 'Select at least one'}</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        
+                                        {/* Visit type 1: Single Visit Card */}
+                                        <div 
+                                            onClick={() => setValue('single_visit_checked', !watchSingleVisitChecked, { shouldValidate: true })}
+                                            className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
+                                                watchSingleVisitChecked 
+                                                ? 'border-[#E91E63] bg-[#FDF0F3]/20 shadow-sm' 
+                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2.5 rounded-xl transition-colors ${watchSingleVisitChecked ? 'bg-[#E91E63]/10 text-[#E91E63]' : 'bg-gray-100 text-gray-500'}`}>
+                                                        <svg className="w-6 h-6 text-inherit animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="text-sm font-bold text-gray-800">{t('form.single_visit')}</h5>
+                                                        <p className="text-[10px] text-gray-400 mt-0.5">{isArabic ? 'حجز لمرة واحدة فقط' : 'One-time visit booking'}</p>
+                                                    </div>
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={watchSingleVisitChecked} 
+                                                    onChange={(e) => setValue('single_visit_checked', e.target.checked, { shouldValidate: true })}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" 
+                                                />
+                                            </div>
+                                            
+                                            {watchSingleVisitChecked && (
+                                                <div onClick={(e) => e.stopPropagation()} className="pt-3 border-t border-gray-100/80">
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('form.discount')}</label>
+                                                    <div className="relative">
+                                                        <input 
+                                                            type="number" 
+                                                            {...register('single_visit_discount')} 
+                                                            placeholder="0" 
+                                                            className={`${INPUT_CLASS} !py-2 text-sm pe-8`} 
+                                                        />
+                                                        <span className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 text-sm font-medium">%</span>
+                                                    </div>
+                                                    <ErrorMsg name="single_visit_discount" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Visit type 2: 3 Days per Week Card */}
+                                        <div 
+                                            onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
+                                            className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
+                                                watchThreeDaysChecked 
+                                                ? 'border-[#E91E63] bg-[#FDF0F3]/20 shadow-sm' 
+                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2.5 rounded-xl transition-colors ${watchThreeDaysChecked ? 'bg-[#E91E63]/10 text-[#E91E63]' : 'bg-gray-100 text-gray-500'}`}>
+                                                        <svg className="w-6 h-6 text-inherit animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12h.008v.008H12V12zm0 2.25h.008v.008H12v-.008zm-2.25-2.25h.008v.008H9.75V12zm0 2.25h.008v.008H9.75v-.008zm4.5-2.25h.008v.008H14.25V12zm0 2.25h.008v.008H14.25v-.008z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="text-sm font-bold text-gray-800">{t('form.three_days_per_week')}</h5>
+                                                        <p className="text-[10px] text-gray-400 mt-0.5">{isArabic ? 'جدول حجز متكرر 3 أيام أسبوعياً' : 'Recurring 3 days/week schedule'}</p>
+                                                    </div>
+                                                </div>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={watchThreeDaysChecked} 
+                                                    onChange={(e) => setValue('three_days_checked', e.target.checked, { shouldValidate: true })}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" 
+                                                />
+                                            </div>
+                                            
+                                            {watchThreeDaysChecked && (
+                                                <div onClick={(e) => e.stopPropagation()} className="pt-3 border-t border-gray-100/80">
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('form.discount')}</label>
+                                                    <div className="relative">
+                                                        <input 
+                                                            type="number" 
+                                                            {...register('three_days_discount')} 
+                                                            placeholder="0" 
+                                                            className={`${INPUT_CLASS} !py-2 text-sm pe-8`} 
+                                                        />
+                                                        <span className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 text-sm font-medium">%</span>
+                                                    </div>
+                                                    <ErrorMsg name="three_days_discount" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                    </div>
+                                    <ErrorMsg name="visit_types" />
+                                </div>
+                            </FormSection>
+                        </div>
+                    )}
+
+                    {/* TAB 3: WORKING WINDOWS & SESSION DURATIONS */}
+                    {activeTab === 'durations' && (
+                        <FormSection icon="clock" title={t('form.tab_durations')} description={isArabic ? 'أوقات العمل الأساسية ومحددات الجلسات للمرة الواحدة.' : 'Configure daily service windows and default booking durations.'}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {(watchType === 'hourly' || watchType === 'both') && (
-                                    <div>
-                                        <label className={LABEL_CLASS}>{t('form.service_period_hours')}</label>
-                                        <input type="number" {...register('service_period_hours')} className={INPUT_CLASS} />
-                                        <ErrorMsg name="service_period_hours" />
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.start_time')}</label>
+                                    <input type="time" {...register('start_time')} className={INPUT_CLASS} />
+                                    <ErrorMsg name="start_time" />
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.end_time')}</label>
+                                    <input type="time" {...register('end_time')} className={INPUT_CLASS} />
+                                    <ErrorMsg name="end_time" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.default_duration')}</label>
+                                    <input type="number" {...register('default_duration')} className={`${INPUT_CLASS} ${errors.default_duration ? 'border-red-500' : ''}`} />
+                                    <ErrorMsg name="default_duration" />
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.duration_unit')}</label>
+                                    <SelectField registration={register('duration_unit')}>
+                                        <option value="Hours">{t('form.hours')}</option>
+                                    </SelectField>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-3 border-t border-gray-100">
+                                <label className={`flex items-center gap-2 cursor-pointer ${watchServiceCode === 'DOMESTIC_HELPER_HOURLY' ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                                    <input 
+                                        type="checkbox" 
+                                        {...register('has_duration_range')} 
+                                        disabled={watchServiceCode === 'DOMESTIC_HELPER_HOURLY'}
+                                        className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    />
+                                    <span className="text-sm font-semibold text-gray-700">{t('form.has_duration_range')}</span>
+                                </label>
+                                
+                                {watchHasDurationRange && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-lg bg-gray-50/50">
+                                        <div>
+                                            <label className={LABEL_CLASS}>{t('form.min_duration')}</label>
+                                            <input type="number" {...register('min_duration')} className={INPUT_CLASS} />
+                                            <ErrorMsg name="min_duration" />
+                                        </div>
+                                        <div>
+                                            <label className={LABEL_CLASS}>{t('form.max_duration')}</label>
+                                            <input type="number" {...register('max_duration')} className={INPUT_CLASS} />
+                                            <ErrorMsg name="max_duration" />
+                                        </div>
                                     </div>
                                 )}
-                                {(watchType === 'moqema' || watchType === 'both') && (
-                                    <>
-                                        <div>
-                                            <label className={LABEL_CLASS}>{t('form.min_contract')}</label>
-                                            <input type="number" {...register('min_contract_months')} className={INPUT_CLASS} />
-                                            <ErrorMsg name="min_contract_months" />
-                                        </div>
-                                        <div>
-                                            <label className={LABEL_CLASS}>{t('form.allowed_contracts')}</label>
-                                            <input type="text" {...register('allowed_contract_durations')} dir="ltr" placeholder="1, 3, 6" className={`${INPUT_CLASS} text-left`} />
-                                        </div>
-                                    </>
-                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
+                                    <input type="number" {...register('min_workers')} className={INPUT_CLASS} />
+                                    <ErrorMsg name="min_workers" />
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
+                                    <input type="number" {...register('max_workers')} className={INPUT_CLASS} />
+                                    <ErrorMsg name="max_workers" />
+                                </div>
                             </div>
                         </FormSection>
+                    )}
 
-                        {/* 3. Coverage & Pricing (per location) */}
-                        <FormSection
-                            icon="location"
-                            title={t('sections.prices.title')}
-                            description={t('sections.prices.desc')}
-                            action={<button type="button" onClick={() => appendPrice({ ...EMPTY_PRICE })} className="text-sm font-medium text-[#E91E63] hover:bg-[#FDF0F3] px-3 py-1.5 rounded-lg transition-colors">+ {t('form.add_price')}</button>}
-                        >
-                            {typeof errors.prices?.message === 'string' && <p className="text-red-500 text-xs">{errors.prices.message}</p>}
-                            <div className="space-y-3">
-                                {priceFields.map((field, index) => (
-                                    <ServicePriceRow
-                                        key={field.id}
-                                        index={index}
-                                        register={register}
-                                        control={control}
-                                        setValue={setValue}
-                                        errors={errors}
-                                        citiesList={citiesList}
-                                        isArabic={isArabic}
-                                        t={t}
-                                        onRemove={() => removePrice(index)}
-                                        canRemove={priceFields.length > 1}
-                                    />
-                                ))}
-                            </div>
-                        </FormSection>
+                    {/* TAB 4: WORKING DAYS & SHIFTS */}
+                    {activeTab === 'shifts' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {/* Working Days Select */}
+                            <FormSection icon="calendar" title={t('form.working_days')} description={isArabic ? 'اختر الأيام المتاحة لتقديم الخدمة.' : 'Select days of the week when this service is active.'}>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {WEEK_DAYS.map((day) => (
+                                        <label key={day} className="flex items-center gap-2 p-2.5 border border-gray-100 bg-gray-50/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                            <input type="checkbox" value={day} {...register('working_days')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                            <span className="text-xs font-semibold text-gray-700">{t(`days.${day}`)}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </FormSection>
 
-                        {/* 4. Workers */}
+                            {/* Shift Start/End Times List Builder */}
+                            <FormSection
+                                icon="clock"
+                                title={t('form.shifts')}
+                                description={isArabic ? 'أدخل وقت البدء والانتهاء لكل شفت عمل يومي.' : 'Add start and end times for daily shifts.'}
+                                action={<button type="button" onClick={() => appendShift({ start_time: DEFAULT_START_TIME, end_time: '' })} className="text-xs font-semibold text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded transition-colors">+ {t('form.add_shift')}</button>}
+                            >
+                                {errors.shifts && !Array.isArray(errors.shifts) && <p className="text-red-500 text-xs mb-3 font-semibold">{errors.shifts.message}</p>}
+                                <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                                    {shiftFields.map((field, index) => {
+                                        const startTimeVal = watch(`shifts.${index}.start_time`);
+                                        const defaultDurationVal = watch('default_duration');
+                                        
+                                        const calculatedEnd = calculateEndTime(startTimeVal, defaultDurationVal);
+                                        const rowError = errors.shifts?.[index]?.start_time;
+
+                                        return (
+                                            <div 
+                                                key={field.id} 
+                                                className={`flex flex-col gap-2 bg-gray-50/60 p-3.5 border rounded-xl relative transition-all duration-300 ${
+                                                    rowError 
+                                                    ? 'border-red-300 bg-red-50/10 hover:border-red-400' 
+                                                    : 'border-gray-100 hover:border-[#E91E63]/25'
+                                                }`}
+                                            >
+                                                <div className="flex gap-3 items-center w-full">
+                                                    <span className="text-xs font-bold text-gray-400 shrink-0">#{index + 1}</span>
+                                                    
+                                                    <div className="flex-1 grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
+                                                                {isArabic ? 'وقت البدء' : 'Start Time'}
+                                                            </label>
+                                                            <input 
+                                                                type="time" 
+                                                                {...register(`shifts.${index}.start_time`)} 
+                                                                className={`${INPUT_CLASS} !py-1.5 text-xs`} 
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
+                                                                {isArabic ? 'وقت الانتهاء' : 'End Time'}
+                                                            </label>
+                                                            <input 
+                                                                type="time" 
+                                                                value={calculatedEnd} 
+                                                                disabled 
+                                                                className={`${INPUT_CLASS} !py-1.5 text-xs bg-gray-100 text-gray-400 cursor-not-allowed`} 
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {shiftFields.length > 1 && (
+                                                        <button type="button" onClick={() => removeShift(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors mt-4 self-center" aria-label={t('form.remove')}>
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {rowError && (
+                                                    <p className="text-red-500 text-[11px] font-semibold mt-1 ps-7 animate-pulse">
+                                                        {rowError.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </FormSection>
+                        </div>
+                    )}
+
+                    {/* TAB 5: RULES, POLICIES & TERMS */}
+                    {activeTab === 'rules' && (
+                        <div className="space-y-6">
+                            
+                            {/* Cancellation & Rescheduling Rules */}
+                            <FormSection icon="shield" title={t('form.section_rules')} description={isArabic ? 'سياسات وقواعد إلغاء وتعديل الحجوزات.' : 'Cancellation, rescheduling and booking lead time configurations.'}>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    
+                                    {/* Cancel Policy */}
+                                    <div className="p-4 border border-gray-100 bg-gray-50/50 rounded-lg space-y-3">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" {...register('rules.allow_cancel')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                            <span className="text-sm font-semibold text-gray-700">{t('form.allow_cancel')}</span>
+                                        </label>
+                                        {watchAllowCancel && (
+                                            <div>
+                                                <label className={LABEL_CLASS}>{t('form.free_cancel')}</label>
+                                                <input type="number" {...register('rules.free_cancel_cutoff_hours')} className={`${INPUT_CLASS} !py-2 text-sm`} />
+                                                {errors.rules?.free_cancel_cutoff_hours && <p className="text-red-500 text-xs mt-1">{errors.rules.free_cancel_cutoff_hours.message}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Reschedule Policy */}
+                                    <div className="p-4 border border-gray-100 bg-gray-50/50 rounded-lg space-y-3">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" {...register('rules.allow_reschedule')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                            <span className="text-sm font-semibold text-gray-700">{t('form.allow_reschedule')}</span>
+                                        </label>
+                                        {watchAllowReschedule && (
+                                            <div>
+                                                <label className={LABEL_CLASS}>{t('form.reschedule_cutoff')}</label>
+                                                <input type="number" {...register('rules.reschedule_cutoff_hours')} className={`${INPUT_CLASS} !py-2 text-sm`} />
+                                                {errors.rules?.reschedule_cutoff_hours && <p className="text-red-500 text-xs mt-1">{errors.rules.reschedule_cutoff_hours.message}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                                    <div className="p-4 border border-gray-100 rounded-lg bg-gray-50/50 flex items-center h-full">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" {...register('rules.allow_same_day')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                            <span className="text-sm font-semibold text-gray-700">{t('form.allow_same_day')}</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.max_advance_booking_days')}</label>
+                                        <input type="number" {...register('rules.max_advance_booking_days')} className={INPUT_CLASS} />
+                                        {errors.rules?.max_advance_booking_days && <p className="text-red-500 text-xs mt-1">{errors.rules.max_advance_booking_days.message}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.arrival_buffer')}</label>
+                                        <input type="number" {...register('rules.arrival_buffer_minutes')} className={INPUT_CLASS} />
+                                        {errors.rules?.arrival_buffer_minutes && <p className="text-red-500 text-xs mt-1">{errors.rules.arrival_buffer_minutes.message}</p>}
+                                    </div>
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.grace_period')}</label>
+                                        <input type="number" {...register('rules.late_arrival_grace_minutes')} className={INPUT_CLASS} />
+                                        {errors.rules?.late_arrival_grace_minutes && <p className="text-red-500 text-xs mt-1">{errors.rules.late_arrival_grace_minutes.message}</p>}
+                                    </div>
+                                </div>
+                            </FormSection>
+
+                            {/* Terms and Conditions */}
+                            <FormSection icon="document" title={isArabic ? 'الشروط والأحكام الخاصة بالخدمة' : 'Terms & Conditions'}>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.terms_ar')}</label>
+                                        <textarea {...register('terms_ar')} dir="rtl" rows="4" className={INPUT_CLASS}></textarea>
+                                        <ErrorMsg name="terms_ar" />
+                                    </div>
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.terms_en')}</label>
+                                        <textarea {...register('terms_en')} dir="ltr" rows="4" className={INPUT_CLASS}></textarea>
+                                        <ErrorMsg name="terms_en" />
+                                    </div>
+                                </div>
+
+                                <div className="pt-3 border-t border-gray-100">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" {...register('acceptance_required')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                        <span className="text-sm font-semibold text-gray-700">{t('form.acceptance_required')}</span>
+                                    </label>
+                                </div>
+                            </FormSection>
+                        </div>
+                    )}
+
+                    {/* TAB 6: WORKERS ASSIGNMENT */}
+                    {activeTab === 'workers' && (
                         <FormSection
                             icon="users"
-                            title={t('sections.workers.title')}
-                            description={t('sections.workers.desc')}
+                            title={t('form.tab_workers')}
+                            description={isArabic ? 'حدد العمال النشطين المؤهلين لتقديم هذه الخدمة.' : 'Select active workers who are qualified to perform this service.'}
                             action={(watch('workers') || []).length > 0
-                                ? <span className="text-xs font-medium text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{t('form.workers_selected', { num: (watch('workers') || []).length, defaultValue: `${(watch('workers') || []).length} selected` })}</span>
+                                ? <span className="text-xs font-semibold text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{t('form.workers_selected', { num: (watch('workers') || []).length })}</span>
                                 : null}
                         >
-                            {/* Search */}
-                            <div className="relative mb-2">
+                            {/* Worker Search */}
+                            <div className="relative mb-3">
                                 <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -690,142 +1119,45 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                 />
                             </div>
 
-                            <div ref={workerScrollRef} className="flex flex-col gap-2 border border-gray-200 rounded-lg p-4 max-h-60 overflow-y-auto bg-gray-50">
+                            <div ref={workerScrollRef} className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4 max-h-80 overflow-y-auto bg-gray-50/50">
                                 {isWorkersLoading ? (
-                                    <span className="text-gray-500 text-sm">{t('loading')}</span>
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('loading')}</div>
                                 ) : workersList.length === 0 ? (
-                                    <span className="text-gray-500 text-sm">{t('no_data')}</span>
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('no_data')}</div>
                                 ) : (
                                     <>
                                         {workersList.map((worker) => (
-                                            <label key={worker.id} className="flex items-center gap-2 cursor-pointer bg-white p-2.5 border border-gray-100 rounded hover:bg-[#FDF0F3] transition-colors">
+                                            <label key={worker.id} className="flex items-center gap-3 bg-white p-3 border border-gray-100 rounded-lg hover:border-[#E91E63]/30 hover:bg-[#FDF0F3]/10 cursor-pointer transition-colors">
                                                 <input type="checkbox" value={String(worker.id)} {...register('workers')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
-                                                <span className="text-sm font-medium text-gray-700">{worker.name} <span className="text-xs text-gray-400 font-normal">({worker.nationality})</span></span>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-gray-700">{worker.name}</p>
+                                                    <p className="text-xs text-gray-400 mt-0.5">{worker.nationality} · ★ {worker.rating || '0.00'}</p>
+                                                </div>
                                             </label>
                                         ))}
 
-                                        {/* Sentinel + load-more (auto on scroll, button as fallback) */}
+                                        {/* Sentinel */}
                                         <div ref={workerSentinelRef} aria-hidden="true" className="h-px" />
-                                        {isFetchingMoreWorkers ? (
-                                            <span className="flex items-center justify-center gap-2 py-1 text-xs text-gray-500">
+                                        {isFetchingMoreWorkers && (
+                                            <div className="flex justify-center items-center py-2 gap-2 text-xs text-gray-500">
                                                 <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                                 {t('loading')}
-                                            </span>
-                                        ) : hasMoreWorkers ? (
-                                            <button type="button" onClick={() => fetchMoreWorkers()} className="text-xs font-medium text-[#E91E63] hover:bg-[#FDF0F3] py-1.5 rounded-lg transition-colors">
-                                                {t('form.load_more', { defaultValue: 'Load more' })}
+                                            </div>
+                                        )}
+                                        {hasMoreWorkers && !isFetchingMoreWorkers && (
+                                            <button type="button" onClick={() => fetchMoreWorkers()} className="text-xs font-semibold text-[#E91E63] hover:text-[#D81B60] py-2 transition-colors">
+                                                {t('form.load_more')}
                                             </button>
-                                        ) : null}
+                                        )}
                                     </>
                                 )}
                             </div>
                             <ErrorMsg name="workers" />
                         </FormSection>
+                    )}
 
-                        {/* Weekly schedule */}
-                        <FormSection icon="clock" title={t('sections.schedule.title')} description={t('sections.schedule.desc')}>
-                            <div className="space-y-2">
-                                {WEEK_DAYS.map((day, index) => (
-                                    <ServiceDayShifts
-                                        key={day}
-                                        dayIndex={index}
-                                        day={day}
-                                        control={control}
-                                        register={register}
-                                        t={t}
-                                    />
-                                ))}
-                            </div>
-                        </FormSection>
-
-                        {/* 5. Features (multiple) */}
-                        <FormSection
-                            icon="sparkles"
-                            title={t('sections.features.title')}
-                            description={t('sections.features.desc')}
-                            action={<button type="button" onClick={() => appendFeature({ ar: '', en: '' })} className="text-sm font-medium text-[#E91E63] hover:bg-[#FDF0F3] px-3 py-1.5 rounded-lg transition-colors">+ {t('form.add_feature')}</button>}
-                        >
-                            {featureFields.length === 0 && <p className="text-gray-400 text-sm">{t('form.no_features')}</p>}
-                            <div className="space-y-3">
-                                {featureFields.map((field, index) => (
-                                    <div key={field.id} className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs font-semibold text-gray-500">{t('form.section_features')} #{index + 1}</span>
-                                            <button type="button" onClick={() => removeFeature(index)} className="text-xs font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors">{t('form.remove')}</button>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div>
-                                                <label className={LABEL_CLASS}>{t('form.feature_ar')}</label>
-                                                <input type="text" {...register(`features.${index}.ar`)} className={INPUT_CLASS} />
-                                            </div>
-                                            <div>
-                                                <label className={LABEL_CLASS}>{t('form.feature_en')}</label>
-                                                <input type="text" {...register(`features.${index}.en`)} className={INPUT_CLASS} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </FormSection>
-
-                        {/* 6. Rules */}
-                        <FormSection icon="shield" title={t('sections.rules.title')} description={t('sections.rules.desc')}>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.free_cancel')}</label>
-                                    <input type="number" {...register('free_cancel_cutoff_hours')} className={INPUT_CLASS} />
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.reschedule_cutoff')}</label>
-                                    <input type="number" {...register('reschedule_cutoff_hours')} className={INPUT_CLASS} />
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.lead_time_min')}</label>
-                                    <input type="number" {...register('lead_time_min_hours')} className={INPUT_CLASS} />
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.lead_time_max')}</label>
-                                    <input type="number" {...register('lead_time_max_days')} className={INPUT_CLASS} />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.cancel_action')}</label>
-                                    <SelectField registration={register('cancel_action')}><option value="fee">Fee</option><option value="block">Block</option><option value="manual">Manual</option></SelectField>
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.cancel_fee_type')}</label>
-                                    <SelectField registration={register('cancel_fee_type')}><option value="fixed">Fixed</option><option value="percent">Percent</option></SelectField>
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.no_show')}</label>
-                                    <SelectField registration={register('no_show_policy')}><option value="consumed">Consumed</option><option value="compensate">Compensate</option></SelectField>
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.cancel_fee_value')}</label>
-                                    <input type="number" {...register('cancel_fee_value')} className={INPUT_CLASS} />
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.max_changes')}</label>
-                                    <input type="number" min="0" {...register('max_changes_per_booking')} className={INPUT_CLASS} />
-                                </div>
-                            </div>
-                        </FormSection>
-
-                    </form>
-                )}
-            </div>
-
-            {/* Sticky footer — buttons pinned to the centered form's edges:
-                cancel on the left border, save on the right border. */}
-            <div className="flex-shrink-0 py-4 border-t border-gray-100 bg-white">
-                <div dir="ltr" className="w-full md:w-1/2 mx-auto px-4 flex items-center justify-between gap-3">
-                    <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-xl font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">{t('form.cancel')}</button>
-                    <button type="submit" form="service-form" disabled={submitMutation.isPending || (isEditMode && isServiceLoading)} className="px-6 py-2.5 rounded-xl font-medium text-white bg-[#E91E63] hover:bg-[#D81B60] transition-colors disabled:opacity-70 min-w-[150px] flex justify-center items-center">
-                        {submitMutation.isPending ? '...' : t('form.submit')}
-                    </button>
                 </div>
-            </div>
-        </div>
+            )}
+        </FullScreenFormModal>
     );
 }

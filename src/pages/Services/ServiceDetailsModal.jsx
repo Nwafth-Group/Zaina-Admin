@@ -145,46 +145,261 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                                 {activeTab === 'profile' && (
-                                    <div className="space-y-6">
-                                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                            <h4 className="text-sm font-bold text-gray-700 mb-4">{t('details.info_title')}</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
-                                                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                                                    <span className="text-sm text-gray-500">{t('details.category')}</span>
-                                                    <span className="text-sm font-medium text-gray-800">{categoryName}</span>
-                                                </div>
-                                                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                                                    <span className="text-sm text-gray-500">{t('details.type')}</span>
-                                                    <span className="text-sm font-medium text-gray-800">{t(`types.${service.type}`)}</span>
-                                                </div>
-                                                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                                                    <span className="text-sm text-gray-500">{t('details.status')}</span>
-                                                    <span className="text-sm font-medium text-gray-800">{t(`status.${service.status}`)}</span>
-                                                </div>
-                                            </div>
-                                            {description && (
-                                                <div className="mt-4">
-                                                    <p className="text-sm text-gray-500 mb-1">{t('details.description')}</p>
-                                                    <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                     <div className="space-y-6">
+                                         {/* 1. Basic & Pricing Info */}
+                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('details.info_title')}</h4>
+                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('details.category')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">{categoryName}</span>
+                                                 </div>
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('form.service_code')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">{service.service_code || '—'}</span>
+                                                 </div>
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('details.type')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">{t(`types.${service.type}`)}</span>
+                                                 </div>
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('details.status')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">{t(`status.${service.status}`)}</span>
+                                                 </div>
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('form.base_price')}</span>
+                                                     <span className="text-sm font-bold text-gray-800">
+                                                         {service.base_price} {service.price_details?.currency || 'EGP'}
+                                                     </span>
+                                                 </div>
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('form.start_time')} - {t('form.end_time')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">
+                                                         {service.start_time ? service.start_time.slice(0, 5) : '—'} - {service.end_time ? service.end_time.slice(0, 5) : '—'}
+                                                     </span>
+                                                 </div>
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('form.default_duration')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">
+                                                         {service.default_duration} {t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}
+                                                     </span>
+                                                 </div>
+                                                 {service.has_duration_range && (
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-sm text-gray-500">{t('form.min_duration')} - {t('form.max_duration')}</span>
+                                                         <span className="text-sm font-medium text-gray-800">
+                                                             {service.min_duration} - {service.max_duration} {t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}
+                                                         </span>
+                                                     </div>
+                                                 )}
+                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                     <span className="text-sm text-gray-500">{t('form.min_workers')} - {t('form.max_workers')}</span>
+                                                     <span className="text-sm font-medium text-gray-800">
+                                                         {service.min_workers || 1} - {service.max_workers || 1}
+                                                     </span>
+                                                 </div>
+                                             </div>
+                                             {description && (
+                                                 <div className="mt-4">
+                                                     <p className="text-sm text-gray-500 mb-1">{t('details.description')}</p>
+                                                     <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
+                                                 </div>
+                                             )}
+                                         </div>
 
-                                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                            <h4 className="text-sm font-bold text-gray-700 mb-4">{t('details.workers_title')}</h4>
-                                            {service.workers?.length ? (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {service.workers.map((w) => (
-                                                        <span key={w.id} className="px-3 py-1 rounded-full text-xs font-medium bg-[#FDF0F3] text-[#E91E63]">
-                                                            {w.name}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-400">{t('details.workers_empty')}</p>
-                                            )}
-                                        </div>
-                                    </div>
+                                         {/* 2. Geographic Coverage Locations */}
+                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('form.coverages')}</h4>
+                                             {service.coverages?.length ? (
+                                                 <div className="overflow-x-auto">
+                                                     <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+                                                         <thead className="text-xs text-gray-700 bg-gray-50 uppercase">
+                                                             <tr>
+                                                                 <th className="px-4 py-2">{t('form.city')}</th>
+                                                                 <th className="px-4 py-2">{t('form.area')}</th>
+                                                                 <th className="px-4 py-2 text-center">{t('form.status')}</th>
+                                                             </tr>
+                                                         </thead>
+                                                         <tbody>
+                                                             {service.coverages.map((cov) => (
+                                                                 <tr key={cov.id} className="border-b border-gray-100">
+                                                                     <td className="px-4 py-2 font-medium text-gray-800">
+                                                                         {isArabic ? cov.city?.name_ar : cov.city?.name_en}
+                                                                     </td>
+                                                                     <td className="px-4 py-2">
+                                                                         {cov.area?.name_ar || cov.area?.name_en ? (
+                                                                             isArabic ? cov.area.name_ar : cov.area.name_en
+                                                                         ) : (
+                                                                             <span className="text-gray-400 text-xs italic">{isArabic ? 'كل المدينة' : 'Whole city'}</span>
+                                                                         )}
+                                                                     </td>
+                                                                     <td className="px-4 py-2 text-center">
+                                                                         <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                                                             cov.status === 'active' 
+                                                                             ? 'bg-green-100 text-green-700' 
+                                                                             : cov.status === 'coming_soon'
+                                                                             ? 'bg-amber-100 text-amber-700'
+                                                                             : 'bg-gray-100 text-gray-600'
+                                                                         }`}>
+                                                                             {cov.status || 'active'}
+                                                                         </span>
+                                                                     </td>
+                                                                 </tr>
+                                                             ))}
+                                                         </tbody>
+                                                     </table>
+                                                 </div>
+                                             ) : (
+                                                 <p className="text-sm text-gray-400">{isArabic ? 'لا توجد تغطية جغرافية محددة.' : 'No coverages specified.'}</p>
+                                             )}
+                                         </div>
+
+                                         {/* 3. Visit Types & Options */}
+                                         {service.available_visit_types && service.available_visit_types.length > 0 && (
+                                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                                 <h4 className="text-sm font-bold text-gray-700 mb-4">{t('form.visit_types')}</h4>
+                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                     {service.available_visit_types.map((vt, i) => (
+                                                         <div key={i} className="flex justify-between items-center bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-100">
+                                                             <span className="text-sm font-medium text-gray-700">{t(`form.${vt.type}`)}</span>
+                                                             {vt.discount != null && vt.discount > 0 && (
+                                                                 <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                                                                     {t('form.discount_pct')}: {vt.discount}%
+                                                                 </span>
+                                                             )}
+                                                         </div>
+                                                     ))}
+                                                 </div>
+                                             </div>
+                                         )}
+
+                                         {/* 4. Weekly Working Days & Shifts */}
+                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('form.shifts')}</h4>
+                                             {service.schedules?.length ? (
+                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                     {service.schedules.filter(s => s.is_active).map((sch, i) => (
+                                                         <div key={i} className="flex justify-between items-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
+                                                             <span className="text-sm font-semibold text-gray-700">{t(`days.${sch.day}`)}</span>
+                                                             <span className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
+                                                                 {sch.start_time?.slice(0, 5)} - {sch.end_time?.slice(0, 5)}
+                                                             </span>
+                                                         </div>
+                                                     ))}
+                                                 </div>
+                                             ) : (
+                                                 <p className="text-sm text-gray-400">{isArabic ? 'لا توجد فترات عمل محددة.' : 'No active shifts defined.'}</p>
+                                             )}
+                                         </div>
+
+                                         {/* 5. Features Section */}
+                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('form.section_features')}</h4>
+                                             {service.features?.length ? (
+                                                 <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-600">
+                                                     {service.features.map((f, i) => (
+                                                         <li key={i}>{isArabic ? f.ar : f.en}</li>
+                                                     ))}
+                                                 </ul>
+                                             ) : (
+                                                 <p className="text-sm text-gray-400">{t('form.no_features')}</p>
+                                             )}
+                                         </div>
+
+                                         {/* 6. Booking Policies & Business Rules */}
+                                         {service.rules && (
+                                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                                 <h4 className="text-sm font-bold text-gray-700 mb-4">{t('form.section_rules')}</h4>
+                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-gray-500">{t('form.allow_cancel')}</span>
+                                                         <span className={`font-semibold ${service.rules.allow_cancel ? 'text-green-600' : 'text-gray-400'}`}>
+                                                             {service.rules.allow_cancel ? (isArabic ? 'نعم' : 'Yes') : (isArabic ? 'لا' : 'No')}
+                                                         </span>
+                                                     </div>
+                                                     {service.rules.allow_cancel && (
+                                                         <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                             <span className="text-gray-500">{t('form.free_cancel')}</span>
+                                                             <span className="font-semibold text-gray-800">{service.rules.free_cancel_cutoff_hours} {isArabic ? 'ساعة' : 'hours'}</span>
+                                                         </div>
+                                                     )}
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-gray-500">{t('form.allow_reschedule')}</span>
+                                                         <span className={`font-semibold ${service.rules.allow_reschedule ? 'text-green-600' : 'text-gray-400'}`}>
+                                                             {service.rules.allow_reschedule ? (isArabic ? 'نعم' : 'Yes') : (isArabic ? 'لا' : 'No')}
+                                                         </span>
+                                                     </div>
+                                                     {service.rules.allow_reschedule && (
+                                                         <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                             <span className="text-gray-500">{t('form.reschedule_cutoff')}</span>
+                                                             <span className="font-semibold text-gray-800">{service.rules.reschedule_cutoff_hours} {isArabic ? 'ساعة' : 'hours'}</span>
+                                                         </div>
+                                                     )}
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-gray-500">{t('form.allow_same_day')}</span>
+                                                         <span className={`font-semibold ${service.rules.allow_same_day ? 'text-green-600' : 'text-gray-400'}`}>
+                                                             {service.rules.allow_same_day ? (isArabic ? 'نعم' : 'Yes') : (isArabic ? 'لا' : 'No')}
+                                                         </span>
+                                                     </div>
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-gray-500">{t('form.max_advance_booking_days')}</span>
+                                                         <span className="font-semibold text-gray-800">{service.rules.max_advance_booking_days || 0} {isArabic ? 'يوم' : 'days'}</span>
+                                                     </div>
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-gray-500">{t('form.arrival_buffer')}</span>
+                                                         <span className="font-semibold text-gray-800">{service.rules.arrival_buffer_minutes ?? 0} {isArabic ? 'دقيقة' : 'minutes'}</span>
+                                                     </div>
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-gray-500">{t('form.grace_period')}</span>
+                                                         <span className="font-semibold text-gray-800">{service.rules.late_arrival_grace_minutes ?? 0} {isArabic ? 'دقيقة' : 'minutes'}</span>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         )}
+
+                                         {/* 7. Terms & Conditions display */}
+                                         {(service.terms_ar || service.terms_en) && (
+                                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                                 <h4 className="text-sm font-bold text-gray-700 mb-4">{isArabic ? 'الشروط والأحكام' : 'Terms & Conditions'}</h4>
+                                                 <div className="space-y-4">
+                                                     {service.terms_ar && (
+                                                         <div dir="rtl" className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                             <p className="text-xs text-gray-400 font-semibold mb-1">الشروط (بالعربية):</p>
+                                                             <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{service.terms_ar}</p>
+                                                         </div>
+                                                     )}
+                                                     {service.terms_en && (
+                                                         <div dir="ltr" className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                             <p className="text-xs text-gray-400 font-semibold mb-1">Terms (English):</p>
+                                                             <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{service.terms_en}</p>
+                                                         </div>
+                                                     )}
+                                                     <div className="flex justify-between py-1 border-t border-gray-100 pt-3">
+                                                         <span className="text-sm text-gray-500">{t('form.acceptance_required')}</span>
+                                                         <span className={`text-sm font-semibold ${service.acceptance_required ? 'text-green-600' : 'text-gray-400'}`}>
+                                                             {service.acceptance_required ? (isArabic ? 'نعم' : 'Yes') : (isArabic ? 'لا' : 'No')}
+                                                         </span>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         )}
+
+                                         {/* 8. Assigned Workers */}
+                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('details.workers_title')}</h4>
+                                             {service.workers?.length ? (
+                                                 <div className="flex flex-wrap gap-2">
+                                                     {service.workers.map((w) => (
+                                                         <span key={w.id} className="px-3 py-1 rounded-full text-xs font-medium bg-[#FDF0F3] text-[#E91E63]">
+                                                             {w.name}
+                                                         </span>
+                                                     ))}
+                                                 </div>
+                                             ) : (
+                                                 <p className="text-sm text-gray-400">{t('details.workers_empty')}</p>
+                                             )}
+                                         </div>
+                                     </div>
                                 )}
 
                                 {activeTab === 'bookings' && (

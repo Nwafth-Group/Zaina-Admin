@@ -26,13 +26,15 @@ const Row = ({ label, value }) => (
 );
 
 export default function BookingDetailsModal({ bookingId, onClose }) {
-    const { t } = useTranslation('bookings');
+    const { t, i18n } = useTranslation('bookings');
+    const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
     const [activeTab, setActiveTab] = useState('details'); // side-menu: 'details' | 'history'
     const [moreOpen, setMoreOpen] = useState(false);
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelNote, setCancelNote] = useState('');
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
 
     const { data: booking, isLoading } = useQuery({
         queryKey: ['bookingDetail', bookingId],
@@ -190,14 +192,61 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         <Row label={t('details.name')} value={booking.customer?.name} />
                                         <Row label={t('details.phone')} value={booking.customer?.phone} />
                                         <Row label={t('details.email')} value={booking.customer?.email} />
+                                        {booking.contract_id && (
+                                            <Row label={isArabic ? 'رقم العقد' : 'Contract ID'} value={booking.contract_id} />
+                                        )}
+                                        {booking.created_at && (
+                                            <Row label={isArabic ? 'تاريخ الإنشاء' : 'Created At'} value={booking.created_at} />
+                                        )}
                                     </FormSection>
 
-                                    <FormSection icon="sparkles" title={t('details.service')}>
+                                    <FormSection 
+                                        icon="sparkles" 
+                                        title={t('details.service')}
+                                        action={!isTerminal && (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setAssignModalOpen(true)}
+                                                className="text-xs font-bold text-white bg-[#E91E63] hover:bg-[#D81B60] px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200"
+                                            >
+                                                {booking.workers?.length ? (isArabic ? 'تغيير العمال' : 'Replace Workers') : (isArabic ? 'تعيين عمال' : 'Assign Workers')}
+                                            </button>
+                                        )}
+                                    >
                                         <Row label={t('details.service_name')} value={booking.service_name} />
+                                        <Row label={t('table.visit_type')} value={t(`visit_types.${booking.visit_type}`, booking.visit_type)} />
+                                        <Row label={isArabic ? 'عدد الزيارات' : 'Number of Visits'} value={booking.visit_number} />
                                         <Row label={t('details.date')} value={booking.booking_date} />
                                         <Row label={t('details.time')} value={booking.time_slot} />
                                         <Row label={t('details.workers')} value={booking.workers?.length ? booking.workers.map((w) => w.name).join(', ') : '—'} />
                                     </FormSection>
+
+                                    {booking.visit_schedule && booking.visit_schedule.length > 0 && (
+                                        <FormSection icon="calendar" title={isArabic ? 'جدول الزيارات' : 'Visit Schedule'}>
+                                            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                                                {booking.visit_schedule.map((v, idx) => {
+                                                    const translateDay = (dayName) => {
+                                                        const m = {
+                                                            'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
+                                                            'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت', 'Sunday': 'الأحد'
+                                                        };
+                                                        return m[dayName] || dayName;
+                                                    };
+                                                    return (
+                                                        <div key={idx} className="flex justify-between items-center p-3 border border-gray-100 bg-gray-50/50 rounded-xl">
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-gray-800">{v.visit_date} ({isArabic ? translateDay(v.visit_day) : v.visit_day})</p>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{v.start_time} - {v.end_time} ({v.duration} {isArabic ? 'ساعة' : 'hours'})</p>
+                                                            </div>
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${STATUS_STYLES[v.visit_status] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                                                                {t(`status.${v.visit_status}`, v.visit_status)}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </FormSection>
+                                    )}
 
                                     {booking.address && (
                                         <FormSection icon="location" title={t('details.address')}>
@@ -210,11 +259,30 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                     <FormSection icon="info" title={t('details.price')}>
                                         <Row label={t('details.subtotal')} value={`${booking.price_summary?.subtotal} ${booking.price_summary?.currency}`} />
                                         <Row label={t('details.tax')} value={`${booking.price_summary?.tax} ${booking.price_summary?.currency}`} />
-                                        <Row label={t('details.discount')} value={`${booking.price_summary?.discount} ${booking.price_summary?.currency}`} />
+                                        
+                                        {booking.price_summary?.service_discount_amount > 0 && (
+                                            <Row label={isArabic ? 'خصم الخدمة' : 'Service Discount'} value={`-${booking.price_summary.service_discount_amount} ${booking.price_summary.currency}`} />
+                                        )}
+                                        {booking.price_summary?.coupon_discount_amount > 0 && (
+                                            <Row label={`${isArabic ? 'خصم الكوبون' : 'Coupon Discount'} (${booking.price_summary.coupon_code || ''})`} value={`-${booking.price_summary.coupon_discount_amount} ${booking.price_summary.currency}`} />
+                                        )}
+                                        {booking.price_summary?.discount > 0 && !(booking.price_summary.service_discount_amount > 0 || booking.price_summary.coupon_discount_amount > 0) && (
+                                            <Row label={t('details.discount')} value={`-${booking.price_summary.discount} ${booking.price_summary.currency}`} />
+                                        )}
+
                                         <div className="border-t border-gray-100 mt-2 pt-2 flex justify-between items-center">
                                             <span className="text-sm font-semibold text-gray-700">{t('details.total')}</span>
                                             <span className="text-base font-bold text-[#E91E63]">{booking.price_summary?.total} {booking.price_summary?.currency}</span>
                                         </div>
+                                        
+                                        {booking.price_summary?.payment_transaction_id && (
+                                            <Row label={isArabic ? 'رقم المعاملة' : 'Transaction ID'} value={booking.price_summary.payment_transaction_id} />
+                                        )}
+
+                                        {booking.price_summary?.payment_method && (
+                                            <Row label={isArabic ? 'طريقة الدفع' : 'Payment Method'} value={booking.price_summary.payment_method} />
+                                        )}
+                                        
                                         <div className="flex justify-between items-center pt-2">
                                             <span className="text-sm text-gray-500">{t('table.payment')}</span>
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${PAYMENT_STYLES[booking.payment_status] || 'bg-gray-100 text-gray-600'}`}>
@@ -223,11 +291,9 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         </div>
                                     </FormSection>
 
-                                    {booking.customer_notes && (
-                                        <FormSection icon="info" title={t('details.notes')}>
-                                            <p className="text-sm text-gray-600">{booking.customer_notes}</p>
-                                        </FormSection>
-                                    )}
+                                    <FormSection icon="info" title={t('details.notes')}>
+                                        <p className="text-sm text-gray-600">{booking.customer_notes || (isArabic ? 'لا توجد ملاحظات من العميل.' : 'No customer notes.')}</p>
+                                    </FormSection>
                                 </>
                             ) : (
                                 <FormSection icon="clock" title={t('details.activity_title')}>
@@ -278,6 +344,212 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                             </button>
                             <button onClick={confirmCancel} disabled={busy} className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50">
                                 {t('details.confirm_cancel_btn')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {assignModalOpen && (
+                <AssignWorkersModal 
+                    booking={booking} 
+                    isArabic={isArabic}
+                    t={t}
+                    onClose={() => setAssignModalOpen(false)} 
+                />
+            )}
+        </div>
+    );
+}
+
+function AssignWorkersModal({ booking, isArabic, t, onClose }) {
+    const queryClient = useQueryClient();
+    const [selectedIds, setSelectedIds] = useState(booking.assigned_worker_ids || []);
+    const [note, setNote] = useState('');
+    const [overrideTime, setOverrideTime] = useState(false);
+    const [showOverridePrompt, setShowOverridePrompt] = useState(false);
+
+    // Fetch eligible workers
+    const { data: eligibleWorkers = [], isLoading } = useQuery({
+        queryKey: ['eligibleWorkers', booking.id],
+        queryFn: async () => (await axiosInstance.get(`/admin/bookings/${booking.id}/eligible-workers`)).data.data || [],
+        enabled: !!booking.id,
+    });
+
+    const assignMutation = useMutation({
+        mutationFn: (payload) => axiosInstance.post(`/admin/bookings/${booking.id}/assign-workers`, payload),
+        onSuccess: (response) => {
+            toast.success(response.data?.message || (isArabic ? 'تم تعيين العمال بنجاح' : 'Workers assigned successfully'));
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', booking.id] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            onClose();
+        },
+        onError: (error) => {
+            const msg = error.response?.data?.message || '';
+            // If the backend validation fails due to time conflict/started service, we check if we can override
+            if (error.response?.status === 422 && (msg.includes('started') || msg.includes('وقت') || msg.includes('تاريخ') || msg.includes('بدأ'))) {
+                setShowOverridePrompt(true);
+            } else {
+                toast.error(msg || (isArabic ? 'حدث خطأ أثناء التعيين.' : 'An error occurred during assignment.'));
+            }
+        }
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (selectedIds.length === 0) {
+            toast.error(isArabic ? 'يرجى اختيار عامل واحد على الأقل' : 'Please select at least one worker');
+            return;
+        }
+        assignMutation.mutate({
+            worker_ids: selectedIds.map(Number),
+            note: note.trim(),
+            override_time: overrideTime
+        });
+    };
+
+    const handleOverrideConfirm = () => {
+        setOverrideTime(true);
+        setShowOverridePrompt(false);
+        assignMutation.mutate({
+            worker_ids: selectedIds.map(Number),
+            note: note.trim(),
+            override_time: true
+        });
+    };
+
+    const toggleWorker = (id) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(wId => wId !== id) : [...prev, id]
+        );
+    };
+
+    const STATUS_STYLES_WORKERS = {
+        active: 'bg-green-100 text-green-700',
+        inactive: 'bg-gray-100 text-gray-600',
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] flex flex-col font-main animate-fade-in">
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                    <h4 className="text-lg font-bold text-gray-800">
+                        {isArabic ? 'تعيين وتغيير عمال الحجز' : 'Assign & Replace Booking Workers'}
+                    </h4>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-1">
+                    {/* Eligible Workers list */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            {isArabic ? 'العمال المتاحون والمؤهلون' : 'Eligible & Available Workers'}
+                        </label>
+
+                        {isLoading ? (
+                            <div className="py-6 flex justify-center">
+                                <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                            </div>
+                        ) : eligibleWorkers.length === 0 ? (
+                            <div className="py-8 text-center border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm bg-gray-50/50">
+                                {isArabic ? 'لا يوجد عمال مؤهلون متاحون لهذا الوقت.' : 'No eligible workers available for this time slot.'}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[240px] overflow-y-auto p-1.5 border border-gray-100 rounded-lg">
+                                {eligibleWorkers.map((w) => {
+                                    const checked = selectedIds.includes(w.id);
+                                    return (
+                                        <div 
+                                            key={w.id} 
+                                            onClick={() => toggleWorker(w.id)}
+                                            className={`p-3 border rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                                                checked 
+                                                ? 'border-[#E91E63] bg-[#FDF0F3]/30 shadow-sm' 
+                                                : 'border-gray-100 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-sm font-semibold text-gray-800 truncate">{w.name}</span>
+                                                <span className="text-xs text-gray-400 mt-0.5">{w.nationality || '—'} · ⭐ {w.avg_rating || '5.0'}</span>
+                                            </div>
+                                            <input 
+                                                type="checkbox"
+                                                checked={checked}
+                                                onChange={() => {}} // toggling is handled by outer div
+                                                className="w-4.5 h-4.5 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63] cursor-pointer"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Change Note */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                            {isArabic ? 'سبب التغيير / ملاحظة (اختياري)' : 'Reason for change / Note (Optional)'}
+                        </label>
+                        <textarea 
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            rows="2"
+                            placeholder={isArabic ? 'مثال: استبدال العامل بسبب إجازة مرضية...' : 'e.g. Replacing worker due to sick leave...'}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] text-sm transition-colors resize-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button 
+                        type="button" 
+                        onClick={onClose} 
+                        className="px-4 py-2 text-sm rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                        {t('details.close')}
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={handleSubmit} 
+                        disabled={assignMutation.isPending || isLoading}
+                        className="px-4 py-2 text-sm rounded-lg font-medium text-white bg-[#E91E63] hover:bg-[#D81B60] transition-colors disabled:opacity-50"
+                    >
+                        {isArabic ? 'حفظ التغييرات' : 'Save Changes'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Overlapping/Time-passed Confirmation Alert Dialog */}
+            {showOverridePrompt && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60" onClick={() => setShowOverridePrompt(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+                        <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3 border border-amber-200">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </div>
+                        <h5 className="text-base font-bold text-gray-800 mb-2">
+                            {isArabic ? 'وقت الخدمة بدأ بالفعل' : 'Service Time Already Started'}
+                        </h5>
+                        <p className="text-xs text-gray-500 mb-5 leading-relaxed">
+                            {isArabic 
+                                ? 'بدأ وقت الخدمة لهذا الحجز. هل تريد تجاوز هذا القيد وتعيين العمال بأي حال؟' 
+                                : 'The service time for this booking has already started. Do you want to force this assignment update anyway?'}
+                        </p>
+                        <div className="flex justify-center gap-3">
+                            <button 
+                                onClick={() => setShowOverridePrompt(false)} 
+                                className="px-3.5 py-1.5 text-xs rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                            >
+                                {isArabic ? 'إلغاء' : 'Cancel'}
+                            </button>
+                            <button 
+                                onClick={handleOverrideConfirm} 
+                                className="px-3.5 py-1.5 text-xs rounded-lg font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors"
+                            >
+                                {isArabic ? 'تجاوز وتأكيد' : 'Force Update'}
                             </button>
                         </div>
                     </div>

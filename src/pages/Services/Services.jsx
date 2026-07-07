@@ -200,7 +200,7 @@ export default function Services() {
                             <th className="px-4 py-4 w-16 text-center">{t('table.image')}</th>
                             <th className="px-4 py-4">{t('table.name')}</th>
                             <th className="px-4 py-4">{t('table.category')}</th>
-                            <th className="px-4 py-4">{t('table.workers')}</th>
+                            <th className="px-4 py-4">{t('table.base_price')}</th>
                             <th className="px-4 py-4 text-center">{t('table.type')}</th>
                             <th className="px-4 py-4 text-center">{t('table.rating')}</th>
                             <th className="px-4 py-4 text-center">{t('table.status')}</th>
@@ -258,9 +258,11 @@ export default function Services() {
                                         </span>
                                     </td>
 
-                                    {/* العمال المرتبطون بالخدمة — عامل واحد + عدد الباقي */}
+                                    {/* السعر الأساسي */}
                                     <td className="px-4 py-3">
-                                        <TagList items={service.workers} label={(w) => w.name} max={1} expandable={false} />
+                                        <span className="font-semibold text-gray-700 whitespace-nowrap">
+                                            {service.base_price} {service.price_details?.currency || 'EGP'}
+                                        </span>
                                     </td>
 
                                     {/* 4. نوع الخدمة */}

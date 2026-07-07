@@ -247,6 +247,7 @@ export default function Bookings() {
                             <th className="px-4 py-4">{t('table.ref')}</th>
                             <th className="px-4 py-4">{t('table.customer')}</th>
                             <th className="px-4 py-4">{t('table.service')}</th>
+                            <th className="px-4 py-4">{t('table.visit_type')}</th>
                             <th className="px-4 py-4">{t('table.schedule')}</th>
                             <th className="px-4 py-4 text-center">{t('table.workers')}</th>
                             <th className="px-4 py-4 text-center">{t('table.amount')}</th>
@@ -258,7 +259,7 @@ export default function Bookings() {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
                                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
@@ -270,7 +271,7 @@ export default function Bookings() {
                             </tr>
                         ) : bookings.length === 0 ? (
                             <tr>
-                                <td colSpan="9" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
+                                <td colSpan="10" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
                             </tr>
                         ) : (
                             bookings.map((b) => (
@@ -279,18 +280,25 @@ export default function Bookings() {
                                     <td className="px-4 py-3">
                                         <span className="font-mono text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">{b.booking_ref}</span>
                                     </td>
-
+ 
                                     {/* Customer */}
                                     <td className="px-4 py-3">
                                         <p className="font-semibold text-gray-800 line-clamp-1">{b.customer_name || '—'}</p>
                                         {b.customer_phone && <p className="text-xs text-gray-400 mt-0.5" dir="ltr">{b.customer_phone}</p>}
                                     </td>
-
+ 
                                     {/* Service */}
                                     <td className="px-4 py-3">
                                         <span className="text-sm font-medium text-gray-600 line-clamp-1">{b.service_name || '—'}</span>
                                     </td>
 
+                                    {/* Visit Type */}
+                                    <td className="px-4 py-3">
+                                        <span className="text-xs font-semibold bg-gray-50 text-gray-700 px-2.5 py-1 rounded-full border border-gray-100 whitespace-nowrap">
+                                            {t(`visit_types.${b.visit_type}`, b.visit_type)}
+                                        </span>
+                                    </td>
+ 
                                     {/* Schedule */}
                                     <td className="px-4 py-3">
                                         <p className="text-sm font-medium text-gray-700 whitespace-nowrap">{b.booking_date || '—'}</p>

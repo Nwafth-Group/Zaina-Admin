@@ -9,7 +9,13 @@
     "amount": "المبلغ",
     "status": "الحالة",
     "payment": "الدفع",
+    "visit_type": "نوع الزيارة",
     "actions": "الإجراءات"
+  },
+  "visit_types": {
+    "single_visit": "زيارة واحدة",
+    "three_visits_per_week": "٣ زيارات / أسبوع",
+    "three_days_per_week": "٣ زيارات / أسبوع"
   },
   "tabs": {
     "all": "الكل"

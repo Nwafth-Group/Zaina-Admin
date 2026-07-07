@@ -24,8 +24,15 @@ export default function RowActionsMenu({ items = [], label = 'Actions' }) {
         const r = el.getBoundingClientRect();
         // Align the menu's end edge under the trigger, clamped to the viewport.
         const left = Math.min(Math.max(r.right - MENU_WIDTH, 8), window.innerWidth - MENU_WIDTH - 8);
-        setCoords({ top: r.bottom + 4, left });
-    }, []);
+        
+        // Estimate the menu height: each item is ~40px plus 8px padding
+        const estimatedHeight = visible.length * 40 + 8;
+        const spaceBelow = window.innerHeight - r.bottom;
+        const showAbove = spaceBelow < estimatedHeight && r.top > estimatedHeight;
+        
+        const top = showAbove ? r.top - estimatedHeight - 4 : r.bottom + 4;
+        setCoords({ top, left });
+    }, [visible.length]);
 
     const toggle = (e) => {
         e.stopPropagation();

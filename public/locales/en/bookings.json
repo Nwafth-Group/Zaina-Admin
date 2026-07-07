@@ -9,7 +9,13 @@
     "amount": "Amount",
     "status": "Status",
     "payment": "Payment",
+    "visit_type": "Visit Type",
     "actions": "Actions"
+  },
+  "visit_types": {
+    "single_visit": "Single Visit",
+    "three_visits_per_week": "3 Visits/Week",
+    "three_days_per_week": "3 Visits/Week"
   },
   "tabs": {
     "all": "All"
