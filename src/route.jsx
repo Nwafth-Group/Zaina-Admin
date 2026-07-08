@@ -16,6 +16,7 @@ import Employees from './pages/Employees/Employess.jsx';
 import Bookings from './pages/Bookings/Bookings.jsx';
 import Banners from './pages/Banners/Banners.jsx';
 import Announcements from './pages/Announcements/Announcements.jsx';
+import Coupons from './pages/Coupons/Coupons.jsx';
 import Settings from './pages/Settings/Settings.jsx';
 import Countries from './pages/Settings/Countries.jsx';
 import Cities from './pages/Settings/Cities.jsx';
@@ -92,6 +93,10 @@ export const router = createBrowserRouter([
         {
           path: 'announcements',
           element: <Announcements />,
+        },
+        {
+          path: 'coupons',
+          element: <Coupons />,
         },
         {
           // Location management is gated behind the location.edit permission
