@@ -100,9 +100,17 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         hasNextPage: hasMoreWorkers,
         isFetchingNextPage: isFetchingMoreWorkers,
     } = useInfiniteQuery({
-        queryKey: ['modal-workers', workerSearch],
+        queryKey: ['modal-workers', workerSearch, serviceToEdit?.id],
         queryFn: async ({ pageParam = 1 }) => {
-            const params = new URLSearchParams({ page: String(pageParam), per_page: '15', status: 'active' });
+            const params = new URLSearchParams({ 
+                page: String(pageParam), 
+                per_page: '15', 
+                status: 'active',
+                unassigned_only: 'true'
+            });
+            if (serviceToEdit?.id) {
+                params.append('include_service_id', String(serviceToEdit.id));
+            }
             if (workerSearch) params.append('search', workerSearch);
             return (await axiosInstance.get(`/admin/workers?${params.toString()}`)).data.data;
         },
@@ -319,22 +327,35 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 status: c.status || 'active',
             }));
 
-            // Map working days from schedules
-            const workingDays = (fullServiceData.schedules || [])
-                .filter((s) => s.is_active)
-                .map((s) => s.day);
-            const workingDaysSet = Array.from(new Set(workingDays));
+            // Map working days from schedules or available_days
+            let workingDaysSet = [];
+            if (fullServiceData.available_days && fullServiceData.available_days.length > 0) {
+                workingDaysSet = fullServiceData.available_days;
+            } else {
+                const workingDays = (fullServiceData.schedules || [])
+                    .filter((s) => s.is_active)
+                    .map((s) => s.day);
+                workingDaysSet = Array.from(new Set(workingDays));
+            }
 
-            // Map shift times
-            const shiftTimes = {};
-            (fullServiceData.schedules || []).forEach((sch) => {
-                if (sch.is_active && sch.start_time) {
-                    const sTime = sch.start_time.slice(0, 5);
-                    const eTime = sch.end_time ? sch.end_time.slice(0, 5) : '';
-                    shiftTimes[sTime] = eTime;
-                }
-            });
-            const shifts = Object.keys(shiftTimes).map((sTime) => ({ start_time: sTime, end_time: shiftTimes[sTime] }));
+            // Map shift times from available_shifts or schedules
+            let shifts = [];
+            if (fullServiceData.available_shifts && fullServiceData.available_shifts.length > 0) {
+                shifts = fullServiceData.available_shifts.map(sh => ({
+                    start_time: sh.start_time?.slice(0, 5) || '',
+                    end_time: sh.end_time?.slice(0, 5) || ''
+                }));
+            } else {
+                const shiftTimes = {};
+                (fullServiceData.schedules || []).forEach((sch) => {
+                    if (sch.is_active && sch.start_time) {
+                        const sTime = sch.start_time.slice(0, 5);
+                        const eTime = sch.end_time ? sch.end_time.slice(0, 5) : '';
+                        shiftTimes[sTime] = eTime;
+                    }
+                });
+                shifts = Object.keys(shiftTimes).map((sTime) => ({ start_time: sTime, end_time: shiftTimes[sTime] }));
+            }
 
             reset({
                 category_id: fullServiceData.category?.id ? String(fullServiceData.category.id) : '',
@@ -640,8 +661,8 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="hidden">
                                     <label className={LABEL_CLASS}>{t('form.category')}</label>
                                     <SelectField registration={register('category_id')}>
                                         <option value="">-- {t('form.category')} --</option>

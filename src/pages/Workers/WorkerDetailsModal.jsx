@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../api/axios.js';
+import BookingDetailsModal from '../Bookings/BookingDetailsModal';
 
 const STATUS_STYLES = {
     Upcoming: 'bg-blue-50 text-blue-600 border-blue-200',
@@ -34,6 +35,7 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
     const { t, i18n } = useTranslation('workers');
     const isArabic = i18n.language?.startsWith('ar');
     const [activeTab, setActiveTab] = useState('profile'); // profile | bookings | reviews
+    const [bookingDetailsId, setBookingDetailsId] = useState(null);
 
     const { data, isLoading } = useQuery({
         queryKey: ['worker-details', workerId],
@@ -41,8 +43,8 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
         enabled: !!workerId,
     });
 
-    const worker = data?.worker;
-    const stats = data?.stats;
+    const worker = data; // Worker fields are at root of data
+    const stats = data?.stats || { total_bookings: 0, completed_bookings: 0, reviews_count: 0 };
     const bookings = data?.latest_bookings || [];
     const reviews = data?.reviews || [];
 
@@ -75,8 +77,14 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                         {t('details.title')} {worker && <span className="text-base text-gray-500">— {worker.name}</span>}
                     </h3>
                     {worker?.status && (
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${worker.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                            {t(`status.${worker.status}`)}
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
+                            worker.status === 'active' 
+                                ? 'bg-green-50 text-green-700 border-green-200' 
+                                : worker.status === 'suspended'
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : 'bg-gray-50 text-gray-600 border-gray-200'
+                        }`}>
+                            {worker.status === 'suspended' ? (isArabic ? 'موقوف' : 'Suspended') : t(`status.${worker.status}`)}
                         </span>
                     )}
                 </div>
@@ -132,14 +140,36 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                                     <div className="space-y-6">
                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('details.info_title')}</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
-                                                    <span className="text-sm text-gray-500">{t('details.nationality')}</span>
-                                                    <span className="text-sm font-medium text-gray-800">{worker.nationality || '—'}</span>
+                                                    <span className="text-gray-500">{isArabic ? 'الجنسية' : 'Nationality'}</span>
+                                                    <span className="font-semibold text-gray-800">{worker.nationality || '—'}</span>
                                                 </div>
                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
-                                                    <span className="text-sm text-gray-500">{t('details.status')}</span>
-                                                    <span className="text-sm font-medium text-gray-800">{t(`status.${worker.status}`)}</span>
+                                                    <span className="text-gray-500">{isArabic ? 'الجنس' : 'Gender'}</span>
+                                                    <span className="font-semibold text-gray-800 capitalize">{worker.gender || '—'}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                    <span className="text-gray-500">{isArabic ? 'رقم الهاتف' : 'Phone Number'}</span>
+                                                    <span className="font-semibold text-gray-800">{worker.phone_number || '—'}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                    <span className="text-gray-500">{isArabic ? 'رقم الهوية' : 'ID Number'}</span>
+                                                    <span className="font-semibold text-gray-800">{worker.id_number || '—'}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1.5 border-b border-gray-50 sm:col-span-2">
+                                                    <span className="text-gray-500">{isArabic ? 'العنوان' : 'Address'}</span>
+                                                    <span className="font-semibold text-gray-805 whitespace-pre-line text-end">{worker.address || '—'}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                    <span className="text-gray-500">{isArabic ? 'الحالة' : 'Status'}</span>
+                                                    <span className="font-semibold text-gray-800">{worker.status === 'suspended' ? (isArabic ? 'موقوف' : 'Suspended') : t(`status.${worker.status}`)}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1.5 border-b border-gray-50 sm:col-span-2">
+                                                    <span className="text-gray-500">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</span>
+                                                    <span className="font-bold text-[#E91E63]">
+                                                        {worker.assigned_service ? serviceLabel(worker.assigned_service) : (isArabic ? 'غير معين' : 'Unassigned')}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -181,7 +211,15 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                                                     <tbody>
                                                         {bookings.map((b) => (
                                                             <tr key={b.id} className="border-b border-gray-50 last:border-0">
-                                                                <td className="px-4 py-3 font-medium text-gray-700">{b.booking_ref}</td>
+                                                                <td className="px-4 py-3">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setBookingDetailsId(b.id)}
+                                                                        className="font-mono text-xs font-bold text-[#E91E63] bg-[#FDF0F3] hover:bg-[#FAD2DC] px-2 py-1 rounded transition-colors"
+                                                                    >
+                                                                        {b.booking_ref}
+                                                                    </button>
+                                                                </td>
                                                                 <td className="px-4 py-3">{b.customer_name || '—'}</td>
                                                                 <td className="px-4 py-3">{b.service_name || '—'}</td>
                                                                 <td className="px-4 py-3 whitespace-nowrap">{b.booking_date || '—'}</td>
@@ -216,7 +254,25 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <p className="text-sm font-bold text-gray-800 truncate">{reviewerName(r)}</p>
-                                                                <p className="text-xs text-gray-400">{r.created_since}{r.booking_ref ? ` · ${r.booking_ref}` : ''}</p>
+                                                                <p className="text-xs text-gray-400">
+                                                                    {r.created_since}
+                                                                    {r.booking_ref && (
+                                                                        <>
+                                                                            {' · '}
+                                                                            {r.booking_id ? (
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => setBookingDetailsId(r.booking_id)}
+                                                                                    className="text-[#E91E63] hover:underline font-semibold"
+                                                                                >
+                                                                                    {r.booking_ref}
+                                                                                </button>
+                                                                            ) : (
+                                                                                r.booking_ref
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <StarRow value={r.rating} />
@@ -232,6 +288,11 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                     </div>
                 )}
             </div>
+
+            {/* Clickable Booking Detail Viewer */}
+            {bookingDetailsId && (
+                <BookingDetailsModal bookingId={bookingDetailsId} onClose={() => setBookingDetailsId(null)} />
+            )}
         </div>
     );
 }

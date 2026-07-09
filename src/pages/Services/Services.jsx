@@ -199,7 +199,6 @@ export default function Services() {
                         <tr>
                             <th className="px-4 py-4 w-16 text-center">{t('table.image')}</th>
                             <th className="px-4 py-4">{t('table.name')}</th>
-                            <th className="px-4 py-4">{t('table.category')}</th>
                             <th className="px-4 py-4">{t('table.base_price')}</th>
                             <th className="px-4 py-4 text-center">{t('table.type')}</th>
                             <th className="px-4 py-4 text-center">{t('table.rating')}</th>
@@ -210,7 +209,7 @@ export default function Services() {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
                                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
@@ -222,7 +221,7 @@ export default function Services() {
                             </tr>
                         ) : services.length === 0 ? (
                             <tr>
-                                <td colSpan="8" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
+                                <td colSpan="7" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
                             </tr>
                         ) : (
                             pagedServices.map((service) => (
@@ -249,13 +248,6 @@ export default function Services() {
                                         <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">
                                             {currentLang === 'ar' ? service.description_ar : service.description_en}
                                         </p>
-                                    </td>
-
-                                    {/* 3. اسم القسم التابعة له */}
-                                    <td className="px-4 py-3">
-                                        <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md whitespace-nowrap">
-                                            {currentLang === 'ar' ? service.category?.name_ar : service.category?.name_en}
-                                        </span>
                                     </td>
 
                                     {/* السعر الأساسي */}

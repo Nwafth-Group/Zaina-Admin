@@ -191,7 +191,7 @@ export default function Workers() {
                             <th className="px-4 py-4 w-16 text-center">{t('table.image')}</th>
                             <th className="px-4 py-4">{t('table.name')}</th>
                             <th className="px-4 py-4">{t('table.nationality')}</th>
-                            <th className="px-4 py-4">{t('table.services')}</th>
+                            <th className="px-4 py-4">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</th>
                             <th className="px-4 py-4 text-center">{t('table.rating')}</th>
                             <th className="px-4 py-4 text-center">{t('table.status')}</th>
                             <th className="px-4 py-4 text-center">{t('table.actions')}</th>
@@ -226,7 +226,13 @@ export default function Workers() {
                                     <td className="px-4 py-3 font-bold text-gray-800">{worker.name}</td>
                                     <td className="px-4 py-3 text-gray-600">{worker.nationality}</td>
                                     <td className="px-4 py-3">
-                                        <TagList items={worker.services} label={serviceLabel} />
+                                        {worker.assigned_service ? (
+                                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FDF0F3] text-[#E91E63] whitespace-nowrap">
+                                                {serviceLabel(worker.assigned_service)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">—</span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-1 text-yellow-500 font-bold">

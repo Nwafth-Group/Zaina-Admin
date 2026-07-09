@@ -115,7 +115,6 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                             <div className="flex-1 text-center sm:text-start min-w-0">
                                 <h2 className="text-2xl font-bold text-gray-800">{serviceName}</h2>
                                 <div className="mt-1 flex items-center gap-2 justify-center sm:justify-start flex-wrap">
-                                    <span className="text-sm text-gray-500">{categoryName}</span>
                                     {service.type && (
                                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${TYPE_STYLES[service.type] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                             {t(`types.${service.type}`)}
@@ -150,10 +149,6 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                                              <h4 className="text-sm font-bold text-gray-700 mb-4">{t('details.info_title')}</h4>
                                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
-                                                 <div className="flex justify-between py-1.5 border-b border-gray-50">
-                                                     <span className="text-sm text-gray-500">{t('details.category')}</span>
-                                                     <span className="text-sm font-medium text-gray-800">{categoryName}</span>
-                                                 </div>
                                                  <div className="flex justify-between py-1.5 border-b border-gray-50">
                                                      <span className="text-sm text-gray-500">{t('form.service_code')}</span>
                                                      <span className="text-sm font-medium text-gray-800">{service.service_code || '—'}</span>
@@ -206,6 +201,32 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                  </div>
                                              )}
                                          </div>
+
+                                         {service.duration && (
+                                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                                 <h4 className="text-sm font-bold text-gray-700 mb-4">{isArabic ? 'تفاصيل العقد والمدة' : 'Duration & Contract Details'}</h4>
+                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
+                                                     {service.duration.service_period_hours && (
+                                                         <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                             <span className="text-gray-500">{isArabic ? 'ساعات فترة الخدمة' : 'Service Period Hours'}</span>
+                                                             <span className="font-semibold text-gray-800">{service.duration.service_period_hours} {isArabic ? 'ساعة' : 'Hours'}</span>
+                                                         </div>
+                                                     )}
+                                                     {service.duration.min_contract_months && (
+                                                         <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                             <span className="text-gray-500">{isArabic ? 'الحد الأدنى لشهور العقد' : 'Min Contract Months'}</span>
+                                                             <span className="font-semibold text-gray-800">{service.duration.min_contract_months} {isArabic ? 'شهر' : 'Months'}</span>
+                                                         </div>
+                                                     )}
+                                                     {service.duration.allowed_contract_durations && service.duration.allowed_contract_durations.length > 0 && (
+                                                         <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                             <span className="text-gray-500">{isArabic ? 'مدد العقد المسموحة' : 'Allowed Contract Durations'}</span>
+                                                             <span className="font-semibold text-gray-800">{service.duration.allowed_contract_durations.join(', ')}</span>
+                                                         </div>
+                                                     )}
+                                                 </div>
+                                             </div>
+                                         )}
 
                                          {/* 2. Geographic Coverage Locations */}
                                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -262,7 +283,7 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                      {service.available_visit_types.map((vt, i) => (
                                                          <div key={i} className="flex justify-between items-center bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-100">
                                                              <span className="text-sm font-medium text-gray-700">{t(`form.${vt.type}`)}</span>
-                                                             {vt.discount != null && vt.discount > 0 && (
+                                                             {vt.discount != null && Number(vt.discount) > 0 && (
                                                                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
                                                                      {t('form.discount_pct')}: {vt.discount}%
                                                                  </span>
@@ -274,23 +295,39 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                          )}
 
                                          {/* 4. Weekly Working Days & Shifts */}
-                                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                             <h4 className="text-sm font-bold text-gray-700 mb-4">{t('form.shifts')}</h4>
-                                             {service.schedules?.length ? (
-                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                     {service.schedules.filter(s => s.is_active).map((sch, i) => (
-                                                         <div key={i} className="flex justify-between items-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
-                                                             <span className="text-sm font-semibold text-gray-700">{t(`days.${sch.day}`)}</span>
-                                                             <span className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
-                                                                 {sch.start_time?.slice(0, 5)} - {sch.end_time?.slice(0, 5)}
-                                                             </span>
-                                                         </div>
-                                                     ))}
-                                                 </div>
-                                             ) : (
-                                                 <p className="text-sm text-gray-400">{isArabic ? 'لا توجد فترات عمل محددة.' : 'No active shifts defined.'}</p>
-                                             )}
-                                         </div>
+                                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+                                              <div>
+                                                  <h4 className="text-sm font-bold text-gray-700 mb-3">{t('form.working_days')}</h4>
+                                                  {service.available_days && service.available_days.length > 0 ? (
+                                                      <div className="flex flex-wrap gap-2">
+                                                          {service.available_days.map((day, i) => (
+                                                              <span key={i} className="text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1 rounded-full shadow-sm capitalize">
+                                                                  {t(`days.${day}`, day)}
+                                                              </span>
+                                                          ))}
+                                                      </div>
+                                                  ) : (
+                                                      <p className="text-sm text-gray-400">{isArabic ? 'لا توجد أيام عمل محددة.' : 'No working days specified.'}</p>
+                                                  )}
+                                              </div>
+                                              <div className="pt-2">
+                                                  <h4 className="text-sm font-bold text-gray-700 mb-3">{t('form.shifts')}</h4>
+                                                  {service.available_shifts && service.available_shifts.length > 0 ? (
+                                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                          {service.available_shifts.map((sch, i) => (
+                                                              <div key={i} className="flex justify-between items-center bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-100 font-mono text-xs">
+                                                                  <span className="font-semibold text-gray-700">{isArabic ? 'شفت ' + (i + 1) : 'Shift ' + (i + 1)}</span>
+                                                                  <span className="font-bold text-[#E91E63] bg-white px-2.5 py-1 rounded border border-gray-200 shadow-sm">
+                                                                      {sch.start_time} - {sch.end_time}
+                                                                  </span>
+                                                              </div>
+                                                          ))}
+                                                      </div>
+                                                  ) : (
+                                                      <p className="text-sm text-gray-400">{isArabic ? 'لا توجد شفتات عمل محددة.' : 'No shifts specified.'}</p>
+                                                  )}
+                                              </div>
+                                          </div>
 
                                          {/* 5. Features Section */}
                                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -383,6 +420,20 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                  </div>
                                              </div>
                                          )}
+
+                                          {/* Available Dates */}
+                                          {service.available_dates && service.available_dates.length > 0 && (
+                                              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                                  <h4 className="text-sm font-bold text-gray-700 mb-4">{isArabic ? 'التواريخ المتاحة للحجز' : 'Available Booking Dates'}</h4>
+                                                  <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                                                      {service.available_dates.map((dt, i) => (
+                                                          <span key={i} className="text-xs bg-gray-50 text-gray-700 border border-gray-200 px-2.5 py-1 rounded shadow-sm">
+                                                              {dt.substring(0, 10)}
+                                                          </span>
+                                                      ))}
+                                                  </div>
+                                              </div>
+                                          )}
 
                                          {/* 8. Assigned Workers */}
                                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

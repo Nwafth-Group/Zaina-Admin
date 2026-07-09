@@ -57,7 +57,7 @@
     "no_activity": "No status changes yet.",
     "system": "System",
     "confirm_cancel": "Are you sure you want to cancel this booking?",
-    "cancel_reason": "Cancellation reason (optional)",
+    "cancel_reason": "Cancellation reason (required)",
     "keep": "Keep booking",
     "confirm_cancel_btn": "Yes, cancel"
   },

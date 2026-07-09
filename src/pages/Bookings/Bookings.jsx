@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import BookingDetailsModal from './BookingDetailsModal';
+import RescheduleBookingModal from './RescheduleBookingModal';
 import RowActionsMenu, { EyeIcon, CancelIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 
@@ -56,6 +57,8 @@ export default function Bookings() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [detailsId, setDetailsId] = useState(null);   // booking open in the details modal
     const [cancelTarget, setCancelTarget] = useState(null); // booking pending cancel confirm
+    const [cancelNote, setCancelNote] = useState('');
+    const [rescheduleTarget, setRescheduleTarget] = useState(null);
     const [page, setPage] = useState(1);
 
     // Debounce the free-text search before it hits the API.
@@ -167,11 +170,12 @@ export default function Bookings() {
 
     // Cancelling a booking from the row menu (status -> cancelled, logged server-side).
     const cancelMutation = useMutation({
-        mutationFn: (id) => axiosInstance.patch(`/admin/bookings/${id}/status`, { status: 'cancelled' }),
+        mutationFn: ({ id, note }) => axiosInstance.patch(`/admin/bookings/${id}/status`, { status: 'cancelled', ...(note ? { note } : {}) }),
         onSuccess: (response) => {
             toast.success(response.data?.message || 'تم إلغاء الحجز');
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
             setCancelTarget(null);
+            setCancelNote('');
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || 'حدث خطأ أثناء الإلغاء.');
@@ -341,6 +345,17 @@ export default function Bookings() {
                                                     onClick: () => setDetailsId(b.id),
                                                 },
                                                 {
+                                                    key: 'reschedule',
+                                                    label: isArabic ? 'إعادة جدولة' : 'Reschedule',
+                                                    icon: (
+                                                        <svg className="w-4 h-4 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    ),
+                                                    hidden: b.status === 'completed' || b.status === 'cancelled',
+                                                    onClick: () => setRescheduleTarget(b),
+                                                },
+                                                {
                                                     key: 'cancel',
                                                     label: t('actions.cancel'),
                                                     icon: <CancelIcon />,
@@ -490,25 +505,39 @@ export default function Bookings() {
             {/* Cancel confirmation (row menu) */}
             {cancelTarget && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50" onClick={() => setCancelTarget(null)} />
+                    <div className="absolute inset-0 bg-black/50" onClick={() => { setCancelTarget(null); setCancelNote(''); }} />
                     <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
                         <h4 className="text-lg font-bold text-gray-800 mb-2">{t('actions.cancel')}</h4>
-                        <p className="text-sm text-gray-500 mb-1">{t('details.confirm_cancel')}</p>
-                        <p className="text-sm font-mono font-bold text-gray-700 mb-5">{cancelTarget.booking_ref}</p>
+                        <p className="text-sm text-gray-500 mb-4">{t('details.confirm_cancel')}</p>
+                        <p className="text-sm font-mono font-bold text-gray-700 mb-4">{cancelTarget.booking_ref}</p>
+                        <textarea
+                            value={cancelNote}
+                            onChange={(e) => setCancelNote(e.target.value)}
+                            rows="3"
+                            placeholder={t('details.cancel_reason')}
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] transition-colors mb-4 text-sm"
+                        />
                         <div className="flex justify-end gap-3">
-                            <button onClick={() => setCancelTarget(null)} className="px-4 py-2 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">
+                            <button onClick={() => { setCancelTarget(null); setCancelNote(''); }} className="px-4 py-2 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">
                                 {t('details.keep')}
                             </button>
                             <button
-                                onClick={() => cancelMutation.mutate(cancelTarget.id)}
-                                disabled={cancelMutation.isPending}
-                                className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                                onClick={() => cancelMutation.mutate({ id: cancelTarget.id, note: cancelNote.trim() })}
+                                disabled={cancelMutation.isPending || !cancelNote.trim()}
+                                className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {t('details.confirm_cancel_btn')}
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {rescheduleTarget && (
+                <RescheduleBookingModal
+                    booking={rescheduleTarget}
+                    onClose={() => setRescheduleTarget(null)}
+                />
             )}
         </div>
     );

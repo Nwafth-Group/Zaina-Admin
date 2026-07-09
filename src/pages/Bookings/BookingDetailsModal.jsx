@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import { FormSection, SelectField } from '../../components/form/FormKit';
+import RescheduleBookingModal from './RescheduleBookingModal';
 
 const STATUS_STYLES = {
     Upcoming: 'bg-blue-50 text-blue-600 border-blue-200',
@@ -35,6 +36,7 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelNote, setCancelNote] = useState('');
     const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [rescheduleOpen, setRescheduleOpen] = useState(false);
 
     const { data: booking, isLoading } = useQuery({
         queryKey: ['bookingDetail', bookingId],
@@ -204,13 +206,22 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         icon="sparkles" 
                                         title={t('details.service')}
                                         action={!isTerminal && (
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setAssignModalOpen(true)}
-                                                className="text-xs font-bold text-white bg-[#E91E63] hover:bg-[#D81B60] px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200"
-                                            >
-                                                {booking.workers?.length ? (isArabic ? 'تغيير العمال' : 'Replace Workers') : (isArabic ? 'تعيين عمال' : 'Assign Workers')}
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setRescheduleOpen(true)}
+                                                    className="text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 border border-gray-200"
+                                                >
+                                                    {isArabic ? 'إعادة جدولة' : 'Reschedule'}
+                                                </button>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setAssignModalOpen(true)}
+                                                    className="text-xs font-bold text-white bg-[#E91E63] hover:bg-[#D81B60] px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200"
+                                                >
+                                                    {booking.workers?.length ? (isArabic ? 'تغيير العمال' : 'Replace Workers') : (isArabic ? 'تعيين عمال' : 'Assign Workers')}
+                                                </button>
+                                            </div>
                                         )}
                                     >
                                         <Row label={t('details.service_name')} value={booking.service_name} />
@@ -220,6 +231,44 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         <Row label={t('details.time')} value={booking.time_slot} />
                                         <Row label={t('details.workers')} value={booking.workers?.length ? booking.workers.map((w) => w.name).join(', ') : '—'} />
                                     </FormSection>
+
+                                    {booking.status === 'cancelled' && (
+                                        <FormSection icon="info" title={isArabic ? 'تفاصيل الإلغاء والاسترداد' : 'Cancellation & Refund Details'}>
+                                            {booking.cancelled_by && (
+                                                <Row label={isArabic ? 'تم الإلغاء بواسطة' : 'Cancelled By'} value={booking.cancelled_by === 'admin' ? (isArabic ? 'الإدارة' : 'Admin') : (isArabic ? 'العميل' : 'Customer')} />
+                                            )}
+                                            {booking.cancelled_at && (
+                                                <Row label={isArabic ? 'وقت الإلغاء' : 'Cancellation Time'} value={booking.cancelled_at} />
+                                            )}
+                                            {booking.cancellation_reason && (
+                                                <Row label={isArabic ? 'سبب الإلغاء' : 'Cancellation Reason'} value={booking.cancellation_reason} />
+                                            )}
+                                            
+                                            {/* Refund section */}
+                                            {booking.refund_status && (
+                                                <div className="border-t border-gray-100 mt-2 pt-2 space-y-2">
+                                                    <Row label={isArabic ? 'حالة الاسترداد' : 'Refund Status'} value={
+                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                                            booking.refund_status === 'completed' 
+                                                            ? 'bg-green-50 text-green-700 border-green-200' 
+                                                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                        }`}>
+                                                            {booking.refund_status}
+                                                        </span>
+                                                    } />
+                                                    {booking.refund_amount > 0 && (
+                                                        <Row label={isArabic ? 'المبلغ المسترد' : 'Refunded Amount'} value={`${booking.refund_amount} ${booking.price_summary?.currency || 'EGP'}`} />
+                                                    )}
+                                                    {booking.refund_points > 0 && (
+                                                        <Row label={isArabic ? 'النقاط المستردة' : 'Refunded Points'} value={booking.refund_points} />
+                                                    )}
+                                                    {booking.refund_destination && (
+                                                        <Row label={isArabic ? 'وجهة الاسترداد' : 'Refund Destination'} value={booking.refund_destination} />
+                                                    )}
+                                                </div>
+                                            )}
+                                        </FormSection>
+                                    )}
 
                                     {booking.visit_schedule && booking.visit_schedule.length > 0 && (
                                         <FormSection icon="calendar" title={isArabic ? 'جدول الزيارات' : 'Visit Schedule'}>
@@ -277,6 +326,10 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         
                                         {booking.price_summary?.payment_transaction_id && (
                                             <Row label={isArabic ? 'رقم المعاملة' : 'Transaction ID'} value={booking.price_summary.payment_transaction_id} />
+                                        )}
+
+                                        {booking.paid_points > 0 && (
+                                            <Row label={isArabic ? 'النقاط المستخدمة' : 'Points Used'} value={booking.paid_points} />
                                         )}
 
                                         {booking.price_summary?.payment_method && (
@@ -342,7 +395,11 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                             <button onClick={() => setCancelOpen(false)} className="px-4 py-2 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">
                                 {t('details.keep')}
                             </button>
-                            <button onClick={confirmCancel} disabled={busy} className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50">
+                            <button 
+                                onClick={confirmCancel} 
+                                disabled={busy || !cancelNote.trim()} 
+                                className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 {t('details.confirm_cancel_btn')}
                             </button>
                         </div>
@@ -356,6 +413,13 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                     isArabic={isArabic}
                     t={t}
                     onClose={() => setAssignModalOpen(false)} 
+                />
+            )}
+
+            {rescheduleOpen && (
+                <RescheduleBookingModal 
+                    booking={booking} 
+                    onClose={() => setRescheduleOpen(false)} 
                 />
             )}
         </div>
