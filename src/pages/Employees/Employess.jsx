@@ -15,6 +15,9 @@ const DEFAULT_FILTERS = {
     role: '',
     sort_by: 'created_at',
     sort_dir: 'desc',
+    created_from: '',
+    created_to: '',
+    per_page: 15,
 };
 
 export default function Employees() {
@@ -88,6 +91,8 @@ export default function Employees() {
     const activeFilterCount =
         (filters.status ? 1 : 0) +
         (filters.type ? 1 : 0) +
+        (filters.created_from ? 1 : 0) +
+        (filters.created_to ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
     // 1. جلب الموظفين مع الفلاتر والبحث وترقيم الصفحات
@@ -118,6 +123,36 @@ export default function Employees() {
             toast.error(error.response?.data?.message || "حدث خطأ أثناء العملية.");
         }
     });
+
+    const exportToCSV = () => {
+        if (!employees || employees.length === 0) {
+            toast.error("لا توجد بيانات لتصديرها");
+            return;
+        }
+
+        const headers = ["User ID", "Full Name", "Email", "Phone", "Status", "Role", "Registration Date"];
+        const rows = employees.map(emp => [
+            emp.id,
+            emp.full_name,
+            emp.email,
+            emp.mobile_number || '',
+            emp.status,
+            emp.primary_role || emp.type,
+            emp.created_at
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+            + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `employees_export_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("تم تصدير الملف بنجاح!");
+    };
 
     const employees = paginatedData?.items || [];
     const meta = paginatedData?.meta;
@@ -178,6 +213,18 @@ export default function Employees() {
                                 {activeFilterCount}
                             </span>
                         )}
+                    </button>
+
+                    {/* Export */}
+                    <button
+                        onClick={exportToCSV}
+                        className="inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        title={t('export_csv', { defaultValue: 'Export to CSV' })}
+                    >
+                        <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>{t('export', { defaultValue: 'تصدير' })}</span>
                     </button>
 
                     {/* Add new */}
@@ -308,7 +355,26 @@ export default function Employees() {
             </div>
 
             {/* Pagination Controls */}
-            <Pagination meta={meta} onPageChange={setPage} />
+            <div className="p-4 md:p-6 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <Pagination meta={meta} onPageChange={setPage} />
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">{t('pagination.rows_per_page', { defaultValue: 'عدد الأسطر:' })}</span>
+                    <select
+                        value={filters.per_page}
+                        onChange={(e) => {
+                            setFilters(f => ({ ...f, per_page: Number(e.target.value) }));
+                            setPage(1);
+                        }}
+                        className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
+                    >
+                        <option value={10}>10</option>
+                        <option value={15}>15</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                </div>
+            </div>
 
             {/* Filter drawer (slides in from the left) */}
             <div className={`fixed inset-0 z-40 transition-opacity duration-300 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -351,6 +417,25 @@ export default function Employees() {
                                 <option value="created_at:asc">{t('filters.sort_oldest')}</option>
                                 <option value="first_name:asc">{t('filters.sort_name')}</option>
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.date_from', { defaultValue: 'تاريخ التسجيل من' })}</label>
+                            <input
+                                type="date"
+                                value={draftFilters.created_from}
+                                onChange={(e) => updateDraft('created_from', e.target.value)}
+                                className={`${selectClass} w-full`}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.date_to', { defaultValue: 'تاريخ التسجيل إلى' })}</label>
+                            <input
+                                type="date"
+                                value={draftFilters.created_to}
+                                onChange={(e) => updateDraft('created_to', e.target.value)}
+                                className={`${selectClass} w-full`}
+                            />
                         </div>
                     </div>
 

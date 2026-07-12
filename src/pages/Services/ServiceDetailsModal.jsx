@@ -193,6 +193,12 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                          {service.min_workers || 1} - {service.max_workers || 1}
                                                      </span>
                                                  </div>
+                                                  <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                      <span className="text-sm text-gray-50">{isArabic ? 'جنس العمالة المتاح' : 'Available Genders'}</span>
+                                                      <span className="text-sm font-medium text-gray-800">
+                                                          {service.worker_gender_options ? service.worker_gender_options.join(', ') : 'Female'}
+                                                      </span>
+                                                  </div>
                                              </div>
                                              {description && (
                                                  <div className="mt-4">

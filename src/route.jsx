@@ -21,6 +21,8 @@ import Settings from './pages/Settings/Settings.jsx';
 import Countries from './pages/Settings/Countries.jsx';
 import Cities from './pages/Settings/Cities.jsx';
 import Areas from './pages/Settings/Areas.jsx';
+import Roles from './pages/Roles/Roles.jsx';
+import MobileNotifications from './pages/Notifications/MobileNotifications.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -95,6 +97,10 @@ export const router = createBrowserRouter([
           element: <Announcements />,
         },
         {
+          path: 'mobile-notifications',
+          element: <MobileNotifications />,
+        },
+        {
           path: 'coupons',
           element: <Coupons />,
         },
@@ -107,6 +113,12 @@ export const router = createBrowserRouter([
             { path: 'settings/countries', element: <Countries /> },
             { path: 'settings/cities', element: <Cities /> },
             { path: 'settings/areas', element: <Areas /> },
+          ],
+        },
+        {
+          element: <PermissionRoute permission="roles.view" />,
+          children: [
+            { path: 'roles', element: <Roles /> },
           ],
         },
       ],

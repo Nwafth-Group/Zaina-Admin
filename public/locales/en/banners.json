@@ -37,5 +37,54 @@
   },
   "validation": {
     "required": "This field is required"
+  },
+  "table": {
+    "image": "Image",
+    "title": "Title",
+    "type": "Type",
+    "status": "Status",
+    "body": "Body",
+    "actions": "Actions"
+  },
+  "form": {
+    "title_add": "Add Ad",
+    "title_edit": "Edit Ad",
+    "image": "Ad Image",
+    "upload_image": "Upload image",
+    "change_image": "Change image",
+    "title_en": "Title (English)",
+    "title_ar": "Title (Arabic)",
+    "text_en": "Body (English)",
+    "text_ar": "Body (Arabic)",
+    "type": "Ad Type",
+    "link_type": "Link Type",
+    "link": "Link (URL / Route)",
+    "link_placeholder": "https://... or coupon code",
+    "status": "Status",
+    "cancel": "Cancel",
+    "submit": "Save Ad"
+  },
+  "types": {
+    "general": "General",
+    "coupon": "Coupon"
+  },
+  "link_types": {
+    "internal": "Internal",
+    "external": "External",
+    "none": "None"
+  },
+  "filters": {
+    "title": "Filters",
+    "search_placeholder": "Search advertisements...",
+    "button": "Filters",
+    "status_label": "Ad Status",
+    "all_statuses": "All Statuses",
+    "type_label": "Ad Type",
+    "all_types": "All Types",
+    "sort_label": "Sort By",
+    "sort_newest": "Newest First",
+    "sort_oldest": "Oldest First",
+    "reset": "Reset",
+    "done": "Apply"
   }
 }

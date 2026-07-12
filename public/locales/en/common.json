@@ -14,7 +14,9 @@
     "banners": "Banners",
     "announcements": "Announcements",
     "employees": "Employees",
-    "settings": "Settings"
+    "settings": "Settings",
+    "roles": "Roles & Permissions",
+    "mobile_notifications": "Mobile Notifications"
   },
   "header": {
     "welcome": "Welcome",

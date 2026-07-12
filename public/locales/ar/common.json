@@ -14,7 +14,9 @@
     "banners": "البانرات",
     "announcements": "الإعلانات",
     "employees": "الموظفين",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "roles": "الأدوار والصلاحيات",
+    "mobile_notifications": "إشعارات الهاتف"
   },
   "header": {
     "welcome": "مرحباً",

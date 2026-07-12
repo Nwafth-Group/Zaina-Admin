@@ -37,5 +37,54 @@
   },
   "validation": {
     "required": "هذا الحقل مطلوب"
+  },
+  "table": {
+    "image": "الصورة",
+    "title": "العنوان",
+    "type": "النوع",
+    "status": "الحالة",
+    "body": "المحتوى",
+    "actions": "الإجراءات"
+  },
+  "form": {
+    "title_add": "إضافة إعلان",
+    "title_edit": "تعديل الإعلان",
+    "image": "صورة الإعلان",
+    "upload_image": "رفع صورة",
+    "change_image": "تغيير الصورة",
+    "title_en": "العنوان (إنجليزي)",
+    "title_ar": "العنوان (عربي)",
+    "text_en": "المحتوى (إنجليزي)",
+    "text_ar": "المحتوى (عربي)",
+    "type": "نوع الإعلان",
+    "link_type": "نوع الرابط",
+    "link": "الرابط (رابط / كود)",
+    "link_placeholder": "https://... أو كود الخصم",
+    "status": "الحالة",
+    "cancel": "إلغاء",
+    "submit": "حفظ الإعلان"
+  },
+  "types": {
+    "general": "عام",
+    "coupon": "كوبون"
+  },
+  "link_types": {
+    "internal": "داخلي",
+    "external": "خارجي",
+    "none": "بدون"
+  },
+  "filters": {
+    "title": "الفلاتر",
+    "search_placeholder": "البحث في الإعلانات...",
+    "button": "الفلاتر",
+    "status_label": "حالة الإعلان",
+    "all_statuses": "كل الحالات",
+    "type_label": "نوع الإعلان",
+    "all_types": "كل الأنواع",
+    "sort_label": "ترتيب حسب",
+    "sort_newest": "الأحدث أولاً",
+    "sort_oldest": "الأقدم أولاً",
+    "reset": "إعادة تعيين",
+    "done": "تطبيق"
   }
 }

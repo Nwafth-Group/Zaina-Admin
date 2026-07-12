@@ -145,6 +145,17 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const schema = yup.object().shape({
         category_id: yup.string().nullable().notRequired(),
         type: yup.string().required(t('validation.required')),
+        worker_gender_options: yup.array().of(yup.string()).nullable().when('category_id', {
+            is: (categoryId) => {
+                if (!categoryId) return false;
+                const categoriesList = JSON.parse(localStorage.getItem('categories_cache') || '[]');
+                const selectedCat = categoriesList.find(c => String(c.id) === String(categoryId));
+                return selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+            },
+            then: (s) => s.required(isArabic ? 'يجب اختيار جنس عمالة واحد على الأقل' : 'At least one worker gender option must be selected').min(1, isArabic ? 'يجب اختيار جنس عمالة واحد على الأقل' : 'At least one worker gender option must be selected'),
+            otherwise: (s) => s.nullable().notRequired()
+        }),
+        pricing_type: yup.string().nullable().notRequired(),
         name_ar: yup.string().required(t('validation.required')).max(100),
         name_en: yup.string().required(t('validation.required')).max(100),
         description_ar: yup.string().required(t('validation.required')).max(500),
@@ -172,30 +183,76 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             status: yup.string().required(t('validation.required'))
         })).min(1, t('validation.required')),
 
-        start_time: yup.string().nullable(),
-        end_time: yup.string().nullable(),
+        start_time: yup.string().nullable()
+            .test('start_time_hosp', isArabic ? 'وقت البدء يجب أن يكون بين 8:00 ص و 8:00 م' : 'Start time must be between 8:00 AM and 8:00 PM for Hospitality Services', function(value) {
+                if (!value) return true;
+                const categoryId = this.parent.category_id;
+                const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                if (isHospitality && (value < '08:00' || value > '20:00')) return false;
+                return true;
+            }),
+        end_time: yup.string().nullable()
+            .test('end_time_hosp', isArabic ? 'وقت الانتهاء يجب أن يكون بين 8:00 ص و 8:00 م' : 'End time must be between 8:00 AM and 8:00 PM for Hospitality Services', function(value) {
+                if (!value) return true;
+                const categoryId = this.parent.category_id;
+                const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                if (isHospitality && (value < '08:00' || value > '20:00')) return false;
+                return true;
+            }),
         duration_unit: yup.string().required(t('validation.required')),
         default_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1, t('validation.min_1')),
         
         min_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('has_duration_range', {
             is: true,
-            then: (s) => s.required(t('validation.required')).min(1),
+            then: (s) => s.required(t('validation.required')).min(1)
+                .test('min_duration_hosp', isArabic ? 'الحد الأدنى للمدة هو 4 ساعات للضيافة' : 'Minimum duration must be at least 4 hours for Hospitality Services', function(value) {
+                    const categoryId = this.parent.category_id;
+                    const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                    const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                    if (isHospitality && value < 4) return false;
+                    return true;
+                }),
             otherwise: (s) => s.nullable(),
         }),
         max_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('has_duration_range', {
             is: true,
-            then: (s) => s.required(t('validation.required')).min(1).test('max_greater', 'Max must be >= Min', function(value) {
-                const { min_duration } = this.parent;
-                return value >= min_duration;
-            }),
+            then: (s) => s.required(t('validation.required')).min(1)
+                .test('max_duration_hosp', isArabic ? 'الحد الأقصى للمدة هو 6 ساعات للضيافة' : 'Maximum duration must be at most 6 hours for Hospitality Services', function(value) {
+                    const categoryId = this.parent.category_id;
+                    const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                    const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                    if (isHospitality && value > 6) return false;
+                    return true;
+                })
+                .test('max_greater', 'Max must be >= Min', function(value) {
+                    const { min_duration } = this.parent;
+                    return value >= min_duration;
+                }),
             otherwise: (s) => s.nullable(),
         }),
 
-        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
-        max_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1).test('max_workers_greater', 'Max workers must be >= Min workers', function(value) {
-            const { min_workers } = this.parent;
-            return value >= min_workers;
-        }),
+        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1)
+            .test('min_workers_hosp', isArabic ? 'الحد الأدنى لعدد العمالة هو 2 للضيافة' : 'Minimum workers must be at least 2 for Hospitality Services', function(value) {
+                const categoryId = this.parent.category_id;
+                const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                if (isHospitality && value < 2) return false;
+                return true;
+            }),
+        max_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1)
+            .test('max_workers_hosp', isArabic ? 'الحد الأقصى لعدد العمالة هو 12 للضيافة' : 'Maximum workers must be at most 12 for Hospitality Services', function(value) {
+                const categoryId = this.parent.category_id;
+                const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                if (isHospitality && value > 12) return false;
+                return true;
+            })
+            .test('max_workers_greater', 'Max workers must be >= Min workers', function(value) {
+                const { min_workers } = this.parent;
+                return value >= min_workers;
+            }),
 
         working_days: yup.array().of(yup.string()),
         shifts: yup.array().of(yup.object().shape({
@@ -241,6 +298,8 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         defaultValues: {
             status: 'active',
             type: 'hourly',
+            worker_gender_options: ['Female'],
+            pricing_type: 'per_hour',
             single_visit_checked: false,
             single_visit_discount: 0,
             three_days_checked: false,
@@ -294,6 +353,21 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             setValue('has_duration_range', false);
         }
     }, [watchServiceCode, setValue]);
+
+    const watchCategoryId = watch('category_id');
+    const selectedCategory = useMemo(() => categories?.find(c => String(c.id) === String(watchCategoryId)), [categories, watchCategoryId]);
+    const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
+    const isBabysitting = (watchServiceCode === 'BABYSITTER_HOURLY') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('babysitting') || selectedCategory.name_en?.toLowerCase().includes('nanny') || selectedCategory.name_ar?.includes('أطفال') || selectedCategory.name_en?.toLowerCase().includes('babysitter')));
+    const isSecondOrThirdService = isHospitality || isBabysitting;
+
+    useEffect(() => {
+        if (isHospitality) {
+            setValue('single_visit_checked', true);
+            setValue('three_days_checked', false);
+            setValue('duration_unit', 'Hours');
+            setValue('has_duration_range', true);
+        }
+    }, [isHospitality, setValue]);
 
     // Handle Image Preview
     const imageList = watch('image');
@@ -393,6 +467,8 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 terms_ar: fullServiceData.terms_ar || '',
                 terms_en: fullServiceData.terms_en || '',
                 acceptance_required: !!fullServiceData.acceptance_required,
+                worker_gender_options: fullServiceData.worker_gender_options || ['Female'],
+                pricing_type: fullServiceData.pricing_type || 'per_hour',
                 
                 workers: fullServiceData.workers?.map((w) => String(w.id)) || [],
                 rules: {
@@ -423,11 +499,18 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             payload.append('status', data.status);
             if (data.service_code) payload.append('service_code', data.service_code);
 
+            (data.worker_gender_options || []).forEach((gender) => {
+                payload.append('worker_gender_options[]', gender);
+            });
+
             if (data.image && data.image[0]) {
                 payload.append('image', data.image[0]);
             }
 
             payload.append('base_price', data.base_price);
+            if (isSecondOrThirdService && data.pricing_type) {
+                payload.append('pricing_type', data.pricing_type);
+            }
 
             // Visit Types
             let vtIndex = 0;
@@ -470,13 +553,15 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             });
 
             // Shifts
-            (data.shifts || []).forEach((shift, i) => {
-                if (shift.start_time) {
-                    payload.append(`shifts[${i}][start_time]`, shift.start_time);
-                    const endTime = calculateEndTime(shift.start_time, data.default_duration);
-                    payload.append(`shifts[${i}][end_time]`, endTime || '');
-                }
-            });
+            if (!isSecondOrThirdService) {
+                (data.shifts || []).forEach((shift, i) => {
+                    if (shift.start_time) {
+                        payload.append(`shifts[${i}][start_time]`, shift.start_time);
+                        const endTime = calculateEndTime(shift.start_time, data.default_duration);
+                        payload.append(`shifts[${i}][end_time]`, endTime || '');
+                    }
+                });
+            }
 
             // Features
             let featureIndex = 0;
@@ -662,7 +747,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="hidden">
+                                <div>
                                     <label className={LABEL_CLASS}>{t('form.category')}</label>
                                     <SelectField registration={register('category_id')}>
                                         <option value="">-- {t('form.category')} --</option>
@@ -681,6 +766,22 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                         <option value="other">{t('types.other')}</option>
                                     </SelectField>
                                 </div>
+                                {isHospitality && (
+                                    <div>
+                                        <label className={LABEL_CLASS}>{isArabic ? 'خيارات جنس العمالة' : 'Worker Gender Options'}</label>
+                                        <div className="flex gap-4 mt-2">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" value="Male" {...register('worker_gender_options')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                                <span className="text-sm font-semibold text-gray-700">{isArabic ? 'ذكور (Male)' : 'Male'}</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" value="Female" {...register('worker_gender_options')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
+                                                <span className="text-sm font-semibold text-gray-700">{isArabic ? 'إناث (Female)' : 'Female'}</span>
+                                            </label>
+                                        </div>
+                                        <ErrorMsg name="worker_gender_options" />
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -752,6 +853,16 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                     <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
                                     <ErrorMsg name="base_price" />
                                 </div>
+                                {isSecondOrThirdService && (
+                                    <div className="mb-4">
+                                        <label className={LABEL_CLASS}>{isArabic ? 'نوع التسعير' : 'Pricing Type'}</label>
+                                        <SelectField registration={register('pricing_type')}>
+                                            <option value="per_hour">{isArabic ? 'سعر بالساعة' : 'Per Hour'}</option>
+                                            <option value="per_service">{isArabic ? 'سعر بالخدمة / الزيارة' : 'Per Service / Visit'}</option>
+                                        </SelectField>
+                                        <ErrorMsg name="pricing_type" />
+                                    </div>
+                                )}
 
                                 <div className="space-y-3 pt-3 border-t border-gray-100">
                                     <div className="flex justify-between items-center">
@@ -807,54 +918,54 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                             )}
                                         </div>
 
-                                        {/* Visit type 2: 3 Days per Week Card */}
-                                        <div 
-                                            onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
-                                            className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
-                                                watchThreeDaysChecked 
-                                                ? 'border-[#E91E63] bg-[#FDF0F3]/20 shadow-sm' 
-                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 bg-white'
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`p-2.5 rounded-xl transition-colors ${watchThreeDaysChecked ? 'bg-[#E91E63]/10 text-[#E91E63]' : 'bg-gray-100 text-gray-500'}`}>
-                                                        <svg className="w-6 h-6 text-inherit animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12h.008v.008H12V12zm0 2.25h.008v.008H12v-.008zm-2.25-2.25h.008v.008H9.75V12zm0 2.25h.008v.008H9.75v-.008zm4.5-2.25h.008v.008H14.25V12zm0 2.25h.008v.008H14.25v-.008z" />
-                                                        </svg>
+                                        {!isHospitality && (
+                                            <div 
+                                                onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
+                                                className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
+                                                    watchThreeDaysChecked 
+                                                    ? 'border-[#E91E63] bg-[#FDF0F3]/20 shadow-sm' 
+                                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 bg-white'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2.5 rounded-xl transition-colors ${watchThreeDaysChecked ? 'bg-[#E91E63]/10 text-[#E91E63]' : 'bg-gray-100 text-gray-500'}`}>
+                                                            <svg className="w-6 h-6 text-inherit animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 12h.008v.008H12V12zm0 2.25h.008v.008H12v-.008zm-2.25-2.25h.008v.008H9.75V12zm0 2.25h.008v.008H9.75v-.008zm4.5-2.25h.008v.008H14.25V12zm0 2.25h.008v.008H14.25v-.008z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="text-sm font-bold text-gray-800">{t('form.three_days_per_week')}</h5>
+                                                            <p className="text-[10px] text-gray-400 mt-0.5">{isArabic ? 'جدول حجز متكرر 3 أيام أسبوعياً' : 'Recurring 3 days/week schedule'}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h5 className="text-sm font-bold text-gray-800">{t('form.three_days_per_week')}</h5>
-                                                        <p className="text-[10px] text-gray-400 mt-0.5">{isArabic ? 'جدول حجز متكرر 3 أيام أسبوعياً' : 'Recurring 3 days/week schedule'}</p>
-                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={watchThreeDaysChecked} 
+                                                        onChange={(e) => setValue('three_days_checked', e.target.checked, { shouldValidate: true })}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" 
+                                                    />
                                                 </div>
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={watchThreeDaysChecked} 
-                                                    onChange={(e) => setValue('three_days_checked', e.target.checked, { shouldValidate: true })}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" 
-                                                />
+                                                
+                                                {watchThreeDaysChecked && (
+                                                    <div onClick={(e) => e.stopPropagation()} className="pt-3 border-t border-gray-100/80">
+                                                        <label className="block text-xs font-semibold text-gray-600 mb-1">{t('form.discount')}</label>
+                                                        <div className="relative">
+                                                            <input 
+                                                                type="number" 
+                                                                {...register('three_days_discount')} 
+                                                                placeholder="0" 
+                                                                className={`${INPUT_CLASS} !py-2 text-sm pe-8`} 
+                                                            />
+                                                            <span className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 text-sm font-medium">%</span>
+                                                        </div>
+                                                        <ErrorMsg name="three_days_discount" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            
-                                            {watchThreeDaysChecked && (
-                                                <div onClick={(e) => e.stopPropagation()} className="pt-3 border-t border-gray-100/80">
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('form.discount')}</label>
-                                                    <div className="relative">
-                                                        <input 
-                                                            type="number" 
-                                                            {...register('three_days_discount')} 
-                                                            placeholder="0" 
-                                                            className={`${INPUT_CLASS} !py-2 text-sm pe-8`} 
-                                                        />
-                                                        <span className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 text-sm font-medium">%</span>
-                                                    </div>
-                                                    <ErrorMsg name="three_days_discount" />
-                                                </div>
-                                            )}
-                                        </div>
-
+                                        )}
                                     </div>
                                     <ErrorMsg name="visit_types" />
                                 </div>
@@ -936,7 +1047,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
 
                     {/* TAB 4: WORKING DAYS & SHIFTS */}
                     {activeTab === 'shifts' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className={isSecondOrThirdService ? "max-w-xl mx-auto" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
                             
                             {/* Working Days Select */}
                             <FormSection icon="calendar" title={t('form.working_days')} description={isArabic ? 'اختر الأيام المتاحة لتقديم الخدمة.' : 'Select days of the week when this service is active.'}>
@@ -951,73 +1062,75 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                             </FormSection>
 
                             {/* Shift Start/End Times List Builder */}
+                            {!isSecondOrThirdService && (
                             <FormSection
-                                icon="clock"
-                                title={t('form.shifts')}
-                                description={isArabic ? 'أدخل وقت البدء والانتهاء لكل شفت عمل يومي.' : 'Add start and end times for daily shifts.'}
-                                action={<button type="button" onClick={() => appendShift({ start_time: DEFAULT_START_TIME, end_time: '' })} className="text-xs font-semibold text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded transition-colors">+ {t('form.add_shift')}</button>}
-                            >
-                                {errors.shifts && !Array.isArray(errors.shifts) && <p className="text-red-500 text-xs mb-3 font-semibold">{errors.shifts.message}</p>}
-                                <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
-                                    {shiftFields.map((field, index) => {
-                                        const startTimeVal = watch(`shifts.${index}.start_time`);
-                                        const defaultDurationVal = watch('default_duration');
-                                        
-                                        const calculatedEnd = calculateEndTime(startTimeVal, defaultDurationVal);
-                                        const rowError = errors.shifts?.[index]?.start_time;
-
-                                        return (
-                                            <div 
-                                                key={field.id} 
-                                                className={`flex flex-col gap-2 bg-gray-50/60 p-3.5 border rounded-xl relative transition-all duration-300 ${
-                                                    rowError 
-                                                    ? 'border-red-300 bg-red-50/10 hover:border-red-400' 
-                                                    : 'border-gray-100 hover:border-[#E91E63]/25'
-                                                }`}
-                                            >
-                                                <div className="flex gap-3 items-center w-full">
-                                                    <span className="text-xs font-bold text-gray-400 shrink-0">#{index + 1}</span>
-                                                    
-                                                    <div className="flex-1 grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
-                                                                {isArabic ? 'وقت البدء' : 'Start Time'}
-                                                            </label>
-                                                            <input 
-                                                                type="time" 
-                                                                {...register(`shifts.${index}.start_time`)} 
-                                                                className={`${INPUT_CLASS} !py-1.5 text-xs`} 
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
-                                                                {isArabic ? 'وقت الانتهاء' : 'End Time'}
-                                                            </label>
-                                                            <input 
-                                                                type="time" 
-                                                                value={calculatedEnd} 
-                                                                disabled 
-                                                                className={`${INPUT_CLASS} !py-1.5 text-xs bg-gray-100 text-gray-400 cursor-not-allowed`} 
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    {shiftFields.length > 1 && (
-                                                        <button type="button" onClick={() => removeShift(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors mt-4 self-center" aria-label={t('form.remove')}>
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {rowError && (
-                                                    <p className="text-red-500 text-[11px] font-semibold mt-1 ps-7 animate-pulse">
-                                                        {rowError.message}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </FormSection>
+                                                            icon="clock"
+                                                            title={t('form.shifts')}
+                                                            description={isArabic ? 'أدخل وقت البدء والانتهاء لكل شفت عمل يومي.' : 'Add start and end times for daily shifts.'}
+                                                            action={<button type="button" onClick={() => appendShift({ start_time: DEFAULT_START_TIME, end_time: '' })} className="text-xs font-semibold text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded transition-colors">+ {t('form.add_shift')}</button>}
+                                                        >
+                                                            {errors.shifts && !Array.isArray(errors.shifts) && <p className="text-red-500 text-xs mb-3 font-semibold">{errors.shifts.message}</p>}
+                                                            <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                                                                {shiftFields.map((field, index) => {
+                                                                    const startTimeVal = watch(`shifts.${index}.start_time`);
+                                                                    const defaultDurationVal = watch('default_duration');
+                                                                    
+                                                                    const calculatedEnd = calculateEndTime(startTimeVal, defaultDurationVal);
+                                                                    const rowError = errors.shifts?.[index]?.start_time;
+                            
+                                                                    return (
+                                                                        <div 
+                                                                            key={field.id} 
+                                                                            className={`flex flex-col gap-2 bg-gray-50/60 p-3.5 border rounded-xl relative transition-all duration-300 ${
+                                                                                rowError 
+                                                                                ? 'border-red-300 bg-red-50/10 hover:border-red-400' 
+                                                                                : 'border-gray-100 hover:border-[#E91E63]/25'
+                                                                            }`}
+                                                                        >
+                                                                            <div className="flex gap-3 items-center w-full">
+                                                                                <span className="text-xs font-bold text-gray-400 shrink-0">#{index + 1}</span>
+                                                                                
+                                                                                <div className="flex-1 grid grid-cols-2 gap-3">
+                                                                                    <div>
+                                                                                        <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
+                                                                                            {isArabic ? 'وقت البدء' : 'Start Time'}
+                                                                                        </label>
+                                                                                        <input 
+                                                                                            type="time" 
+                                                                                            {...register(`shifts.${index}.start_time`)} 
+                                                                                            className={`${INPUT_CLASS} !py-1.5 text-xs`} 
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
+                                                                                            {isArabic ? 'وقت الانتهاء' : 'End Time'}
+                                                                                        </label>
+                                                                                        <input 
+                                                                                            type="time" 
+                                                                                            value={calculatedEnd} 
+                                                                                            disabled 
+                                                                                            className={`${INPUT_CLASS} !py-1.5 text-xs bg-gray-100 text-gray-400 cursor-not-allowed`} 
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                            
+                                                                                {shiftFields.length > 1 && (
+                                                                                    <button type="button" onClick={() => removeShift(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors mt-4 self-center" aria-label={t('form.remove')}>
+                                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                            {rowError && (
+                                                                                <p className="text-red-500 text-[11px] font-semibold mt-1 ps-7 animate-pulse">
+                                                                                    {rowError.message}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </FormSection>
+                            )}
                         </div>
                     )}
 

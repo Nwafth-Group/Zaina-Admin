@@ -180,6 +180,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     </Link>
 
                     <Link
+                        to="/mobile-notifications"
+                        onClick={handleLinkClick}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                            isActive('/mobile-notifications')
+                            ? 'bg-[#E91E63] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                        }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.07 6.07 0 00-1-3.59V6a3 3 0 00-6 0v1.41A6.07 6.07 0 0010 11v3.159c0 .538-.214 1.055-.595 1.436L8 17h5m4 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        {t('sidebar.mobile_notifications')}
+                    </Link>
+
+                    <Link
                         to="/coupons"
                         onClick={handleLinkClick}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
@@ -208,6 +223,23 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.073c0 1.313-.953 2.439-2.253 2.632a48.81 48.81 0 01-11.994 0c-1.3-.193-2.253-1.319-2.253-2.632V14.15M8.25 6.75h7.5a2.25 2.25 0 012.25 2.25v1.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25V9a2.25 2.25 0 012.25-2.25zM9 6.75V5.25A2.25 2.25 0 0111.25 3h1.5A2.25 2.25 0 0115 5.25v1.5" />
                             </svg>
                             {t('sidebar.employees')}
+                        </Link>
+                    )}
+
+                    {hasPermission('roles.view') && (
+                        <Link
+                            to="/roles"
+                            onClick={handleLinkClick}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                                isActive('/roles')
+                                ? 'bg-[#E91E63] text-white shadow-md'
+                                : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                            }`}
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                            </svg>
+                            {t('sidebar.roles')}
                         </Link>
                     )}
 

@@ -45,6 +45,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
         password: yup.string().when('$isEditMode', (isEdit, schema) => (
             isEdit[0] ? schema.nullable() : schema.required(t('validation.required')).min(6, t('validation.min_password'))
         )),
+        image: yup.mixed().nullable(),
     });
 
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
@@ -77,11 +78,34 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
 
     const submitMutation = useMutation({
         mutationFn: async (data) => {
-            const payload = { ...data };
-            if (isEditMode && !payload.password) delete payload.password;
+            const formData = new FormData();
+            
+            // Build FormData fields
+            Object.entries(data).forEach(([key, value]) => {
+                if (key === 'roles') {
+                    if (Array.isArray(value)) {
+                        value.forEach(role => formData.append('roles[]', role));
+                    }
+                } else if (key === 'image') {
+                    if (value && value[0]) {
+                        formData.append('image', value[0]); // Upload first selected file
+                    }
+                } else if (value !== undefined && value !== null) {
+                    if (key === 'password' && isEditMode && !value) return; // skip empty passwords
+                    formData.append(key, value);
+                }
+            });
+
+            if (isEditMode) {
+                formData.append('_method', 'PUT');
+            }
+
             const url = isEditMode ? `/admin/employees/${employeeToEdit.id}` : '/admin/employees';
-            const method = isEditMode ? 'put' : 'post';
-            return axiosInstance[method](url, payload);
+            return axiosInstance.post(url, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
         },
         onSuccess: (response) => {
             toast.success(response.data?.message || 'تم حفظ بيانات الموظف بنجاح');
@@ -133,10 +157,17 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
                         <ErrorMsg name="phone_number" />
                     </div>
                 </div>
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.password')}</label>
-                    <input type="password" {...register('password')} placeholder={isEditMode ? t('form.password_hint') : '********'} className={`${INPUT_CLASS} ${errors.password ? 'border-red-500' : ''}`} />
-                    <ErrorMsg name="password" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className={LABEL_CLASS}>{t('form.password')}</label>
+                        <input type="password" {...register('password')} placeholder={isEditMode ? t('form.password_hint') : '********'} className={`${INPUT_CLASS} ${errors.password ? 'border-red-500' : ''}`} />
+                        <ErrorMsg name="password" />
+                    </div>
+                    <div>
+                        <label className={LABEL_CLASS}>{t('form.profile_image', { defaultValue: 'صورة البروفايل' })}</label>
+                        <input type="file" accept="image/*" {...register('image')} className={`${INPUT_CLASS} ${errors.image ? 'border-red-500' : ''}`} />
+                        <ErrorMsg name="image" />
+                    </div>
                 </div>
             </FormSection>
 

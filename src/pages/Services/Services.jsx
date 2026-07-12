@@ -180,15 +180,17 @@ export default function Services() {
                     </button>
 
                     {/* Add new */}
-                    <button
-                        onClick={() => setActionModal({ isOpen: true, serviceToEdit: null })}
-                        className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        {t('add_new')}
-                    </button>
+                    {false && (
+                        <button
+                            onClick={() => setActionModal({ isOpen: true, serviceToEdit: null })}
+                            className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            {t('add_new')}
+                        </button>
+                    )}
                 </div>
             </div>
 
