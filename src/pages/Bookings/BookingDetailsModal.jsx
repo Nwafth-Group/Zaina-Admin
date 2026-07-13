@@ -230,6 +230,21 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         <Row label={t('details.date')} value={booking.booking_date} />
                                         <Row label={t('details.time')} value={booking.time_slot} />
                                         <Row label={t('details.workers')} value={booking.workers?.length ? booking.workers.map((w) => w.name).join(', ') : '—'} />
+                                        {booking.number_of_workers !== null && booking.number_of_workers !== undefined && (
+                                            <Row label={isArabic ? 'عدد العاملات المطلوب' : 'Requested Workers Count'} value={booking.number_of_workers} />
+                                        )}
+                                        {booking.worker_gender && (
+                                            <Row label={isArabic ? 'جنس العاملة المطلوب' : 'Requested Gender'} value={isArabic ? (booking.worker_gender === 'Female' ? 'أنثى' : 'ذكر') : booking.worker_gender} />
+                                        )}
+                                        {booking.number_of_children !== null && booking.number_of_children !== undefined && (
+                                            <Row label={t('details.number_of_children')} value={booking.number_of_children} />
+                                        )}
+                                        {booking.child_age_groups && booking.child_age_groups.length > 0 && (
+                                            <Row 
+                                                label={t('details.child_age_groups')} 
+                                                value={booking.child_age_groups.map(group => isArabic ? group.name_ar : group.name_en).join(', ')} 
+                                            />
+                                        )}
                                     </FormSection>
 
                                     {booking.status === 'cancelled' && (
@@ -265,6 +280,46 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                                     {booking.refund_destination && (
                                                         <Row label={isArabic ? 'وجهة الاسترداد' : 'Refund Destination'} value={booking.refund_destination} />
                                                     )}
+                                                </div>
+                                            )}
+                                        </FormSection>
+                                    )}
+
+                                    {booking.reviews && (booking.reviews.service || booking.reviews.workers?.length > 0) && (
+                                        <FormSection icon="star" title={isArabic ? 'تقييمات الحجز' : 'Booking Ratings'}>
+                                            {booking.reviews.service && (
+                                                <div className="mb-3 pb-3 border-b border-gray-100">
+                                                    <p className="text-sm font-semibold text-gray-800">{isArabic ? 'تقييم الخدمة' : 'Service Rating'}</p>
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <span className="text-amber-500 font-bold text-sm">★ {booking.reviews.service.rating} / 5</span>
+                                                        <span className="text-xs text-gray-400">({booking.reviews.service.percentage}%)</span>
+                                                    </div>
+                                                    {booking.reviews.service.comment && (
+                                                        <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 mt-2 italic">
+                                                            "{booking.reviews.service.comment}"
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {booking.reviews.workers && booking.reviews.workers.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <p className="text-sm font-semibold text-gray-800">{isArabic ? 'تقييم العاملات' : 'Workers Ratings'}</p>
+                                                    {booking.reviews.workers.map((w, idx) => (
+                                                        <div key={idx} className="p-3 border border-gray-100 bg-gray-50/50 rounded-xl">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-sm font-semibold text-gray-700">{w.worker_name}</span>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="text-amber-500 font-bold text-xs">★ {w.rating} / 5</span>
+                                                                </div>
+                                                            </div>
+                                                            {w.comment && (
+                                                                <p className="text-xs text-gray-600 bg-white p-2 rounded-lg border border-gray-100 mt-1.5 italic">
+                                                                    "{w.comment}"
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </FormSection>

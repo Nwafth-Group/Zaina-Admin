@@ -104,21 +104,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                         {t('sidebar.clients')}
                     </Link>
 
-                    <Link
-                        to="/categories"
-                        onClick={handleLinkClick}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
-                            isActive('/categories') 
-                            ? 'bg-[#E91E63] text-white shadow-md' 
-                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
-                        }`}
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
-                        {t('sidebar.category_management')}
-                    </Link>
-
                      <Link
                         to="/services"
                         onClick={handleLinkClick}
@@ -195,6 +180,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     </Link>
 
                     <Link
+                        to="/legal-documents"
+                        onClick={handleLinkClick}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                            isActive('/legal-documents')
+                            ? 'bg-[#E91E63] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                        }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        {t('sidebar.terms_conditions')}
+                    </Link>
+
+                    <Link
                         to="/coupons"
                         onClick={handleLinkClick}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
@@ -207,6 +207,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                         {t('sidebar.coupons', { defaultValue: 'Coupons' })}
+                    </Link>
+
+                    <Link
+                        to="/reports"
+                        onClick={handleLinkClick}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                            isActive('/reports')
+                            ? 'bg-[#E91E63] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                        }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {t('sidebar.reports', { defaultValue: 'Reports' })}
                     </Link>
 
                     {hasPermission('employees.view') && (

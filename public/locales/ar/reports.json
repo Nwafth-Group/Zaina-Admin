@@ -1,0 +1,56 @@
+{
+  "title": "بلاغات مشاكل خدمات الحجز",
+  "table": {
+    "report_id": "رقم البلاغ",
+    "report_number": "رقم التذكرة",
+    "booking_id": "رقم الحجز",
+    "customer": "العميل",
+    "service": "الخدمة",
+    "worker": "العاملة المعينة",
+    "reason": "سبب المشكلة",
+    "status": "الحالة",
+    "created_date": "تاريخ التقديم",
+    "actions": "الإجراءات"
+  },
+  "status": {
+    "submitted": "تم التقديم",
+    "under_review": "قيد المراجعة",
+    "in_progress": "قيد التنفيذ",
+    "resolved": "تم الحل",
+    "rejected": "مرفوض"
+  },
+  "reasons": {
+    "worker_didnt_show_up": "العاملة لم تحضر",
+    "late_arrival": "وصول متأخر",
+    "poor_service_quality": "جودة خدمة ضعيفة",
+    "wrong_charges": "رسوم غير صحيحة",
+    "other": "أخرى"
+  },
+  "details": {
+    "title": "تفاصيل البلاغ",
+    "close": "إغلاق",
+    "info_section": "معلومات البلاغ",
+    "booking_section": "معلومات الحجز",
+    "customer_section": "بيانات العميل",
+    "service_section": "الخدمة ونوع الزيارة",
+    "worker_section": "بيانات العاملة",
+    "notes_section": "ملاحظات الإدارة الداخلية",
+    "history_section": "الجدول الزمني للحالة",
+    "no_worker": "لم يتم الإبلاغ عن عاملة محددة أو تعيين عاملة.",
+    "no_notes": "لا توجد ملاحظات داخلية بعد.",
+    "no_history": "لا توجد تحديثات مسجلة للحالة بعد.",
+    "add_note_placeholder": "أدخل ملاحظات داخلية للإدارة...",
+    "change_status_btn": "تغيير الحالة",
+    "assign_btn": "تعيين",
+    "assign_placeholder": "اختر موظفاً...",
+    "add_note_btn": "إضافة ملاحظة",
+    "resolve_btn": "حل البلاغ",
+    "reject_btn": "رفض البلاغ",
+    "reason_label": "السبب",
+    "description_label": "الوصف",
+    "status_label": "الحالة الحالية",
+    "assigned_admin_label": "الموظف المسؤول"
+  },
+  "loading": "جاري تحميل البلاغات...",
+  "no_data": "لم يتم العثور على بلاغات."
+}

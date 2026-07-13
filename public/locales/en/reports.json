@@ -1,0 +1,56 @@
+{
+  "title": "Booking Service Issue Reports",
+  "table": {
+    "report_id": "Report ID",
+    "report_number": "Ticket Number",
+    "booking_id": "Booking ID",
+    "customer": "Customer",
+    "service": "Service",
+    "worker": "Assigned Worker",
+    "reason": "Issue Reason",
+    "status": "Status",
+    "created_date": "Submission Date",
+    "actions": "Actions"
+  },
+  "status": {
+    "submitted": "Submitted",
+    "under_review": "Under Review",
+    "in_progress": "In Progress",
+    "resolved": "Resolved",
+    "rejected": "Rejected"
+  },
+  "reasons": {
+    "worker_didnt_show_up": "Worker Didn't Show Up",
+    "late_arrival": "Late Arrival",
+    "poor_service_quality": "Poor Service Quality",
+    "wrong_charges": "Wrong Charges",
+    "other": "Other"
+  },
+  "details": {
+    "title": "Report Details",
+    "close": "Close",
+    "info_section": "Report Information",
+    "booking_section": "Booking Information",
+    "customer_section": "Customer Details",
+    "service_section": "Service & Visit Type",
+    "worker_section": "Worker Details",
+    "notes_section": "Admin Internal Notes",
+    "history_section": "Status Timeline",
+    "no_worker": "No worker was reported or assigned.",
+    "no_notes": "No internal notes yet.",
+    "no_history": "No status updates recorded yet.",
+    "add_note_placeholder": "Enter internal admin notes...",
+    "change_status_btn": "Change Status",
+    "assign_btn": "Assign",
+    "assign_placeholder": "Select employee...",
+    "add_note_btn": "Add Note",
+    "resolve_btn": "Resolve Report",
+    "reject_btn": "Reject Report",
+    "reason_label": "Reason",
+    "description_label": "Description",
+    "status_label": "Current Status",
+    "assigned_admin_label": "Assigned Officer"
+  },
+  "loading": "Loading reports...",
+  "no_data": "No reports found."
+}

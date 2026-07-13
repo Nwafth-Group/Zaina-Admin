@@ -251,9 +251,12 @@ export default function Bookings() {
                             <th className="px-4 py-4">{t('table.ref')}</th>
                             <th className="px-4 py-4">{t('table.customer')}</th>
                             <th className="px-4 py-4">{t('table.service')}</th>
+                            <th className="px-4 py-4 whitespace-nowrap">{isArabic ? 'نوع السعر' : 'Price Type'}</th>
+                            <th className="px-4 py-4 whitespace-nowrap">{isArabic ? 'جنس العمالة' : 'Gender'}</th>
+                            <th className="px-4 py-4 text-center whitespace-nowrap">{isArabic ? 'العدد المطلوب' : 'Req. Workers'}</th>
                             <th className="px-4 py-4">{t('table.visit_type')}</th>
                             <th className="px-4 py-4">{t('table.schedule')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.workers')}</th>
+                            <th className="px-4 py-4 text-center">{isArabic ? 'العمالة المسندة' : 'Assigned Workers'}</th>
                             <th className="px-4 py-4 text-center">{t('table.amount')}</th>
                             <th className="px-4 py-4 text-center">{t('table.status')}</th>
                             <th className="px-4 py-4 text-center">{t('table.payment')}</th>
@@ -263,7 +266,7 @@ export default function Bookings() {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan="13" className="px-6 py-12 text-center text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
                                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
@@ -275,7 +278,7 @@ export default function Bookings() {
                             </tr>
                         ) : bookings.length === 0 ? (
                             <tr>
-                                <td colSpan="10" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
+                                <td colSpan="13" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
                             </tr>
                         ) : (
                             bookings.map((b) => (
@@ -294,6 +297,31 @@ export default function Bookings() {
                                     {/* Service */}
                                     <td className="px-4 py-3">
                                         <span className="text-sm font-medium text-gray-600 line-clamp-1">{b.service_name || '—'}</span>
+                                    </td>
+
+                                    {/* Price Type */}
+                                    <td className="px-4 py-3">
+                                        <span className="text-sm text-gray-600 whitespace-nowrap">
+                                            {b.pricing_type === 'per_hour' 
+                                                ? (isArabic ? 'بالساعة' : 'Per Hour') 
+                                                : (isArabic ? 'بالخدمة' : 'Per Service')}
+                                        </span>
+                                    </td>
+
+                                    {/* Gender */}
+                                    <td className="px-4 py-3">
+                                        <span className="text-sm text-gray-600 whitespace-nowrap">
+                                            {b.worker_gender 
+                                                ? (isArabic 
+                                                    ? (b.worker_gender === 'Male' ? 'ذكور' : 'إناث') 
+                                                    : b.worker_gender) 
+                                                : '—'}
+                                        </span>
+                                    </td>
+
+                                    {/* Requested Workers */}
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm font-medium text-gray-700">{b.number_of_workers || 1}</span>
                                     </td>
 
                                     {/* Visit Type */}

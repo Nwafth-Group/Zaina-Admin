@@ -59,7 +59,9 @@
     "confirm_cancel": "هل أنت متأكد من إلغاء هذا الحجز؟",
     "cancel_reason": "سبب الإلغاء (مطلوب)",
     "keep": "إبقاء الحجز",
-    "confirm_cancel_btn": "نعم، إلغاء"
+    "confirm_cancel_btn": "نعم، إلغاء",
+    "number_of_children": "عدد الأطفال",
+    "child_age_groups": "الفئات العمرية للأطفال"
   },
   "status": {
     "Upcoming": "قادم",

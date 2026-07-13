@@ -23,6 +23,8 @@ import Cities from './pages/Settings/Cities.jsx';
 import Areas from './pages/Settings/Areas.jsx';
 import Roles from './pages/Roles/Roles.jsx';
 import MobileNotifications from './pages/Notifications/MobileNotifications.jsx';
+import Reports from './pages/Reports/Reports.jsx';
+import LegalDocuments from './pages/LegalDocuments/LegalDocuments.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -103,6 +105,14 @@ export const router = createBrowserRouter([
         {
           path: 'coupons',
           element: <Coupons />,
+        },
+        {
+          path: 'legal-documents',
+          element: <LegalDocuments />,
+        },
+        {
+          path: 'reports',
+          element: <Reports />,
         },
         {
           // Location management is gated behind the location.edit permission

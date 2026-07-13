@@ -16,7 +16,8 @@
     "employees": "Employees",
     "settings": "Settings",
     "roles": "Roles & Permissions",
-    "mobile_notifications": "Mobile Notifications"
+    "mobile_notifications": "Mobile Notifications",
+    "terms_conditions": "Terms & Conditions"
   },
   "header": {
     "welcome": "Welcome",

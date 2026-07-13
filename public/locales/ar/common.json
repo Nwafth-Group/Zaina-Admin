@@ -16,7 +16,8 @@
     "employees": "الموظفين",
     "settings": "الإعدادات",
     "roles": "الأدوار والصلاحيات",
-    "mobile_notifications": "إشعارات الهاتف"
+    "mobile_notifications": "إشعارات الهاتف",
+    "terms_conditions": "الشروط والأحكام"
   },
   "header": {
     "welcome": "مرحباً",

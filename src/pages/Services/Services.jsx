@@ -194,125 +194,117 @@ export default function Services() {
                 </div>
             </div>
 
-            {/* حاوية الجدول (Responsive Horizontal Scroll) */}
-            <div className="overflow-x-auto w-full">
-                <table className="w-full text-sm text-left rtl:text-right text-gray-500 min-w-[960px]">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-4 py-4 w-16 text-center">{t('table.image')}</th>
-                            <th className="px-4 py-4">{t('table.name')}</th>
-                            <th className="px-4 py-4">{t('table.base_price')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.type')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.rating')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.status')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.actions')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
-                                    <div className="flex justify-center items-center gap-3">
-                                        <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
-                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-                                            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
+            {/* Grid of Service Cards */}
+            <div className="p-4 md:p-6 bg-gray-50/50">
+                {isLoading ? (
+                    <div className="flex justify-center items-center py-20 gap-3">
+                        <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
+                            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
+                        </svg>
+                        <span className="text-lg font-medium text-gray-700">{t('loading')}</span>
+                    </div>
+                ) : services.length === 0 ? (
+                    <div className="text-center py-20 text-gray-400 bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                        {t('no_data')}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {pagedServices.map((service) => (
+                            <div
+                                key={service.id}
+                                onClick={() => setDetailsId(service.id)}
+                                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
+                            >
+                                {/* Image & Badges cover */}
+                                <div className="relative h-48 w-full bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100">
+                                    {service.image ? (
+                                        <img
+                                            src={service.image}
+                                            alt={service.name_en}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    ) : (
+                                        <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        <span className="text-lg font-medium">{t('loading')}</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : services.length === 0 ? (
-                            <tr>
-                                <td colSpan="7" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
-                            </tr>
-                        ) : (
-                            pagedServices.map((service) => (
-                                <tr key={service.id} onClick={() => setDetailsId(service.id)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
-                                    
-                                    {/* 1. الصورة */}
-                                    <td className="px-4 py-3">
-                                        <div className="w-12 h-12 mx-auto rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
-                                            {service.image ? (
-                                                <img src={service.image} alt={service.name_en} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    </td>
+                                    )}
 
-                                    {/* 2. اسم الخدمة */}
-                                    <td className="px-4 py-3">
-                                        <p className="font-bold text-gray-800 line-clamp-1">
+                                    {/* Status Badge */}
+                                    <div className={`absolute top-3 ltr:left-3 rtl:right-3 px-2.5 py-0.5 rounded-full text-xs font-semibold border shadow-sm z-10 ${
+                                        service.status === 'active'
+                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                            : 'bg-gray-50 text-gray-600 border-gray-200'
+                                    }`}>
+                                        {service.status === 'active' ? t('status.active') : t('status.inactive')}
+                                    </div>
+
+                                    {/* Action RowActionsMenu Overlay */}
+                                    <div className="absolute top-3 ltr:right-3 rtl:left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                                        <div className="bg-white/95 backdrop-blur p-1 rounded-full shadow-sm hover:bg-white transition-all">
+                                            <RowActionsMenu
+                                                label=""
+                                                items={[
+                                                    {
+                                                        key: 'edit',
+                                                        label: t('actions.edit'),
+                                                        icon: <EditIcon />,
+                                                        onClick: () => setActionModal({ isOpen: true, serviceToEdit: service }),
+                                                    },
+                                                    {
+                                                        key: 'toggle',
+                                                        label: t('actions.toggle_status'),
+                                                        icon: <ToggleIcon />,
+                                                        onClick: () => toggleStatusMutation.mutate(service.id),
+                                                        disabled: toggleStatusMutation.isPending,
+                                                    },
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-gray-800 line-clamp-1 group-hover:text-[#E91E63] transition-colors">
                                             {currentLang === 'ar' ? service.name_ar : service.name_en}
-                                        </p>
-                                        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">
+                                        </h3>
+                                        <p className="text-xs text-gray-400 line-clamp-2 mt-1.5 min-h-[32px]">
                                             {currentLang === 'ar' ? service.description_ar : service.description_en}
                                         </p>
-                                    </td>
+                                    </div>
 
-                                    {/* السعر الأساسي */}
-                                    <td className="px-4 py-3">
-                                        <span className="font-semibold text-gray-700 whitespace-nowrap">
-                                            {service.base_price} {service.price_details?.currency || 'EGP'}
-                                        </span>
-                                    </td>
-
-                                    {/* 4. نوع الخدمة */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getTypeBadgeStyles(service.type)}`}>
-                                            {t(`types.${service.type}`)}
-                                        </span>
-                                    </td>
-
-                                    {/* 5. التقييم */}
-                                    <td className="px-4 py-3 text-center">
-                                        <div className="flex items-center justify-center gap-1 text-yellow-500 font-bold">
-                                            <span>{service.avg_rating}</span>
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                            </svg>
+                                    <div className="border-t border-gray-50 pt-3 space-y-2">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400 text-xs">{t('table.base_price')}</span>
+                                            <span className="font-extrabold text-gray-800">
+                                                {service.base_price} {service.price_details?.currency || 'EGP'}
+                                            </span>
                                         </div>
-                                    </td>
 
-                                    {/* 6. الحالة */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                                            service.status === 'active' 
-                                            ? 'bg-green-100 text-green-700' 
-                                            : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                            {service.status === 'active' ? t('status.active') : t('status.inactive')}
-                                        </span>
-                                    </td>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400 text-xs">{t('table.type')}</span>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border whitespace-nowrap ${getTypeBadgeStyles(service.type)}`}>
+                                                {t(`types.${service.type}`)}
+                                            </span>
+                                        </div>
 
-                                    {/* 7. الإجراءات */}
-                                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                                        <RowActionsMenu
-                                            label={t('table.actions')}
-                                            items={[
-                                                {
-                                                    key: 'edit',
-                                                    label: t('actions.edit'),
-                                                    icon: <EditIcon />,
-                                                    onClick: () => setActionModal({ isOpen: true, serviceToEdit: service }),
-                                                },
-                                                {
-                                                    key: 'toggle',
-                                                    label: t('actions.toggle_status'),
-                                                    icon: <ToggleIcon />,
-                                                    onClick: () => toggleStatusMutation.mutate(service.id),
-                                                    disabled: toggleStatusMutation.isPending,
-                                                },
-                                            ]}
-                                        />
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400 text-xs">{t('table.rating')}</span>
+                                            <div className="flex items-center gap-1 text-yellow-500 font-bold text-xs">
+                                                <span>{service.avg_rating}</span>
+                                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Pagination */}

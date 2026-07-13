@@ -59,7 +59,9 @@
     "confirm_cancel": "Are you sure you want to cancel this booking?",
     "cancel_reason": "Cancellation reason (required)",
     "keep": "Keep booking",
-    "confirm_cancel_btn": "Yes, cancel"
+    "confirm_cancel_btn": "Yes, cancel",
+    "number_of_children": "Number of Children",
+    "child_age_groups": "Children Age Groups"
   },
   "status": {
     "Upcoming": "Upcoming",

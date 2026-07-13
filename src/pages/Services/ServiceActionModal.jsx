@@ -253,6 +253,51 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 const { min_workers } = this.parent;
                 return value >= min_workers;
             }),
+        min_children: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable()
+            .when('category_id', {
+                is: (val) => {
+                    const selectedCat = categories?.find(c => String(c.id) === String(val));
+                    return selectedCat && (selectedCat.name_en?.toLowerCase().includes('babysitting') || selectedCat.name_ar?.includes('أطفال') || selectedCat.name_en?.toLowerCase().includes('babysitter'));
+                },
+                then: (s) => s.required(t('validation.required')).min(1),
+                otherwise: (s) => s.nullable()
+            }),
+        max_children: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable()
+            .when('category_id', {
+                is: (val) => {
+                    const selectedCat = categories?.find(c => String(c.id) === String(val));
+                    return selectedCat && (selectedCat.name_en?.toLowerCase().includes('babysitting') || selectedCat.name_ar?.includes('أطفال') || selectedCat.name_en?.toLowerCase().includes('babysitter'));
+                },
+                then: (s) => s.required(t('validation.required')).min(1)
+                    .test('max_children_greater', isArabic ? 'الحد الأقصى يجب أن يكون أكبر من أو يساوي الحد الأدنى' : 'Max children must be >= Min children', function(value) {
+                        const { min_children } = this.parent;
+                        return value >= min_children;
+                    }),
+                otherwise: (s) => s.nullable()
+            }),
+        child_age_groups: yup.array().of(
+            yup.object().shape({
+                name_ar: yup.string().required(t('validation.required')),
+                name_en: yup.string().required(t('validation.required')),
+                age_from: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(0),
+                age_to: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(0)
+                    .test('age_to_greater', isArabic ? 'العمر الأقصى يجب أن يكون أكبر من أو يساوي الأدنى' : 'Age To must be >= Age From', function(value) {
+                        const { age_from } = this.parent;
+                        return value >= age_from;
+                    }),
+                calculation_type: yup.string().required(t('validation.required')).oneOf(['per_child', 'ratio_based']),
+                children_count: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
+                required_worker_count: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
+                status: yup.string().required(t('validation.required')).oneOf(['active', 'inactive']),
+            })
+        ).nullable().when('category_id', {
+            is: (val) => {
+                const selectedCat = categories?.find(c => String(c.id) === String(val));
+                return selectedCat && (selectedCat.name_en?.toLowerCase().includes('babysitting') || selectedCat.name_ar?.includes('أطفال') || selectedCat.name_en?.toLowerCase().includes('babysitter'));
+            },
+            then: (s) => s.required(t('validation.required')).min(1, isArabic ? 'يجب إدخال فئة عمرية واحدة نشطة على الأقل' : 'At least one active child age group must be configured'),
+            otherwise: (s) => s.nullable()
+        }),
 
         working_days: yup.array().of(yup.string()),
         shifts: yup.array().of(yup.object().shape({
@@ -315,6 +360,9 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             max_duration: '',
             min_workers: 1,
             max_workers: 1,
+            min_children: '',
+            max_children: '',
+            child_age_groups: [],
             working_days: [],
             shifts: [{ start_time: '09:00', end_time: '' }],
             features: [],
@@ -338,6 +386,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const { fields: featureFields, append: appendFeature, remove: removeFeature } = useFieldArray({ control, name: 'features' });
     const { fields: coverageFields, append: appendCoverage, remove: removeCoverage } = useFieldArray({ control, name: 'coverages' });
     const { fields: shiftFields, append: appendShift, remove: removeShift } = useFieldArray({ control, name: 'shifts' });
+    const { fields: childAgeGroupFields, append: appendChildAgeGroup, remove: removeChildAgeGroup } = useFieldArray({ control, name: 'child_age_groups' });
 
     const watchType = watch('type');
     const watchHasDurationRange = watch('has_duration_range');
@@ -361,13 +410,13 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const isSecondOrThirdService = isHospitality || isBabysitting;
 
     useEffect(() => {
-        if (isHospitality) {
+        if (isHospitality || isBabysitting) {
             setValue('single_visit_checked', true);
             setValue('three_days_checked', false);
             setValue('duration_unit', 'Hours');
             setValue('has_duration_range', true);
         }
-    }, [isHospitality, setValue]);
+    }, [isHospitality, isBabysitting, setValue]);
 
     // Handle Image Preview
     const imageList = watch('image');
@@ -459,6 +508,9 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 max_duration: fullServiceData.max_duration || '',
                 min_workers: fullServiceData.min_workers || 1,
                 max_workers: fullServiceData.max_workers || 1,
+                min_children: fullServiceData.min_children || '',
+                max_children: fullServiceData.max_children || '',
+                child_age_groups: fullServiceData.child_age_groups || [],
                 
                 working_days: workingDaysSet,
                 shifts: shifts.length ? shifts : [{ start_time: '09:00', end_time: '' }],
@@ -546,6 +598,24 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             }
             payload.append('min_workers', data.min_workers || 1);
             payload.append('max_workers', data.max_workers || 1);
+            if (data.min_children !== undefined && data.min_children !== null && data.min_children !== '') {
+                payload.append('min_children', String(data.min_children));
+            }
+            if (data.max_children !== undefined && data.max_children !== null && data.max_children !== '') {
+                payload.append('max_children', String(data.max_children));
+            }
+            if (data.child_age_groups && data.child_age_groups.length) {
+                data.child_age_groups.forEach((group, index) => {
+                    payload.append('child_age_groups[' + index + '][name_ar]', group.name_ar);
+                    payload.append('child_age_groups[' + index + '][name_en]', group.name_en);
+                    payload.append('child_age_groups[' + index + '][age_from]', String(group.age_from));
+                    payload.append('child_age_groups[' + index + '][age_to]', String(group.age_to));
+                    payload.append('child_age_groups[' + index + '][calculation_type]', group.calculation_type);
+                    payload.append('child_age_groups[' + index + '][children_count]', String(group.children_count || 1));
+                    payload.append('child_age_groups[' + index + '][required_worker_count]', String(group.required_worker_count || 1));
+                    payload.append('child_age_groups[' + index + '][status]', group.status || 'active');
+                });
+            }
 
             // Working Days
             (data.working_days || []).forEach((day) => {
@@ -767,16 +837,48 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                     </SelectField>
                                 </div>
                                 {isHospitality && (
-                                    <div>
-                                        <label className={LABEL_CLASS}>{isArabic ? 'خيارات جنس العمالة' : 'Worker Gender Options'}</label>
-                                        <div className="flex gap-4 mt-2">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="checkbox" value="Male" {...register('worker_gender_options')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
-                                                <span className="text-sm font-semibold text-gray-700">{isArabic ? 'ذكور (Male)' : 'Male'}</span>
+                                    <div className="col-span-full">
+                                        <label className={LABEL_CLASS}>{isArabic ? 'خيارات جنس العمالة المتاحة' : 'Available Worker Gender Options'}</label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                                            {/* Male option card */}
+                                            <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all ${
+                                                (watch('worker_gender_options') || []).includes('Male')
+                                                    ? 'border-[#E91E63] bg-[#E91E63]/5 ring-1 ring-[#E91E63]'
+                                                     : 'border-gray-200 hover:bg-gray-50'
+                                            }`}>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">👨</span>
+                                                    <div>
+                                                        <div className="font-semibold text-gray-800 text-sm">{isArabic ? 'ذكور' : 'Male'}</div>
+                                                        <div className="text-xs text-gray-500">{isArabic ? 'تفعيل العمال الذكور للمرفق' : 'Enable male workers'}</div>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    value="Male"
+                                                    {...register('worker_gender_options')}
+                                                    className="w-5 h-5 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] focus:ring-offset-0 cursor-pointer accent-[#E91E63]"
+                                                />
                                             </label>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="checkbox" value="Female" {...register('worker_gender_options')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
-                                                <span className="text-sm font-semibold text-gray-700">{isArabic ? 'إناث (Female)' : 'Female'}</span>
+                                            {/* Female option card */}
+                                            <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all ${
+                                                (watch('worker_gender_options') || []).includes('Female')
+                                                    ? 'border-[#E91E63] bg-[#E91E63]/5 ring-1 ring-[#E91E63]'
+                                                     : 'border-gray-200 hover:bg-gray-50'
+                                            }`}>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">👩</span>
+                                                    <div>
+                                                        <div className="font-semibold text-gray-800 text-sm">{isArabic ? 'إناث' : 'Female'}</div>
+                                                        <div className="text-xs text-gray-500">{isArabic ? 'تفعيل العاملات الإناث للمرفق' : 'Enable female workers'}</div>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    value="Female"
+                                                    {...register('worker_gender_options')}
+                                                    className="w-5 h-5 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] focus:ring-offset-0 cursor-pointer accent-[#E91E63]"
+                                                />
                                             </label>
                                         </div>
                                         <ErrorMsg name="worker_gender_options" />
@@ -918,7 +1020,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                             )}
                                         </div>
 
-                                        {!isHospitality && (
+                                        {!isHospitality && !isBabysitting && (
                                             <div 
                                                 onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
                                                 className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
@@ -1042,6 +1144,119 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                     <ErrorMsg name="max_workers" />
                                 </div>
                             </div>
+
+                            {isBabysitting && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                                    <div>
+                                        <label className={LABEL_CLASS}>{isArabic ? 'الحد الأدنى لعدد الأطفال' : 'Minimum Children'}</label>
+                                        <input type="number" {...register('min_children')} className={INPUT_CLASS} />
+                                        <ErrorMsg name="min_children" />
+                                    </div>
+                                    <div>
+                                        <label className={LABEL_CLASS}>{isArabic ? 'الحد الأقصى لعدد الأطفال' : 'Maximum Children'}</label>
+                                        <input type="number" {...register('max_children')} className={INPUT_CLASS} />
+                                        <ErrorMsg name="max_children" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {isBabysitting && (
+                                <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-800">{isArabic ? 'قواعد احتساب جليسة الأطفال حسب الفئات العمرية' : 'Child Age Group Babysitter Calculation Rules'}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5">{isArabic ? 'تحديد فئات الأعمار (بالأشهر) وعدد المربيات المطلوب.' : 'Configure required babysitter count rules per child age group (in months).'}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => appendChildAgeGroup({ name_ar: '', name_en: '', age_from: 0, age_to: 0, calculation_type: 'per_child', children_count: 1, required_worker_count: 1, status: 'active' })}
+                                            className="px-3 py-1.5 text-xs font-bold text-white bg-[#E91E63] hover:bg-[#D81B60] rounded-lg transition-colors"
+                                        >
+                                            {isArabic ? '+ إضافة فئة عمرية' : '+ Add Age Group'}
+                                        </button>
+                                    </div>
+
+                                    {errors.child_age_groups && !Array.isArray(errors.child_age_groups) && (
+                                        <p className="text-xs text-red-500 mt-1">{errors.child_age_groups.message}</p>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        {childAgeGroupFields.map((field, idx) => {
+                                            const calcType = watch('child_age_groups.' + idx + '.calculation_type');
+                                            return (
+                                                <div key={field.id} className="p-4 border border-gray-200 rounded-xl bg-gray-50/30 space-y-4 relative">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeChildAgeGroup(idx)}
+                                                        className="absolute top-4 end-4 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
+                                                    >
+                                                        {isArabic ? 'حذف' : 'Remove'}
+                                                    </button>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'اسم الفئة (عربي)' : 'Group Name (Arabic)'}</label>
+                                                            <input type="text" {...register('child_age_groups.' + idx + '.name_ar')} className={INPUT_CLASS} placeholder="مثال: من حديثي الولادة إلى سنتين" />
+                                                            {errors.child_age_groups?.[idx]?.name_ar && <span className="text-xs text-red-500">{errors.child_age_groups[idx].name_ar.message}</span>}
+                                                        </div>
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'اسم الفئة (إنجليزي)' : 'Group Name (English)'}</label>
+                                                            <input type="text" {...register('child_age_groups.' + idx + '.name_en')} className={INPUT_CLASS} placeholder="e.g. Newborn to 2 Years" />
+                                                            {errors.child_age_groups?.[idx]?.name_en && <span className="text-xs text-red-500">{errors.child_age_groups[idx].name_en.message}</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'العمر من (بالأشهر)' : 'Age From (Months)'}</label>
+                                                            <input type="number" {...register('child_age_groups.' + idx + '.age_from')} className={INPUT_CLASS} min="0" />
+                                                            {errors.child_age_groups?.[idx]?.age_from && <span className="text-xs text-red-500">{errors.child_age_groups[idx].age_from.message}</span>}
+                                                        </div>
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'العمر إلى (بالأشهر)' : 'Age To (Months)'}</label>
+                                                            <input type="number" {...register('child_age_groups.' + idx + '.age_to')} className={INPUT_CLASS} min="0" />
+                                                            {errors.child_age_groups?.[idx]?.age_to && <span className="text-xs text-red-500">{errors.child_age_groups[idx].age_to.message}</span>}
+                                                        </div>
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'الحالة' : 'Status'}</label>
+                                                            <select {...register('child_age_groups.' + idx + '.status')} className={INPUT_CLASS}>
+                                                                <option value="active">{isArabic ? 'نشط' : 'Active'}</option>
+                                                                <option value="inactive">{isArabic ? 'غير نشط' : 'Inactive'}</option>
+                                                            </select>
+                                                            {errors.child_age_groups?.[idx]?.status && <span className="text-xs text-red-500">{errors.child_age_groups[idx].status.message}</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-gray-100">
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'طريقة الاحتساب' : 'Calculation Rule'}</label>
+                                                            <select {...register('child_age_groups.' + idx + '.calculation_type')} className={INPUT_CLASS}>
+                                                                <option value="per_child">{isArabic ? 'لكل طفل' : 'Per Child'}</option>
+                                                                <option value="ratio_based">{isArabic ? 'نسبة وتناسب' : 'Ratio-Based'}</option>
+                                                            </select>
+                                                            {errors.child_age_groups?.[idx]?.calculation_type && <span className="text-xs text-red-500">{errors.child_age_groups[idx].calculation_type.message}</span>}
+                                                        </div>
+                                                        {calcType === 'ratio_based' ? (
+                                                            <div>
+                                                                <label className={LABEL_CLASS}>{isArabic ? 'عدد الأطفال المقابل' : 'Children Count'}</label>
+                                                                <input type="number" {...register('child_age_groups.' + idx + '.children_count')} className={INPUT_CLASS} min="1" />
+                                                                {errors.child_age_groups?.[idx]?.children_count && <span className="text-xs text-red-500">{errors.child_age_groups[idx].children_count.message}</span>}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="hidden" />
+                                                        )}
+                                                        <div>
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'عدد المربيات المطلوب' : 'Required Babysitters'}</label>
+                                                            <input type="number" {...register('child_age_groups.' + idx + '.required_worker_count')} className={INPUT_CLASS} min="1" />
+                                                            {errors.child_age_groups?.[idx]?.required_worker_count && <span className="text-xs text-red-500">{errors.child_age_groups[idx].required_worker_count.message}</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </FormSection>
                     )}
 

@@ -55,6 +55,11 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
     const serviceName = service ? (isArabic ? (service.name_ar || service.name_en) : (service.name_en || service.name_ar)) : '';
     const categoryName = service?.category ? (isArabic ? service.category.name_ar : service.category.name_en) : '—';
     const description = service ? (isArabic ? service.description_ar : service.description_en) : '';
+    const isBabysitting = service?.service_code === 'BABYSITTER_HOURLY' || 
+                          (service?.category?.name_en?.toLowerCase().includes('babysitting') || 
+                           service?.category?.name_en?.toLowerCase().includes('nanny') || 
+                           service?.category?.name_ar?.includes('أطفال') || 
+                           service?.category?.name_en?.toLowerCase().includes('babysitter'));
 
     const sideMenuItem = (key, label, iconPath) => {
         const active = activeTab === key;
@@ -193,17 +198,75 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                          {service.min_workers || 1} - {service.max_workers || 1}
                                                      </span>
                                                  </div>
+                                                 {isBabysitting && (
+                                                     <div className="flex justify-between py-1.5 border-b border-gray-50">
+                                                         <span className="text-sm text-gray-500">{isArabic ? 'الحد الأدنى - الأقصى للأطفال' : 'Min - Max Children'}</span>
+                                                         <span className="text-sm font-medium text-gray-800">
+                                                             {service.min_children || 1} - {service.max_children || 1}
+                                                         </span>
+                                                     </div>
+                                                 )}
                                                   <div className="flex justify-between py-1.5 border-b border-gray-50">
                                                       <span className="text-sm text-gray-50">{isArabic ? 'جنس العمالة المتاح' : 'Available Genders'}</span>
                                                       <span className="text-sm font-medium text-gray-800">
                                                           {service.worker_gender_options ? service.worker_gender_options.join(', ') : 'Female'}
                                                       </span>
                                                   </div>
+                                                 {description && (
+                                                     <div className="mt-4">
+                                                         <p className="text-sm text-gray-500 mb-1">{t('details.description')}</p>
+                                                         <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
+                                                     </div>
+                                                 )}
                                              </div>
-                                             {description && (
-                                                 <div className="mt-4">
-                                                     <p className="text-sm text-gray-500 mb-1">{t('details.description')}</p>
-                                                     <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
+
+                                             {isBabysitting && service.child_age_groups && service.child_age_groups.length > 0 && (
+                                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+                                                     <h4 className="text-sm font-bold text-gray-700 mb-4">{isArabic ? 'قواعد حساب جليسات الأطفال حسب الفئات العمرية' : 'Babysitter Age Group Calculation Rules'}</h4>
+                                                     <div className="overflow-x-auto">
+                                                         <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+                                                             <thead className="text-xs text-gray-700 bg-gray-50 uppercase">
+                                                                 <tr>
+                                                                     <th className="px-4 py-2">{isArabic ? 'الفئة العمرية' : 'Age Group'}</th>
+                                                                     <th className="px-4 py-2">{isArabic ? 'السن من (شهور)' : 'Age From (Months)'}</th>
+                                                                     <th className="px-4 py-2">{isArabic ? 'السن إلى (شهور)' : 'Age To (Months)'}</th>
+                                                                     <th className="px-4 py-2">{isArabic ? 'طريقة الحساب' : 'Calculation Rule'}</th>
+                                                                     <th className="px-4 py-2 text-center">{isArabic ? 'حالة القاعدة' : 'Status'}</th>
+                                                                     <th className="px-4 py-2 text-center">{isArabic ? 'جليسة لكل طفل/نسبة' : 'Babysitters Ratio'}</th>
+                                                                 </tr>
+                                                             </thead>
+                                                             <tbody>
+                                                                 {service.child_age_groups.map((group) => (
+                                                                     <tr key={group.id} className="border-b border-gray-100">
+                                                                         <td className="px-4 py-2 font-medium text-gray-800">
+                                                                             {isArabic ? group.name_ar : group.name_en}
+                                                                         </td>
+                                                                         <td className="px-4 py-2">{group.age_from}</td>
+                                                                         <td className="px-4 py-2">{group.age_to}</td>
+                                                                         <td className="px-4 py-2">
+                                                                             {group.calculation_type === 'per_child'
+                                                                                 ? (isArabic ? 'لكل طفل' : 'Per Child')
+                                                                                 : (isArabic ? 'نسبة وتناسب' : 'Ratio Based')}
+                                                                         </td>
+                                                                         <td className="px-4 py-2 text-center">
+                                                                             <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                                                                 group.status === 'active'
+                                                                                 ? 'bg-green-100 text-green-700'
+                                                                                 : 'bg-gray-100 text-gray-600'
+                                                                             }`}>
+                                                                                 {group.status}
+                                                                             </span>
+                                                                         </td>
+                                                                         <td className="px-4 py-2 text-center font-medium">
+                                                                             {group.calculation_type === 'per_child'
+                                                                                 ? (isArabic ? `${group.required_worker_count} عامل(ة) لكل طفل` : `${group.required_worker_count} worker(s) per child`)
+                                                                                 : (isArabic ? `${group.required_worker_count} عامل(ة) لكل ${group.children_count} أطفال` : `${group.required_worker_count} worker(s) for every ${group.children_count} children`)}
+                                                                         </td>
+                                                                     </tr>
+                                                                 ))}
+                                                             </tbody>
+                                                         </table>
+                                                     </div>
                                                  </div>
                                              )}
                                          </div>
@@ -300,7 +363,56 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                              </div>
                                          )}
 
-                                         {/* 4. Weekly Working Days & Shifts */}
+                                         
+
+                                          {/* Babysitter Age Groups Configuration */}
+                                          {isBabysitting && service.child_age_groups && service.child_age_groups.length > 0 && (
+                                              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                                  <h4 className="text-sm font-bold text-gray-700 mb-4">{isArabic ? 'قواعد احتساب جليسة الأطفال والفئات العمرية' : 'Child Age Groups & Babysitter Calculation Rules'}</h4>
+                                                  <div className="overflow-x-auto">
+                                                      <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+                                                          <thead className="text-xs text-gray-700 bg-gray-50 uppercase">
+                                                              <tr>
+                                                                  <th className="px-4 py-2">{isArabic ? 'اسم الفئة العمرية' : 'Age Group Name'}</th>
+                                                                  <th className="px-4 py-2">{isArabic ? 'النطاق العمري (بالأشهر)' : 'Age Range (Months)'}</th>
+                                                                  <th className="px-4 py-2">{isArabic ? 'طريقة الاحتساب' : 'Calculation Rule'}</th>
+                                                                  <th className="px-4 py-2 text-center">{isArabic ? 'عدد المربيات المطلوب' : 'Req. Babysitters'}</th>
+                                                                  <th className="px-4 py-2 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
+                                                              </tr>
+                                                          </thead>
+                                                          <tbody>
+                                                              {service.child_age_groups.map((group) => (
+                                                                  <tr key={group.id} className="border-b border-gray-100">
+                                                                      <td className="px-4 py-2 font-medium text-gray-800">
+                                                                          {isArabic ? group.name_ar : group.name_en}
+                                                                      </td>
+                                                                      <td className="px-4 py-2 text-gray-600">
+                                                                          {group.age_from} - {group.age_to} {isArabic ? 'أشهر' : 'Months'}
+                                                                      </td>
+                                                                      <td className="px-4 py-2 text-gray-600">
+                                                                          {group.calculation_type === 'per_child'
+                                                                              ? (isArabic ? 'مربيات لكل طفل' : 'Per Child')
+                                                                              : (isArabic ? `مربيات لكل ${group.children_count} أطفال` : `${group.required_worker_count} Babysitter per ${group.children_count} Children`)}
+                                                                      </td>
+                                                                      <td className="px-4 py-2 text-center font-bold text-gray-800">
+                                                                          {group.required_worker_count}
+                                                                      </td>
+                                                                      <td className="px-4 py-2 text-center">
+                                                                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                                                              group.status === 'active'
+                                                                              ? 'bg-green-100 text-green-700'
+                                                                              : 'bg-gray-100 text-gray-600'
+                                                                          }`}>
+                                                                              {group.status === 'active' ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'غير نشط' : 'Inactive')}
+                                                                          </span>
+                                                                      </td>
+                                                                  </tr>
+                                                              ))}
+                                                          </tbody>
+                                                      </table>
+                                                  </div>
+                                              </div>
+                                          )}{/* 4. Weekly Working Days & Shifts */}
                                           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
                                               <div>
                                                   <h4 className="text-sm font-bold text-gray-700 mb-3">{t('form.working_days')}</h4>
