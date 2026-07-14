@@ -128,7 +128,9 @@ export default function Workers() {
         'border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none';
 
     const serviceLabel = (service) =>
-        isArabic ? (service.name_ar || service.name_en) : (service.name_en || service.name_ar);
+        service && typeof service === 'object'
+            ? (isArabic ? (service.name_ar || service.name_en) : (service.name_en || service.name_ar))
+            : '—';
 
     if (isError) return <div className="p-8 text-red-500 font-bold">حدث خطأ: {error.message}</div>;
 
@@ -219,7 +221,9 @@ export default function Workers() {
                                             {worker.image ? (
                                                 <img src={worker.image} alt={worker.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                <span className="text-gray-400 font-bold text-lg">{worker.name.charAt(0)}</span>
+                                                <span className="text-gray-400 font-bold text-lg">
+                                                    {worker.name ? worker.name.charAt(0) : '?'}
+                                                </span>
                                             )}
                                         </div>
                                     </td>

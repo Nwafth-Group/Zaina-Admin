@@ -233,14 +233,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             otherwise: (s) => s.nullable(),
         }),
 
-        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1)
-            .test('min_workers_hosp', isArabic ? 'الحد الأدنى لعدد العمالة هو 2 للضيافة' : 'Minimum workers must be at least 2 for Hospitality Services', function(value) {
-                const categoryId = this.parent.category_id;
-                const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
-                const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
-                if (isHospitality && value < 2) return false;
-                return true;
-            }),
+        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
         max_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1)
             .test('max_workers_hosp', isArabic ? 'الحد الأقصى لعدد العمالة هو 12 للضيافة' : 'Maximum workers must be at most 12 for Hospitality Services', function(value) {
                 const categoryId = this.parent.category_id;
