@@ -43,7 +43,7 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
         enabled: !!workerId,
     });
 
-    const worker = data; // Worker fields are at root of data
+    const worker = data?.worker; // Worker fields are nested inside worker key
     const stats = data?.stats || { total_bookings: 0, completed_bookings: 0, reviews_count: 0 };
     const bookings = data?.latest_bookings || [];
     const reviews = data?.reviews || [];
