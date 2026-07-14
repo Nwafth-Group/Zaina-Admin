@@ -1495,13 +1495,6 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                         <ErrorMsg name="terms_en" />
                                     </div>
                                 </div>
-
-                                <div className="pt-3 border-t border-gray-100">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" {...register('acceptance_required')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]" />
-                                        <span className="text-sm font-semibold text-gray-700">{t('form.acceptance_required')}</span>
-                                    </label>
-                                </div>
                             </FormSection>
                         </div>
                     )}

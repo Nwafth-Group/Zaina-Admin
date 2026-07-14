@@ -21,7 +21,8 @@ const DEFAULT_FILTERS = {
 };
 
 export default function Employees() {
-    const { t } = useTranslation('employees');
+    const { t, i18n } = useTranslation('employees');
+    const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
     const [page, setPage] = useState(1);
@@ -379,7 +380,11 @@ export default function Employees() {
             {/* Filter drawer (slides in from the right) */}
             <div className={`fixed inset-0 z-40 transition-opacity duration-300 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className="absolute inset-0 bg-black/40" onClick={() => setIsFilterOpen(false)} />
-                <aside className={`absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <aside className={`absolute top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${
+                    isArabic
+                        ? `left-0 ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}`
+                        : `right-0 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`
+                }`}>
                     <div className="flex items-center justify-between p-4 border-b border-gray-100">
                         <h3 className="text-lg font-bold text-gray-800">{t('filters.title')}</h3>
                         <button onClick={() => setIsFilterOpen(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" aria-label="close">

@@ -396,7 +396,11 @@ export default function Bookings() {
             {/* Filter drawer */}
             <div className={`fixed inset-0 z-40 transition-opacity duration-300 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className="absolute inset-0 bg-black/40" onClick={() => setIsFilterOpen(false)} />
-                <aside className={`absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <aside className={`absolute top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${
+                    isArabic
+                        ? `left-0 ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}`
+                        : `right-0 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`
+                }`}>
                     <div className="flex items-center justify-between p-4 border-b border-gray-100">
                         <h3 className="text-lg font-bold text-gray-800">{t('filters.title')}</h3>
                         <button onClick={() => setIsFilterOpen(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" aria-label="close">
@@ -411,7 +415,6 @@ export default function Bookings() {
                             <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.payment_label')}</label>
                             <select value={draftFilters.payment_status} onChange={(e) => updateDraft('payment_status', e.target.value)} className={`${selectClass} w-full`}>
                                 <option value="">{t('filters.all_payments')}</option>
-                                <option value="unpaid">{t('payment.unpaid')}</option>
                                 <option value="paid">{t('payment.paid')}</option>
                                 <option value="refunded">{t('payment.refunded')}</option>
                             </select>
@@ -454,9 +457,6 @@ export default function Bookings() {
                             <select value={`${draftFilters.sort_by}:${draftFilters.sort_dir}`} onChange={(e) => handleSortChange(e.target.value)} className={`${selectClass} w-full`}>
                                 <option value="created_at:desc">{t('filters.sort_newest')}</option>
                                 <option value="created_at:asc">{t('filters.sort_oldest')}</option>
-                                <option value="booking_date:desc">{t('filters.sort_date')}</option>
-                                <option value="total_amount:desc">{t('filters.sort_amount_high')}</option>
-                                <option value="total_amount:asc">{t('filters.sort_amount_low')}</option>
                             </select>
                         </div>
                     </div>
