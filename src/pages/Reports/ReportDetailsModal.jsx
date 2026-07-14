@@ -224,50 +224,27 @@ export default function ReportDetailsModal({ reportId, onClose }) {
                             </div>
                         </div>
 
-                        {/* 3. Customer & Worker Details Card */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
-                            {/* Customer Details */}
-                            <div className="bg-white p-5 border border-gray-100 rounded-2xl shadow-sm space-y-3">
-                                <h4 className="font-bold text-gray-800 border-b border-gray-50 pb-2">{t('details.customer_section')}</h4>
-                                {report.customer ? (
-                                    <div className="text-sm space-y-2">
-                                        <div>
-                                            <span className="text-gray-400 block text-xs">{isArabic ? 'اسم العميل' : 'Customer Name'}</span>
-                                            <span className="font-semibold text-gray-700">{report.customer.name}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-400 block text-xs">{isArabic ? 'رقم الجوال' : 'Mobile Number'}</span>
-                                            <span className="font-semibold text-gray-700">{report.customer.phone_number}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-400 block text-xs">{isArabic ? 'البريد الإلكتروني' : 'Email Address'}</span>
-                                            <span className="font-semibold text-gray-700">{report.customer.email || '—'}</span>
-                                        </div>
+                        {/* 3. Customer Details Card */}
+                        <div className="bg-white p-5 border border-gray-100 rounded-2xl shadow-sm space-y-3">
+                            <h4 className="font-bold text-gray-800 border-b border-gray-50 pb-2">{t('details.customer_section')}</h4>
+                            {report.customer ? (
+                                <div className="text-sm space-y-2">
+                                    <div>
+                                        <span className="text-gray-400 block text-xs">{isArabic ? 'اسم العميل' : 'Customer Name'}</span>
+                                        <span className="font-semibold text-gray-700">{report.customer.name}</span>
                                     </div>
-                                ) : (
-                                    <span className="text-gray-400 text-sm">{isArabic ? 'لا توجد بيانات للعميل' : 'No customer details available.'}</span>
-                                )}
-                            </div>
-
-                            {/* Worker Details */}
-                            <div className="bg-white p-5 border border-gray-100 rounded-2xl shadow-sm space-y-3">
-                                <h4 className="font-bold text-gray-800 border-b border-gray-50 pb-2">{t('details.worker_section')}</h4>
-                                {report.worker ? (
-                                    <div className="text-sm space-y-2">
-                                        <div>
-                                            <span className="text-gray-400 block text-xs">{isArabic ? 'اسم العاملة' : 'Worker Name'}</span>
-                                            <span className="font-semibold text-gray-700">{report.worker.name}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-400 block text-xs">{isArabic ? 'رقم الهاتف' : 'Phone Number'}</span>
-                                            <span className="font-semibold text-gray-700">{report.worker.phone_number || '—'}</span>
-                                        </div>
+                                    <div>
+                                        <span className="text-gray-400 block text-xs">{isArabic ? 'رقم الجوال' : 'Mobile Number'}</span>
+                                        <span className="font-semibold text-gray-700">{report.customer.phone_number}</span>
                                     </div>
-                                ) : (
-                                    <p className="text-gray-400 text-sm">{t('details.no_worker')}</p>
-                                )}
-                            </div>
+                                    <div>
+                                        <span className="text-gray-400 block text-xs">{isArabic ? 'البريد الإلكتروني' : 'Email Address'}</span>
+                                        <span className="font-semibold text-gray-700">{report.customer.email || '—'}</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <span className="text-gray-400 text-sm">{isArabic ? 'لا توجد بيانات للعميل' : 'No customer details available.'}</span>
+                            )}
                         </div>
 
                         {/* 4. History/Timeline log */}
@@ -321,60 +298,64 @@ export default function ReportDetailsModal({ reportId, onClose }) {
                             </select>
                         </div>
 
-                        {/* Note area for status changes */}
-                        <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">
-                            <h4 className="font-bold text-gray-800 text-sm">{isArabic ? 'ملاحظة تحديث الحالة (تظهر للعميل)' : 'Status update note (visible to client)'}</h4>
-                            <textarea
-                                value={statusTransitionNote}
-                                onChange={(e) => setStatusTransitionNote(e.target.value)}
-                                placeholder={isArabic ? 'أدخل تفاصيل التحديث أو سبب الرفض/الحل...' : 'Enter note for status transition/resolution...'}
-                                rows={3}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] resize-none"
-                            />
-                        </div>
+                        {report.status !== 'resolved' && report.status !== 'rejected' && (
+                            <>
+                                {/* Note area for status changes */}
+                                <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">
+                                    <h4 className="font-bold text-gray-800 text-sm">{isArabic ? 'ملاحظة تحديث الحالة (تظهر للعميل)' : 'Status update note (visible to client)'}</h4>
+                                    <textarea
+                                        value={statusTransitionNote}
+                                        onChange={(e) => setStatusTransitionNote(e.target.value)}
+                                        placeholder={isArabic ? 'أدخل تفاصيل التحديث أو سبب الرفض/الحل...' : 'Enter note for status transition/resolution...'}
+                                        rows={3}
+                                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] resize-none"
+                                    />
+                                </div>
 
-                        {/* Status Actions */}
-                        <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">
-                            <h4 className="font-bold text-gray-800 text-sm">{t('details.change_status_btn')}</h4>
-                            
-                            <div className="flex flex-col gap-2">
-                                {report.status !== 'under_review' && report.status !== 'resolved' && report.status !== 'rejected' && (
-                                    <button
-                                        onClick={() => handleStatusUpdate('under_review')}
-                                        className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-medium transition-colors"
-                                    >
-                                        {t('status.under_review')}
-                                    </button>
-                                )}
+                                {/* Status Actions */}
+                                <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">
+                                    <h4 className="font-bold text-gray-800 text-sm">{t('details.change_status_btn')}</h4>
+                                    
+                                    <div className="flex flex-col gap-2">
+                                        {report.status === 'submitted' && (
+                                            <button
+                                                onClick={() => handleStatusUpdate('under_review')}
+                                                className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-medium transition-colors"
+                                            >
+                                                {t('status.under_review')}
+                                            </button>
+                                        )}
 
-                                {report.status !== 'in_progress' && report.status !== 'resolved' && report.status !== 'rejected' && (
-                                    <button
-                                        onClick={() => handleStatusUpdate('in_progress')}
-                                        className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium transition-colors"
-                                    >
-                                        {t('status.in_progress')}
-                                    </button>
-                                )}
+                                        {report.status === 'under_review' && (
+                                            <button
+                                                onClick={() => handleStatusUpdate('in_progress')}
+                                                className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium transition-colors"
+                                            >
+                                                {t('status.in_progress')}
+                                            </button>
+                                        )}
 
-                                {report.status !== 'resolved' && (
-                                    <button
-                                        onClick={() => handleStatusUpdate('resolved')}
-                                        className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-colors"
-                                    >
-                                        {t('details.resolve_btn')}
-                                    </button>
-                                )}
+                                        {report.status === 'in_progress' && (
+                                            <button
+                                                onClick={() => handleStatusUpdate('resolved')}
+                                                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-colors"
+                                            >
+                                                {t('details.resolve_btn')}
+                                            </button>
+                                        )}
 
-                                {report.status !== 'rejected' && (
-                                    <button
-                                        onClick={() => handleStatusUpdate('rejected')}
-                                        className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors"
-                                    >
-                                        {t('details.reject_btn')}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                                        {(report.status === 'submitted' || report.status === 'under_review' || report.status === 'in_progress') && (
+                                            <button
+                                                onClick={() => handleStatusUpdate('rejected')}
+                                                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors"
+                                            >
+                                                {t('details.reject_btn')}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         {/* Admin Notes Section */}
                         <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">

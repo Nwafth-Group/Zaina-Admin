@@ -53,8 +53,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                 then: (schema) => schema.min(0).max(100, t('form.validation.value_percentage')),
                 otherwise: (schema) => schema.min(0, t('form.validation.value_fixed')),
             }),
-        max_discount: yup.number().nullable().transform((value, originalValue) => originalValue === '' ? null : value),
-        min_booking_amount: yup.number().required(t('form.validation.required')).min(0).typeError(t('form.validation.required')),
         start_date: yup.string().required(t('form.validation.required')),
         end_date: yup.string().required(t('form.validation.required')),
         usage_limit: yup.number().nullable().transform((value, originalValue) => originalValue === '' ? null : value),
@@ -68,7 +66,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
         defaultValues: {
             type: 'percentage',
             status: 'active',
-            min_booking_amount: 0,
             user_usage_limit: 1,
             completed_bookings_count: 0,
         },
@@ -92,8 +89,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                 code: fullCoupon.code || '',
                 type: fullCoupon.type || 'percentage',
                 value: fullCoupon.value || 0,
-                max_discount: fullCoupon.max_discount || '',
-                min_booking_amount: fullCoupon.min_booking_amount || 0,
                 start_date: toFormDateTime(fullCoupon.start_date),
                 end_date: toFormDateTime(fullCoupon.end_date),
                 usage_limit: fullCoupon.usage_limit || '',
@@ -351,17 +346,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                         <label className={LABEL_CLASS}>{t('form.value')}</label>
                         <input type="number" step="any" min="0" {...register('value')} className={`${INPUT_CLASS} ${errors.value ? 'border-red-500' : ''}`} />
                         <ErrorMsg name="value" />
-                    </div>
-
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.max_discount')}</label>
-                        <input type="number" step="any" min="0" {...register('max_discount')} className={INPUT_CLASS} disabled={discountType === 'fixed'} />
-                    </div>
-
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.min_booking_amount')}</label>
-                        <input type="number" step="any" min="0" {...register('min_booking_amount')} className={`${INPUT_CLASS} ${errors.min_booking_amount ? 'border-red-500' : ''}`} />
-                        <ErrorMsg name="min_booking_amount" />
                     </div>
                 </div>
             </FormSection>

@@ -64,6 +64,15 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
     const isTerminal = status === 'completed' || status === 'cancelled';
     const busy = statusMutation.isPending;
 
+    const getLocalDateString = () => {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    const isToday = booking?.raw_booking_date === getLocalDateString();
+
     const confirmCancel = () => {
         changeStatus('cancelled', cancelNote.trim());
         setCancelOpen(false);
@@ -127,7 +136,9 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                             >
                                 {!isWorkingStatus && <option value="" disabled>—</option>}
                                 <option value="Upcoming">{t('status.Upcoming')}</option>
-                                <option value="inService">{t('status.inService')}</option>
+                                <option value="inService" disabled={!isToday}>
+                                    {t('status.inService')} {!isToday && (isArabic ? ' (يوم الخدمة فقط)' : ' (Service day only)')}
+                                </option>
                             </SelectField>
                         </div>
 
@@ -135,8 +146,9 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                         <button
                             type="button"
                             onClick={() => changeStatus('completed')}
-                            disabled={busy}
-                            className="px-4 py-2.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 text-sm whitespace-nowrap"
+                            disabled={busy || !isToday}
+                            title={!isToday ? (isArabic ? 'متاح فقط في يوم الخدمة' : 'Only available on scheduled service day') : ''}
+                            className="px-4 py-2.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
                         >
                             {t('details.mark_completed')}
                         </button>
@@ -214,13 +226,6 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                                 >
                                                     {isArabic ? 'إعادة جدولة' : 'Reschedule'}
                                                 </button>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => setAssignModalOpen(true)}
-                                                    className="text-xs font-bold text-white bg-[#E91E63] hover:bg-[#D81B60] px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200"
-                                                >
-                                                    {booking.workers?.length ? (isArabic ? 'تغيير العمال' : 'Replace Workers') : (isArabic ? 'تعيين عمال' : 'Assign Workers')}
-                                                </button>
                                             </div>
                                         )}
                                     >
@@ -229,7 +234,6 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         <Row label={isArabic ? 'عدد الزيارات' : 'Number of Visits'} value={booking.visit_number} />
                                         <Row label={t('details.date')} value={booking.booking_date} />
                                         <Row label={t('details.time')} value={booking.time_slot} />
-                                        <Row label={t('details.workers')} value={booking.workers?.length ? booking.workers.map((w) => w.name).join(', ') : '—'} />
                                         {booking.number_of_workers !== null && booking.number_of_workers !== undefined && (
                                             <Row label={isArabic ? 'عدد العاملات المطلوب' : 'Requested Workers Count'} value={booking.number_of_workers} />
                                         )}
@@ -244,6 +248,39 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                                 label={t('details.child_age_groups')} 
                                                 value={booking.child_age_groups.map(group => isArabic ? group.name_ar : group.name_en).join(', ')} 
                                             />
+                                        )}
+                                    </FormSection>
+
+                                    {/* Dedicated Workers Section */}
+                                    <FormSection
+                                        icon="user"
+                                        title={isArabic ? 'العاملات المعينات' : 'Assigned Workers'}
+                                        action={!isTerminal && (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setAssignModalOpen(true)}
+                                                className="text-xs font-bold text-white bg-[#E91E63] hover:bg-[#D81B60] px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200"
+                                            >
+                                                {booking.workers?.length ? (isArabic ? 'تغيير العمال' : 'Replace Workers') : (isArabic ? 'تعيين عمال' : 'Assign Workers')}
+                                            </button>
+                                        )}
+                                    >
+                                        {booking.workers && booking.workers.length > 0 ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                                                {booking.workers.map((w) => (
+                                                    <div key={w.id} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                                                        <div className="w-10 h-10 rounded-full bg-[#FDF0F3] text-[#E91E63] flex items-center justify-center font-bold text-base shrink-0">
+                                                            {w.name?.charAt(0) || '?'}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold text-gray-800 truncate">{w.name}</p>
+                                                            <p className="text-xs text-gray-505">{isArabic ? 'الجنسية: ' : 'Nationality: '}{w.nationality || '—'}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-400 py-1">{isArabic ? 'لم يتم تعيين عاملات بعد.' : 'No workers assigned yet.'}</p>
                                         )}
                                     </FormSection>
 
@@ -516,8 +553,12 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (selectedIds.length === 0) {
-            toast.error(isArabic ? 'يرجى اختيار عامل واحد على الأقل' : 'Please select at least one worker');
+        const limit = booking.number_of_workers || 1;
+        if (selectedIds.length !== limit) {
+            toast.error(isArabic 
+                ? `يجب اختيار ${limit} عامل(ة) بالضبط لهذا الحجز.` 
+                : `You must select exactly ${limit} worker(s) for this booking.`
+            );
             return;
         }
         assignMutation.mutate({
@@ -538,9 +579,20 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
     };
 
     const toggleWorker = (id) => {
-        setSelectedIds(prev => 
-            prev.includes(id) ? prev.filter(wId => wId !== id) : [...prev, id]
-        );
+        setSelectedIds(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(wId => wId !== id);
+            }
+            const limit = booking.number_of_workers || 1;
+            if (prev.length >= limit) {
+                toast.error(isArabic 
+                    ? `لا يمكنك اختيار أكثر من ${limit} عامل(ة) لهذا الحجز.` 
+                    : `You cannot select more than ${limit} worker(s) for this booking.`
+                );
+                return prev;
+            }
+            return [...prev, id];
+        });
     };
 
     const STATUS_STYLES_WORKERS = {

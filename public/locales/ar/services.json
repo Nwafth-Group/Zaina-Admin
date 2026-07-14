@@ -177,6 +177,8 @@
     "discount_pct": "نسبة الخصم %",
     "single_visit": "زيارة واحدة",
     "three_days_per_week": "3 أيام في الأسبوع",
+    "three_visits_per_week": "3 أيام في الأسبوع",
+    "3_days_per_week": "3 أيام في الأسبوع",
     "min_workers": "الحد الأدنى للعمال",
     "max_workers": "الحد الأقصى للعمال",
     "start_time": "وقت البدء",

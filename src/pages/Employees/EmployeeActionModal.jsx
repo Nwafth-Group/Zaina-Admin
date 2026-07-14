@@ -37,7 +37,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
         last_name: yup.string().required(t('validation.required')),
         phone_number: yup.string().required(t('validation.required')),
         email: yup.string().email(t('validation.email')).required(t('validation.required')),
-        type: yup.string().required(t('validation.required')),
+        type: yup.string().optional(),
         job_title: yup.string().required(t('validation.required')),
         gender: yup.string().required(t('validation.required')),
         status: yup.string().required(t('validation.required')),
@@ -174,14 +174,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
             {/* Job */}
             <FormSection icon="briefcase" title={t('sections.job.title')} description={t('sections.job.desc')}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.type')}</label>
-                        <SelectField registration={register('type')}>
-                            <option value="operation">{t('types.operation')}</option>
-                            <option value="super_admin">{t('types.super_admin')}</option>
-                        </SelectField>
-                    </div>
-                    <div>
+                    <div className="col-span-full">
                         <label className={LABEL_CLASS}>{t('form.job_title')}</label>
                         <input {...register('job_title')} className={`${INPUT_CLASS} ${errors.job_title ? 'border-red-500' : ''}`} />
                         <ErrorMsg name="job_title" />

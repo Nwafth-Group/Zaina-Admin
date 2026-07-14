@@ -11,9 +11,6 @@ import Pagination from '../../component/Pagination.jsx';
 const DEFAULT_FILTERS = {
     status: '',
     payment_status: '',
-    category_ids: [],
-    min_amount: '',
-    max_amount: '',
     city_id: '',
     area_id: '',
     date_from: '',
@@ -77,13 +74,7 @@ export default function Bookings() {
 
     const updateDraft = (key, value) => setDraftFilters((d) => ({ ...d, [key]: value }));
 
-    // Toggle a category in/out of the multi-select set.
-    const toggleCategory = (id) =>
-        setDraftFilters((d) => {
-            const set = new Set(d.category_ids);
-            set.has(id) ? set.delete(id) : set.add(id);
-            return { ...d, category_ids: [...set] };
-        });
+
 
     // Picking a city resets the dependent area selection.
     const selectCity = (cityId) => setDraftFilters((d) => ({ ...d, city_id: cityId, area_id: '' }));
@@ -129,8 +120,6 @@ export default function Bookings() {
     // `status` is handled by the tab bar, so it's excluded from the drawer badge.
     const activeFilterCount =
         (filters.payment_status ? 1 : 0) +
-        (filters.category_ids.length ? 1 : 0) +
-        (filters.min_amount || filters.max_amount ? 1 : 0) +
         (filters.city_id ? 1 : 0) +
         (filters.area_id ? 1 : 0) +
         (filters.date_from ? 1 : 0) +
@@ -407,7 +396,7 @@ export default function Bookings() {
             {/* Filter drawer */}
             <div className={`fixed inset-0 z-40 transition-opacity duration-300 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className="absolute inset-0 bg-black/40" onClick={() => setIsFilterOpen(false)} />
-                <aside className={`absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <aside className={`absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                     <div className="flex items-center justify-between p-4 border-b border-gray-100">
                         <h3 className="text-lg font-bold text-gray-800">{t('filters.title')}</h3>
                         <button onClick={() => setIsFilterOpen(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" aria-label="close">
@@ -428,43 +417,7 @@ export default function Bookings() {
                             </select>
                         </div>
 
-                        {/* Categories — multi-select */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">
-                                {t('filters.category_label')}
-                                {draftFilters.category_ids.length > 0 && (
-                                    <span className="ms-2 text-xs font-bold text-[#E91E63]">
-                                        {t('filters.selected_count', { count: draftFilters.category_ids.length, defaultValue: '{{count}} selected' })}
-                                    </span>
-                                )}
-                            </label>
-                            <div className="border border-gray-200 rounded-lg max-h-40 overflow-y-auto divide-y divide-gray-50">
-                                {categories.length === 0 ? (
-                                    <p className="px-3 py-2 text-sm text-gray-400">{t('filters.all_categories')}</p>
-                                ) : (
-                                    categories.map((c) => (
-                                        <label key={c.id} className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={draftFilters.category_ids.includes(c.id)}
-                                                onChange={() => toggleCategory(c.id)}
-                                                className="w-4 h-4 rounded border-gray-300 text-[#E91E63] focus:ring-[#E91E63]"
-                                            />
-                                            <span className="truncate">{isArabic ? c.name_ar : c.name_en}</span>
-                                        </label>
-                                    ))
-                                )}
-                            </div>
-                        </div>
 
-                        {/* Price range */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.price_label')}</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <input type="number" min="0" inputMode="numeric" value={draftFilters.min_amount} onChange={(e) => updateDraft('min_amount', e.target.value)} placeholder={t('filters.price_min')} className={`${selectClass} w-full`} />
-                                <input type="number" min="0" inputMode="numeric" value={draftFilters.max_amount} onChange={(e) => updateDraft('max_amount', e.target.value)} placeholder={t('filters.price_max')} className={`${selectClass} w-full`} />
-                            </div>
-                        </div>
 
                         {/* Location — city + area side by side */}
                         <div>

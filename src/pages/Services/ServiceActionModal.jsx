@@ -338,7 +338,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         return true;
     });
 
-    const { register, handleSubmit, watch, reset, setValue, control, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, reset, setValue, setError, control, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             status: 'active',
@@ -503,7 +503,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 end_time: fullServiceData.end_time ? fullServiceData.end_time.slice(0, 5) : '',
                 duration_unit: fullServiceData.duration_unit || 'Hours',
                 default_duration: fullServiceData.default_duration || 1,
-                has_duration_range: !!fullServiceData.has_duration_range,
+                has_duration_range: (serviceToEdit?.id === 2 || serviceToEdit?.id === 3) ? true : !!fullServiceData.has_duration_range,
                 min_duration: fullServiceData.min_duration || '',
                 max_duration: fullServiceData.max_duration || '',
                 min_workers: fullServiceData.min_workers || 1,
@@ -591,8 +591,10 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             if (data.end_time) payload.append('end_time', data.end_time);
             payload.append('duration_unit', data.duration_unit || 'Hours');
             payload.append('default_duration', data.default_duration);
-            payload.append('has_duration_range', data.has_duration_range ? '1' : '0');
-            if (data.has_duration_range) {
+            const isForcedRange = serviceToEdit?.id === 2 || serviceToEdit?.id === 3;
+            const hasRange = isForcedRange || data.has_duration_range;
+            payload.append('has_duration_range', hasRange ? '1' : '0');
+            if (hasRange) {
                 if (data.min_duration) payload.append('min_duration', data.min_duration);
                 if (data.max_duration) payload.append('max_duration', data.max_duration);
             }
@@ -680,7 +682,22 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             onClose();
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'حدث خطأ أثناء حفظ البيانات.');
+            const respData = error.response?.data;
+            if (respData?.errors) {
+                // Set the errors in react-hook-form
+                Object.entries(respData.errors).forEach(([key, messages]) => {
+                    const message = Array.isArray(messages) ? messages[0] : messages;
+                    setError(key, { type: 'server', message });
+                });
+                
+                // Show first error in toast
+                const firstErrKey = Object.keys(respData.errors)[0];
+                const firstErrMsg = respData.errors[firstErrKey];
+                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
+                toast.error(message || (isArabic ? 'حدث خطأ في التحقق من البيانات.' : 'Validation error occurred.'));
+            } else {
+                toast.error(respData?.message || (isArabic ? 'حدث خطأ أثناء حفظ البيانات.' : 'An error occurred while saving.'));
+            }
         },
     });
 
@@ -817,14 +834,16 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.category')}</label>
-                                    <SelectField registration={register('category_id')}>
-                                        <option value="">-- {t('form.category')} --</option>
-                                        {categories.map((cat) => <option key={cat.id} value={cat.id}>{isArabic ? cat.name_ar : cat.name_en}</option>)}
-                                    </SelectField>
-                                </div>
-                                <div>
+                                {!isEditMode && (
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.category')}</label>
+                                        <SelectField registration={register('category_id')}>
+                                            <option value="">-- {t('form.category')} --</option>
+                                            {categories.map((cat) => <option key={cat.id} value={cat.id}>{isArabic ? cat.name_ar : cat.name_en}</option>)}
+                                        </SelectField>
+                                    </div>
+                                )}
+                                <div className={isEditMode ? 'col-span-full' : ''}>
                                     <label className={LABEL_CLASS}>{t('form.service_code')}</label>
                                     <input type="text" {...register('service_code')} readOnly className={`${INPUT_CLASS} bg-gray-100 text-gray-500 cursor-not-allowed`} />
                                     <ErrorMsg name="service_code" />
@@ -1106,11 +1125,11 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                             </div>
 
                             <div className="space-y-4 pt-3 border-t border-gray-100">
-                                <label className={`flex items-center gap-2 cursor-pointer ${watchServiceCode === 'DOMESTIC_HELPER_HOURLY' ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                                <label className={`flex items-center gap-2 cursor-pointer ${(watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3) ? 'opacity-60 cursor-not-allowed' : ''}`}>
                                     <input 
                                         type="checkbox" 
                                         {...register('has_duration_range')} 
-                                        disabled={watchServiceCode === 'DOMESTIC_HELPER_HOURLY'}
+                                        disabled={watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3}
                                         className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] disabled:opacity-50 disabled:cursor-not-allowed" 
                                     />
                                     <span className="text-sm font-semibold text-gray-700">{t('form.has_duration_range')}</span>

@@ -15,8 +15,6 @@ import usePagedList from '../../hooks/usePagedList.js';
 const DEFAULT_FILTERS = {
     status: '',
     type: '',
-    category_id: '',
-    min_rating: '',
     sort_by: 'created_at',
     sort_dir: 'desc',
 };
@@ -81,10 +79,7 @@ export default function Services() {
     // Drawer filters that are active (search lives in the header, counted separately).
     const activeFilterCount =
         (filters.status ? 1 : 0) +
-        (filters.type ? 1 : 0) +
-        (filters.category_id ? 1 : 0) +
-        (filters.min_rating ? 1 : 0) +
-        (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
+        (filters.type ? 1 : 0);
 
     // 1. جلب قائمة الخدمات مع الفلاتر والبحث
     const { data: services = [], isLoading, isError, error } = useQuery({
@@ -310,10 +305,10 @@ export default function Services() {
             {/* Pagination */}
             <Pagination meta={meta} onPageChange={setPage} />
 
-            {/* Filter drawer (slides in from the left) */}
+            {/* Filter drawer (slides in from the right) */}
             <div className={`fixed inset-0 z-40 transition-opacity duration-300 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className="absolute inset-0 bg-black/40" onClick={() => setIsFilterOpen(false)} />
-                <aside className={`absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <aside className={`absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                     <div className="flex items-center justify-between p-4 border-b border-gray-100">
                         <h3 className="text-lg font-bold text-gray-800">{t('filters.title')}</h3>
                         <button onClick={() => setIsFilterOpen(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" aria-label="close">
@@ -338,38 +333,7 @@ export default function Services() {
                             <select value={draftFilters.type} onChange={(e) => updateDraft('type', e.target.value)} className={`${selectClass} w-full`}>
                                 <option value="">{t('filters.all_types')}</option>
                                 <option value="hourly">{t('types.hourly')}</option>
-                                <option value="moqema">{t('types.moqema')}</option>
-                                <option value="both">{t('types.both')}</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.category_label')}</label>
-                            <select value={draftFilters.category_id} onChange={(e) => updateDraft('category_id', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.all_categories')}</option>
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>{categoryLabel(cat)}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.rating_label')}</label>
-                            <select value={draftFilters.min_rating} onChange={(e) => updateDraft('min_rating', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.any_rating')}</option>
-                                <option value="3">3+</option>
-                                <option value="4">4+</option>
-                                <option value="4.5">4.5+</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.sort_label')}</label>
-                            <select value={`${draftFilters.sort_by}:${draftFilters.sort_dir}`} onChange={(e) => handleSortChange(e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="created_at:desc">{t('filters.sort_newest')}</option>
-                                <option value="created_at:asc">{t('filters.sort_oldest')}</option>
-                                <option value="avg_rating:desc">{t('filters.sort_top_rated')}</option>
-                                <option value={nameSortValue}>{t('filters.sort_name')}</option>
+                                <option value="other">{isArabic ? 'أخرى' : 'Other'}</option>
                             </select>
                         </div>
                     </div>

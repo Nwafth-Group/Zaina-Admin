@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../api/axios.js';
+import BookingDetailsModal from '../Bookings/BookingDetailsModal';
 
 const STATUS_STYLES = {
     Upcoming: 'bg-blue-50 text-blue-600 border-blue-200',
@@ -40,6 +41,7 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
     const { t, i18n } = useTranslation('services');
     const isArabic = i18n.language?.startsWith('ar');
     const [activeTab, setActiveTab] = useState('profile'); // profile | bookings | reviews
+    const [bookingDetailsId, setBookingDetailsId] = useState(null);
 
     const { data, isLoading } = useQuery({
         queryKey: ['service-details', serviceId],
@@ -590,7 +592,15 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                     <tbody>
                                                         {bookings.map((b) => (
                                                             <tr key={b.id} className="border-b border-gray-50 last:border-0">
-                                                                <td className="px-4 py-3 font-medium text-gray-700">{b.booking_ref}</td>
+                                                                <td className="px-4 py-3">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setBookingDetailsId(b.id)}
+                                                                        className="font-mono text-xs font-bold text-[#E91E63] bg-[#FDF0F3] hover:bg-[#FAD2DC] px-2 py-1 rounded transition-colors"
+                                                                    >
+                                                                        {b.booking_ref}
+                                                                    </button>
+                                                                </td>
                                                                 <td className="px-4 py-3">{b.customer_name || '—'}</td>
                                                                 <td className="px-4 py-3 whitespace-nowrap">{b.booking_date || '—'}</td>
                                                                 <td className="px-4 py-3 text-center">
@@ -624,7 +634,25 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <p className="text-sm font-bold text-gray-800 truncate">{reviewerName(r)}</p>
-                                                                <p className="text-xs text-gray-400">{r.created_since}{r.booking_ref ? ` · ${r.booking_ref}` : ''}</p>
+                                                                <p className="text-xs text-gray-400">
+                                                                    {r.created_since}
+                                                                    {r.booking_ref && (
+                                                                        <>
+                                                                            {' · '}
+                                                                            {r.booking_id ? (
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => setBookingDetailsId(r.booking_id)}
+                                                                                    className="text-[#E91E63] hover:underline font-semibold"
+                                                                                >
+                                                                                    {r.booking_ref}
+                                                                                </button>
+                                                                            ) : (
+                                                                                r.booking_ref
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <StarRow value={r.rating} />
@@ -632,14 +660,19 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                     {r.comment && <p className="text-sm text-gray-600 mt-3">{r.comment}</p>}
                                                 </div>
                                             ))
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+                                         )}
+                                     </div>
+                                 )}
+                             </div>
+                         </div>
+                     </div>
+                 )}
+             </div>
+
+            {/* Clickable Booking Detail Viewer */}
+            {bookingDetailsId && (
+                <BookingDetailsModal bookingId={bookingDetailsId} onClose={() => setBookingDetailsId(null)} />
+            )}
         </div>
     );
 }

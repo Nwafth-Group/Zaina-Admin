@@ -66,8 +66,6 @@ export default function CouponDetailsModal({ couponId, onClose }) {
                                 <Row label={t('form.code')} value={coupon.code} />
                                 <Row label={t('form.type')} value={t(`types.${coupon.type}`)} />
                                 <Row label={t('form.value')} value={coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value} EGP`} />
-                                <Row label={t('details.max_discount')} value={coupon.max_discount ? `${coupon.max_discount} EGP` : '—'} />
-                                <Row label={t('details.min_booking_amount')} value={`${coupon.min_booking_amount} EGP`} />
                             </FormSection>
 
                             <FormSection icon="clock" title={t('details.validity')}>

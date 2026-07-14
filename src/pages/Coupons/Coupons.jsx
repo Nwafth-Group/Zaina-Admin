@@ -78,8 +78,6 @@ export default function Coupons() {
                 code: fullDetails.code,
                 type: fullDetails.type,
                 value: Number(fullDetails.value),
-                max_discount: fullDetails.max_discount != null ? Number(fullDetails.max_discount) : null,
-                min_booking_amount: Number(fullDetails.min_booking_amount),
                 start_date: fullDetails.start_date,
                 end_date: fullDetails.end_date,
                 usage_limit: fullDetails.usage_limit != null ? Number(fullDetails.usage_limit) : null,

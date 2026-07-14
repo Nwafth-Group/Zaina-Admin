@@ -175,6 +175,8 @@
     "discount_pct": "Discount %",
     "single_visit": "Single Visit",
     "three_days_per_week": "3 Days per Week",
+    "three_visits_per_week": "3 Days per Week",
+    "3_days_per_week": "3 Days per Week",
     "min_workers": "Minimum Workers",
     "max_workers": "Maximum Workers",
     "start_time": "Start Time",
