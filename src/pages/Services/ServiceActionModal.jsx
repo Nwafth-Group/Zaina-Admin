@@ -683,18 +683,44 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
         },
         onError: (error) => {
             const respData = error.response?.data;
-            if (respData?.errors) {
+            const validationErrors = respData?.errors || respData?.params;
+
+            const fieldToTabMap = {
+                name_ar: 'basic',
+                name_en: 'basic',
+                description_ar: 'basic',
+                description_en: 'basic',
+                type: 'basic',
+                base_price: 'locations',
+                coverages: 'locations',
+                default_duration: 'durations',
+                min_duration: 'durations',
+                max_duration: 'durations',
+                min_workers: 'durations',
+                max_workers: 'durations',
+                shifts: 'shifts',
+                rules: 'rules',
+                workers: 'workers',
+            };
+
+            if (validationErrors) {
                 // Set the errors in react-hook-form
-                Object.entries(respData.errors).forEach(([key, messages]) => {
+                Object.entries(validationErrors).forEach(([key, messages]) => {
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
                 
                 // Show first error in toast
-                const firstErrKey = Object.keys(respData.errors)[0];
-                const firstErrMsg = respData.errors[firstErrKey];
+                const firstErrKey = Object.keys(validationErrors)[0];
+                const firstErrMsg = validationErrors[firstErrKey];
                 const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
                 toast.error(message || (isArabic ? 'حدث خطأ في التحقق من البيانات.' : 'Validation error occurred.'));
+
+                // Switch to error tab
+                const targetTab = fieldToTabMap[firstErrKey];
+                if (targetTab) {
+                    setActiveTab(targetTab);
+                }
             } else {
                 toast.error(respData?.message || (isArabic ? 'حدث خطأ أثناء حفظ البيانات.' : 'An error occurred while saving.'));
             }
@@ -704,6 +730,25 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const onFormError = (formErrors) => {
         console.error('Form Validation Errors:', formErrors);
         const firstErrorKey = Object.keys(formErrors)[0];
+        
+        const fieldToTabMap = {
+            name_ar: 'basic',
+            name_en: 'basic',
+            description_ar: 'basic',
+            description_en: 'basic',
+            type: 'basic',
+            base_price: 'locations',
+            coverages: 'locations',
+            default_duration: 'durations',
+            min_duration: 'durations',
+            max_duration: 'durations',
+            min_workers: 'durations',
+            max_workers: 'durations',
+            shifts: 'shifts',
+            rules: 'rules',
+            workers: 'workers',
+        };
+
         if (formErrors[firstErrorKey]) {
             let errorObj = formErrors[firstErrorKey];
             if (Array.isArray(errorObj)) {
@@ -716,6 +761,13 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 const subKey = Object.keys(errorObj)[0];
                 errorObj = errorObj[subKey];
             }
+
+            // Switch to error tab
+            const targetTab = fieldToTabMap[firstErrorKey];
+            if (targetTab) {
+                setActiveTab(targetTab);
+            }
+
             if (errorObj?.message) {
                 toast.error(`${isArabic ? 'خطأ في المدخلات:' : 'Validation Error:'} ${errorObj.message}`);
             } else {

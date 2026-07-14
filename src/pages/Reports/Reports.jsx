@@ -92,7 +92,7 @@ export default function Reports() {
                     >
                         {isArabic ? 'الكل' : 'All'}
                     </button>
-                    {['submitted', 'under_review', 'in_progress', 'resolved', 'rejected'].map((status) => (
+                    {['submitted', 'under_review', 'resolved'].map((status) => (
                         <button
                             key={status}
                             onClick={() => selectStatus(status)}

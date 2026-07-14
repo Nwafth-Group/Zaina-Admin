@@ -15,9 +15,7 @@
   "status": {
     "submitted": "Submitted",
     "under_review": "Under Review",
-    "in_progress": "In Progress",
-    "resolved": "Resolved",
-    "rejected": "Rejected"
+    "resolved": "Resolved"
   },
   "reasons": {
     "worker_didnt_show_up": "Worker Didn't Show Up",
@@ -45,7 +43,6 @@
     "assign_placeholder": "Select employee...",
     "add_note_btn": "Add Note",
     "resolve_btn": "Resolve Report",
-    "reject_btn": "Reject Report",
     "reason_label": "Reason",
     "description_label": "Description",
     "status_label": "Current Status",

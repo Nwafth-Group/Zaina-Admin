@@ -298,7 +298,7 @@ export default function ReportDetailsModal({ reportId, onClose }) {
                             </select>
                         </div>
 
-                        {report.status !== 'resolved' && report.status !== 'rejected' && (
+                        {report.status !== 'resolved' && (
                             <>
                                 {/* Note area for status changes */}
                                 <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">
@@ -318,38 +318,28 @@ export default function ReportDetailsModal({ reportId, onClose }) {
                                     
                                     <div className="flex flex-col gap-2">
                                         {report.status === 'submitted' && (
-                                            <button
-                                                onClick={() => handleStatusUpdate('under_review')}
-                                                className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-medium transition-colors"
-                                            >
-                                                {t('status.under_review')}
-                                            </button>
+                                            <div className="space-y-2 w-full">
+                                                <button
+                                                    onClick={() => handleStatusUpdate('under_review')}
+                                                    className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-medium transition-colors"
+                                                >
+                                                    {t('status.under_review')}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleStatusUpdate('resolved')}
+                                                    className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-colors"
+                                                >
+                                                    {t('details.resolve_btn')}
+                                                </button>
+                                            </div>
                                         )}
 
                                         {report.status === 'under_review' && (
-                                            <button
-                                                onClick={() => handleStatusUpdate('in_progress')}
-                                                className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium transition-colors"
-                                            >
-                                                {t('status.in_progress')}
-                                            </button>
-                                        )}
-
-                                        {report.status === 'in_progress' && (
                                             <button
                                                 onClick={() => handleStatusUpdate('resolved')}
                                                 className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-colors"
                                             >
                                                 {t('details.resolve_btn')}
-                                            </button>
-                                        )}
-
-                                        {(report.status === 'submitted' || report.status === 'under_review' || report.status === 'in_progress') && (
-                                            <button
-                                                onClick={() => handleStatusUpdate('rejected')}
-                                                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors"
-                                            >
-                                                {t('details.reject_btn')}
                                             </button>
                                         )}
                                     </div>

@@ -15,9 +15,7 @@
   "status": {
     "submitted": "تم التقديم",
     "under_review": "قيد المراجعة",
-    "in_progress": "قيد التنفيذ",
-    "resolved": "تم الحل",
-    "rejected": "مرفوض"
+    "resolved": "تم الحل"
   },
   "reasons": {
     "worker_didnt_show_up": "العاملة لم تحضر",
@@ -45,7 +43,6 @@
     "assign_placeholder": "اختر موظفاً...",
     "add_note_btn": "إضافة ملاحظة",
     "resolve_btn": "حل البلاغ",
-    "reject_btn": "رفض البلاغ",
     "reason_label": "السبب",
     "description_label": "الوصف",
     "status_label": "الحالة الحالية",
