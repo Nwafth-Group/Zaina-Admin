@@ -21,6 +21,7 @@ import Settings from './pages/Settings/Settings.jsx';
 import Countries from './pages/Settings/Countries.jsx';
 import Cities from './pages/Settings/Cities.jsx';
 import Areas from './pages/Settings/Areas.jsx';
+import CompanyInfo from './pages/Settings/CompanyInfo.jsx';
 import Roles from './pages/Roles/Roles.jsx';
 import MobileNotifications from './pages/Notifications/MobileNotifications.jsx';
 import Reports from './pages/Reports/Reports.jsx';
@@ -123,6 +124,7 @@ export const router = createBrowserRouter([
             { path: 'settings/countries', element: <Countries /> },
             { path: 'settings/cities', element: <Cities /> },
             { path: 'settings/areas', element: <Areas /> },
+            { path: 'settings/company-info', element: <CompanyInfo /> },
           ],
         },
         {

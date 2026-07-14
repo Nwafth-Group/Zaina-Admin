@@ -4,7 +4,8 @@
   "cards": {
     "countries": "Countries",
     "cities": "Cities",
-    "areas": "Areas"
+    "areas": "Areas",
+    "company_info": "Company Info"
   },
   "coming_soon": "This section is coming soon.",
   "back": "Back to Settings",
