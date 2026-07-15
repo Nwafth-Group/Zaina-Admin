@@ -37,6 +37,32 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
     const [cancelNote, setCancelNote] = useState('');
     const [assignModalOpen, setAssignModalOpen] = useState(false);
     const [rescheduleOpen, setRescheduleOpen] = useState(false);
+    const [downloadingContract, setDownloadingContract] = useState(false);
+
+    const handleDownloadContract = async () => {
+        if (!booking) return;
+        try {
+            setDownloadingContract(true);
+            const response = await axiosInstance.get(`/admin/bookings/${booking.id}/contract`, {
+                responseType: 'blob',
+            });
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Contract-${booking.booking_ref || booking.id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success(isArabic ? 'تم تحميل العقد بنجاح' : 'Contract downloaded successfully');
+        } catch (error) {
+            console.error('Failed to download contract:', error);
+            toast.error(isArabic ? 'فشل تحميل العقد. الرجاء المحاولة لاحقاً.' : 'Failed to download contract. Please try again later.');
+        } finally {
+            setDownloadingContract(false);
+        }
+    };
 
     const { data: booking, isLoading } = useQuery({
         queryKey: ['bookingDetail', bookingId],
@@ -254,14 +280,34 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                     <FormSection 
                                         icon="sparkles" 
                                         title={t('details.service')}
-                                        action={!isTerminal && (
+                                        action={(
                                             <div className="flex gap-2">
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => setRescheduleOpen(true)}
-                                                    className="text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 border border-gray-200"
+                                                {!isTerminal && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setRescheduleOpen(true)}
+                                                        className="text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 border border-gray-200"
+                                                    >
+                                                        {isArabic ? 'إعادة جدولة' : 'Reschedule'}
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    disabled={downloadingContract}
+                                                    onClick={handleDownloadContract}
+                                                    className="text-xs font-bold text-white bg-[#0284c7] hover:bg-[#0369a1] px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50"
                                                 >
-                                                    {isArabic ? 'إعادة جدولة' : 'Reschedule'}
+                                                    {downloadingContract ? (
+                                                        <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                    )}
+                                                    {isArabic ? 'تحميل العقد' : 'Download Contract'}
                                                 </button>
                                             </div>
                                         )}
