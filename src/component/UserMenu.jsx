@@ -21,7 +21,7 @@ export default function UserMenu({ adminName, onOpenProfile }) {
             localStorage.removeItem('zaina_admin_token');
             localStorage.removeItem('zaina_admin_user');
             queryClient.clear();
-            navigate('/admin/auth/login', { replace: true });
+            navigate('/auth/login', { replace: true });
         },
     });
 

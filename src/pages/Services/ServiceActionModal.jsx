@@ -638,8 +638,8 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             });
 
             // Terms
-            if (data.terms_ar) payload.append('terms_ar', data.terms_ar);
-            if (data.terms_en) payload.append('terms_en', data.terms_en);
+            payload.append('terms_ar', data.terms_ar || '');
+            payload.append('terms_en', data.terms_en || '');
             payload.append('acceptance_required', data.acceptance_required ? '1' : '0');
 
             // Workers

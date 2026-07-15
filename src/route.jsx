@@ -26,6 +26,7 @@ import Roles from './pages/Roles/Roles.jsx';
 import MobileNotifications from './pages/Notifications/MobileNotifications.jsx';
 import Reports from './pages/Reports/Reports.jsx';
 import LegalDocuments from './pages/LegalDocuments/LegalDocuments.jsx';
+import PointsManagement from './pages/Points/PointsManagement.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -106,6 +107,10 @@ export const router = createBrowserRouter([
         {
           path: 'coupons',
           element: <Coupons />,
+        },
+        {
+          path: 'points',
+          element: <PointsManagement />,
         },
         {
           path: 'legal-documents',

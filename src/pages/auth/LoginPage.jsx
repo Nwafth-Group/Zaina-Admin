@@ -26,6 +26,10 @@ export default function LoginPage() {
     const backendUrl = apiBase.replace('/api/v1/', '').replace('/api/v1', '');
     const logoUrl = `${backendUrl}/assist/logo/logo.webp`;
 
+    const base = import.meta.env.BASE_URL || '/';
+    const cleanBase = base.endsWith('/') ? base : `${base}/`;
+    const whiteLogoUrl = `${cleanBase}logo/white_logo.png`;
+
     // 1. بناء قواعد التحقق (Schema) باستخدام Yup
     const schema = yup.object().shape({
         email: yup
@@ -88,22 +92,13 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-main" dir={isRtl ? 'rtl' : 'ltr'}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 w-full">
                 
                 {/* Left Panel: Login Form */}
-                <div className="col-span-1 lg:col-span-5 flex flex-col justify-between p-8 sm:p-12 bg-white relative z-10 shadow-2xl">
-                    <div className="my-auto max-w-md w-full mx-auto space-y-8">
+                <div className="col-span-1 flex flex-col justify-center p-8 sm:p-12 bg-white relative z-10 shadow-2xl">
+                    <div className="max-w-md w-full mx-auto space-y-8">
                         {/* Logo & Welcome Header */}
                         <div className="text-center">
-                            <img 
-                                src={logoUrl} 
-                                alt="Ziena Logo" 
-                                className="h-20 object-contain mx-auto mb-6 drop-shadow-sm hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                    // Fallback to local logo if backend image fails to load
-                                    e.target.src = '/logo/logo.png';
-                                }}
-                            />
                             <h1 className="text-3xl font-extrabold text-[#212121] tracking-tight mb-2">
                                 {isRtl ? 'نظام زينة' : 'Ziena System'}
                             </h1>
@@ -201,7 +196,8 @@ export default function LoginPage() {
                                 <button 
                                     type="submit" 
                                     disabled={loginMutation.isPending || !!successMessage}
-                                    className="w-full py-4 bg-[#E91E63] text-white rounded-2xl text-md font-semibold hover:bg-[#D81B60] focus:outline-none focus:ring-4 focus:ring-rose-200 transition-all duration-200 disabled:opacity-70 flex justify-center items-center shadow-lg shadow-rose-100"
+                                    className="w-full py-4 text-white rounded-2xl text-md font-semibold hover:opacity-90 focus:outline-none transition-all duration-200 disabled:opacity-70 flex justify-center items-center shadow-lg shadow-rose-100"
+                                    style={{ background: 'linear-gradient(135deg, #F45B8C 0%, #FF8FA3 100%)' }}
                                 >
                                     {loginMutation.isPending ? (
                                         <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -216,42 +212,25 @@ export default function LoginPage() {
                         </form>
                     </div>
 
-                    {/* Footer text */}
-                    <div className="text-center pt-8">
-                        <p className="text-xs text-slate-400 font-medium">
-                            {t('footer') || `© ${new Date().getFullYear()} Ziena. All rights reserved.`}
-                        </p>
-                    </div>
                 </div>
 
-                {/* Right Panel: Immersive Glassmorphic Cover */}
-                <div className="hidden lg:flex lg:col-span-7 relative items-center justify-center overflow-hidden bg-[#880E4F]">
-                    {/* Background Hero Image */}
-                    <img 
-                        src={heroImage} 
-                        alt="Ziena Cover" 
-                        className="absolute inset-0 w-full h-full object-cover select-none scale-105 filter blur-[1px] brightness-95" 
-                    />
-                    
-                    {/* Colored overlay for deep contrast */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-[#880E4F]/90 via-[#880E4F]/75 to-[#E91E63]/60 mix-blend-multiply" />
-                    
-                    {/* Floating Glass Container - Logo Only */}
-                    <div className="relative z-10 p-12 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center justify-center">
+                {/* Right Panel: Immersive Brand Cover */}
+                <div 
+                    className="hidden lg:flex col-span-1 relative items-center justify-center overflow-hidden"
+                    style={{ background: 'linear-gradient(135deg, #F45B8C 0%, #FF8FA3 100%)' }}
+                >
+                    {/* Centered White Brand Logo */}
+                    <div className="relative z-10 p-12 flex flex-col items-center justify-center">
                         <img 
-                            src={logoUrl} 
+                            src={whiteLogoUrl} 
                             alt="Ziena Logo" 
-                            className="h-32 object-contain filter drop-shadow-lg" 
-                            onError={(e) => {
-                                // Fallback to local logo if backend image fails to load
-                                e.target.src = '/logo/logo.png';
-                            }}
+                            className="h-64 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-500" 
                         />
                     </div>
 
                     {/* Subtle decorative circles */}
-                    <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-white/5 blur-3xl pointer-events-none" />
-                    <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-white/5 blur-3xl pointer-events-none" />
+                    <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-white/10 blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-white/10 blur-3xl pointer-events-none" />
                 </div>
 
             </div>

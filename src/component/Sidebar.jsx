@@ -221,6 +221,21 @@ const Sidebar = ({ isOpen, setIsOpen, companyData }) => {
                     </Link>
 
                     <Link
+                        to="/points"
+                        onClick={handleLinkClick}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                            isActive('/points')
+                            ? 'bg-[#E91E63] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-[#FDF0F3] hover:text-[#E91E63]'
+                        }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {t('sidebar.points', { defaultValue: 'Points Management' })}
+                    </Link>
+
+                    <Link
                         to="/reports"
                         onClick={handleLinkClick}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
