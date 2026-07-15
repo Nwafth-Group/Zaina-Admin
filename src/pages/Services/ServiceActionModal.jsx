@@ -1246,7 +1246,6 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
 
                                     <div className="space-y-4">
                                         {childAgeGroupFields.map((field, idx) => {
-                                            const calcType = watch('child_age_groups.' + idx + '.calculation_type');
                                             return (
                                                 <div key={field.id} className="p-4 border border-gray-200 rounded-xl bg-gray-50/30 space-y-4 relative">
                                                     <button
@@ -1292,23 +1291,13 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                                     </div>
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-gray-100">
+                                                        {/* Calculation Rule is hidden and implicitly ratio_based */}
+                                                        <input type="hidden" {...register('child_age_groups.' + idx + '.calculation_type')} value="ratio_based" />
                                                         <div>
-                                                            <label className={LABEL_CLASS}>{isArabic ? 'طريقة الاحتساب' : 'Calculation Rule'}</label>
-                                                            <select {...register('child_age_groups.' + idx + '.calculation_type')} className={INPUT_CLASS}>
-                                                                <option value="per_child">{isArabic ? 'لكل طفل' : 'Per Child'}</option>
-                                                                <option value="ratio_based">{isArabic ? 'نسبة وتناسب' : 'Ratio-Based'}</option>
-                                                            </select>
-                                                            {errors.child_age_groups?.[idx]?.calculation_type && <span className="text-xs text-red-500">{errors.child_age_groups[idx].calculation_type.message}</span>}
+                                                            <label className={LABEL_CLASS}>{isArabic ? 'عدد الأطفال المقابل' : 'Children Count'}</label>
+                                                            <input type="number" {...register('child_age_groups.' + idx + '.children_count')} className={INPUT_CLASS} min="1" />
+                                                            {errors.child_age_groups?.[idx]?.children_count && <span className="text-xs text-red-500">{errors.child_age_groups[idx].children_count.message}</span>}
                                                         </div>
-                                                        {calcType === 'ratio_based' ? (
-                                                            <div>
-                                                                <label className={LABEL_CLASS}>{isArabic ? 'عدد الأطفال المقابل' : 'Children Count'}</label>
-                                                                <input type="number" {...register('child_age_groups.' + idx + '.children_count')} className={INPUT_CLASS} min="1" />
-                                                                {errors.child_age_groups?.[idx]?.children_count && <span className="text-xs text-red-500">{errors.child_age_groups[idx].children_count.message}</span>}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="hidden" />
-                                                        )}
                                                         <div>
                                                             <label className={LABEL_CLASS}>{isArabic ? 'عدد المربيات المطلوب' : 'Required Babysitters'}</label>
                                                             <input type="number" {...register('child_age_groups.' + idx + '.required_worker_count')} className={INPUT_CLASS} min="1" />
