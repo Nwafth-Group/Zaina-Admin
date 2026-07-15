@@ -35,13 +35,13 @@ export default function PointsManagement() {
     });
 
     // Global Redemption settings state
-    const [settingsForm, setSettingsForm] = useState({
+    const settingsForm = {
         points_conversion_rate: 10,
         min_redemption_points: 100,
         max_discount_percentage: 50,
         points_expiration_months: 12,
         include_taxes_in_points: false,
-    });
+    };
 
     // Service settings state
     const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -88,26 +88,7 @@ export default function PointsManagement() {
         },
     });
 
-    // Query for Global Settings
-    const { data: settingsData, isLoading: isSettingsLoading } = useQuery({
-        queryKey: ['points-settings'],
-        queryFn: async () => {
-            const response = await axiosInstance.get('/admin/points/settings');
-            return response.data.data;
-        },
-    });
-
-    useEffect(() => {
-        if (settingsData) {
-            setSettingsForm({
-                points_conversion_rate: Number(settingsData.points_conversion_rate || 10),
-                min_redemption_points: Number(settingsData.min_redemption_points || 100),
-                max_discount_percentage: Number(settingsData.max_discount_percentage || 50),
-                points_expiration_months: Number(settingsData.points_expiration_months || 12),
-                include_taxes_in_points: settingsData.include_taxes_in_points === '1' || settingsData.include_taxes_in_points === true,
-            });
-        }
-    }, [settingsData]);
+    const isSettingsLoading = false;
 
     // Query for Services points settings
     const { data: servicesData, isLoading: isServicesLoading } = useQuery({
@@ -188,19 +169,7 @@ export default function PointsManagement() {
         },
     });
 
-    // Save Settings mutation
-    const saveSettingsMutation = useMutation({
-        mutationFn: async (payload) => {
-            return await axiosInstance.post('/admin/points/settings', payload);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries(['points-settings']);
-            toast.success('Global redemption settings saved successfully');
-        },
-        onError: (err) => {
-            toast.error(err.response?.data?.message || 'Failed to save settings');
-        },
-    });
+
 
     // Update Service Points configuration mutation
     const saveServicePointsMutation = useMutation({
@@ -247,13 +216,7 @@ export default function PointsManagement() {
         saveRuleMutation.mutate(payload);
     };
 
-    const handleSettingsFormSubmit = (e) => {
-        e.preventDefault();
-        saveSettingsMutation.mutate({
-            ...settingsForm,
-            include_taxes_in_points: settingsForm.include_taxes_in_points ? 1 : 0,
-        });
-    };
+
 
     const handleServiceFormSubmit = (e) => {
         e.preventDefault();
@@ -366,9 +329,8 @@ export default function PointsManagement() {
             <div className="flex border-b border-gray-200 overflow-x-auto gap-1 mb-6 bg-white p-2 rounded-2xl shadow-sm">
                 {[
                     { id: 'rules', label: isArabic ? 'قواعد كسب النقاط' : 'Earning Rules' },
-                    { id: 'settings', label: isArabic ? 'إعدادات الاسترداد' : 'Redemption Settings' },
                     { id: 'services', label: isArabic ? 'نقاط الخدمات' : 'Service Points' },
-                    { id: 'adjustments', label: isArabic ? 'تعديل يدوي' : 'Manual Adjustment' },
+                    { id: 'adjustments', label: isArabic ? 'اضافة نقاط للمستخدمين' : 'Add Points to Users' },
                     { id: 'transactions', label: isArabic ? 'سجل العمليات' : 'Transactions Log' },
                 ].map(tab => (
                     <button
@@ -479,126 +441,6 @@ export default function PointsManagement() {
                 </div>
             )}
 
-            {/* Tab: Redemption settings */}
-            {activeTab === 'settings' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <form onSubmit={handleSettingsFormSubmit} className="lg:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-                        <h2 className="text-xl font-bold text-gray-800">
-                            {isArabic ? 'تعديل المعلمات العامة للاسترداد' : 'Modify Global Redemption Settings'}
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                    {isArabic ? 'سعر تحويل النقاط (1 جنيه = X نقطة)' : 'Points Conversion Rate (1 Currency = X points)'}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={settingsForm.points_conversion_rate}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, points_conversion_rate: Number(e.target.value) })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#E91E63]"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                    {isArabic ? 'الحد الأدنى للنقاط لبدء الاسترداد' : 'Min Points to Start Redemption'}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={settingsForm.min_redemption_points}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, min_redemption_points: Number(e.target.value) })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#E91E63]"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                    {isArabic ? 'الحد الأقصى للخصم (%) من الفاتورة' : 'Max Allowed Discount (%) per booking'}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="100"
-                                    value={settingsForm.max_discount_percentage}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, max_discount_percentage: Number(e.target.value) })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#E91E63]"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                    {isArabic ? 'صلاحية النقاط بالشهور' : 'Points Validity (Months)'}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={settingsForm.points_expiration_months}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, points_expiration_months: Number(e.target.value) })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#E91E63]"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <input
-                                type="checkbox"
-                                id="include_taxes_in_points"
-                                checked={settingsForm.include_taxes_in_points}
-                                onChange={(e) => setSettingsForm({ ...settingsForm, include_taxes_in_points: e.target.checked })}
-                                className="w-5 h-5 accent-[#E91E63] rounded border-gray-300"
-                            />
-                            <label htmlFor="include_taxes_in_points" className="text-sm font-semibold text-gray-700 cursor-pointer">
-                                {isArabic ? 'احتساب الضرائب والرسوم في قيمة النقاط المستردة' : 'Include taxes and fees in points value calculations'}
-                            </label>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={saveSettingsMutation.isLoading}
-                            className="bg-[#E91E63] text-white px-6 py-3.5 rounded-xl shadow-md hover:bg-[#c2185b] transition-all font-bold text-sm"
-                        >
-                            {saveSettingsMutation.isLoading ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : (isArabic ? 'حفظ التغييرات' : 'Save Settings')}
-                        </button>
-                    </form>
-
-                    <div className="bg-gradient-to-br from-[#FDF0F3] to-[#fff] p-6 rounded-3xl border border-[#FDF0F3] shadow-sm flex flex-col justify-between">
-                        <div>
-                            <h3 className="text-[#E91E63] text-lg font-bold mb-4">
-                                {isArabic ? 'آلية الاسترداد' : 'Redemption Rule Details'}
-                            </h3>
-                            <ul className="space-y-3.5 text-sm text-gray-700 font-medium">
-                                <li className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-[#E91E63] rounded-full"></span>
-                                    <span>{settingsForm.points_conversion_rate} {isArabic ? 'نقاط = 1 جنيه' : 'Points = 1 EGP'}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-[#E91E63] rounded-full"></span>
-                                    <span>{isArabic ? `الحد الأدنى للاسترداد: ${settingsForm.min_redemption_points} نقطة` : `Min Points for Redemption: ${settingsForm.min_redemption_points} pts`}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-[#E91E63] rounded-full"></span>
-                                    <span>{isArabic ? `الحد الأقصى للخصم: ${settingsForm.max_discount_percentage}% من إجمالي الخدمة` : `Max Booking Discount Limit: ${settingsForm.max_discount_percentage}%`}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-[#E91E63] rounded-full"></span>
-                                    <span>{isArabic ? `تاريخ انتهاء النقاط: بعد ${settingsForm.points_expiration_months} شهرًا` : `Points expire after ${settingsForm.points_expiration_months} months`}</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div className="mt-8 border-t border-rose-100/50 pt-4 text-xs text-rose-500 font-semibold">
-                            {isArabic ? '* يتم إرجاع نقاط العميل المستردة تلقائيًا في حال الإلغاء ضمن فترة الإلغاء المجاني.' : '* Points are automatically returned if the customer cancels within the free cancellation window.'}
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Tab: Service point settings */}
             {activeTab === 'services' && (
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -679,7 +521,7 @@ export default function PointsManagement() {
             {activeTab === 'adjustments' && (
                 <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                     <h2 className="text-xl font-bold text-gray-800">
-                        {isArabic ? 'تعديل رصيد العميل يدويًا' : 'Manual Points Balance Adjustment'}
+                        {isArabic ? 'اضافة نقاط للمستخدمين' : 'Add Points to Users'}
                     </h2>
                     <p className="text-sm text-gray-500">
                         {isArabic ? 'حدد العميل وابحث عن اسمه، ثم اختر خصم أو إضافة نقاط مع كتابة السبب.' : 'Select customer by name or phone, then choose to add/deduct points and provide a reason.'}
@@ -810,7 +652,7 @@ export default function PointsManagement() {
                         >
                             {submitAdjustmentMutation.isLoading
                                 ? (isArabic ? 'جاري المعالجة...' : 'Processing...')
-                                : (isArabic ? 'تأكيد التعديل' : 'Submit Adjustment')
+                                : (isArabic ? 'تأكيد العملية' : 'Confirm Action')
                             }
                         </button>
                     </form>
@@ -829,7 +671,7 @@ export default function PointsManagement() {
                                 { value: 'redeem', label: isArabic ? 'استرداد' : 'Redeem' },
                                 { value: 'refund', label: isArabic ? 'إرجاع' : 'Refund' },
                                 { value: 'expire', label: isArabic ? 'انتهاء الصلاحية' : 'Expire' },
-                                { value: 'adjustment', label: isArabic ? 'تعديل يدوي' : 'Adjustment' },
+                                { value: 'adjustment', label: isArabic ? 'اضافة نقاط للمستخدمين' : 'Add Points to Users' },
                             ].map(item => (
                                 <button
                                     key={item.value}
@@ -1027,8 +869,6 @@ export default function PointsManagement() {
                                         <option value="referral">Referral</option>
                                         <option value="booking">Booking Complete</option>
                                         <option value="booking_count">Booking Count Cycle</option>
-                                        <option value="admin_reward">Admin Reward</option>
-                                        <option value="promotional">Promotional Activity</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1054,7 +894,6 @@ export default function PointsManagement() {
                                     >
                                         <option value="one_time">One Time</option>
                                         <option value="repeatable">Repeatable</option>
-                                        <option value="repeatable_cycle">Repeatable Cycle</option>
                                     </select>
                                 </div>
                                 <div>
