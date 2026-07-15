@@ -17,11 +17,6 @@ export default function BannerActionModal({ bannerToEdit, onClose }) {
     const schema = yup.object().shape({
         title_en: yup.string().required(t('validation.required')),
         title_ar: yup.string().required(t('validation.required')),
-        type: yup.string().required(t('validation.required')),
-        text_en: yup.string().nullable(),
-        text_ar: yup.string().nullable(),
-        link_type: yup.string().required(t('validation.required')),
-        link: yup.string().nullable(),
         status: yup.string().required(t('validation.required')),
     });
 
@@ -30,11 +25,6 @@ export default function BannerActionModal({ bannerToEdit, onClose }) {
         defaultValues: {
             title_en: '',
             title_ar: '',
-            type: 'general',
-            text_en: '',
-            text_ar: '',
-            link_type: 'none',
-            link: '',
             status: 'active',
         },
     });
@@ -46,11 +36,6 @@ export default function BannerActionModal({ bannerToEdit, onClose }) {
             reset({
                 title_en: bannerToEdit.title_en || '',
                 title_ar: bannerToEdit.title_ar || '',
-                type: bannerToEdit.type || 'general',
-                text_en: bannerToEdit.text_en || '',
-                text_ar: bannerToEdit.text_ar || '',
-                link_type: bannerToEdit.link_type || 'none',
-                link: bannerToEdit.link || '',
                 status: bannerToEdit.status || 'active',
             });
         }
@@ -62,11 +47,6 @@ export default function BannerActionModal({ bannerToEdit, onClose }) {
             if (isEditMode) payload.append('_method', 'PUT');
             payload.append('title_en', data.title_en);
             payload.append('title_ar', data.title_ar);
-            payload.append('type', data.type);
-            payload.append('text_en', data.text_en || '');
-            payload.append('text_ar', data.text_ar || '');
-            payload.append('link_type', data.link_type);
-            payload.append('link', data.link || '');
             payload.append('status', data.status);
             
             if (data.image && data.image[0]) {
@@ -126,60 +106,7 @@ export default function BannerActionModal({ bannerToEdit, onClose }) {
                     </div>
                 </div>
 
-                {/* Ad Type & Link Type */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.type')}</label>
-                        <SelectField registration={register('type')}>
-                            <option value="general">{t('types.general')}</option>
-                            <option value="coupon">{t('types.coupon')}</option>
-                        </SelectField>
-                        <ErrorMsg name="type" />
-                    </div>
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.link_type')}</label>
-                        <SelectField registration={register('link_type')}>
-                            <option value="none">{t('link_types.none')}</option>
-                            <option value="internal">{t('link_types.internal')}</option>
-                            <option value="external">{t('link_types.external')}</option>
-                        </SelectField>
-                        <ErrorMsg name="link_type" />
-                    </div>
-                </div>
 
-                {/* Link */}
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.link')}</label>
-                    <input
-                        {...register('link')}
-                        dir="ltr"
-                        placeholder={t('form.link_placeholder')}
-                        className={`${INPUT_CLASS} text-left ${errors.link ? 'border-red-500' : ''}`}
-                    />
-                    <ErrorMsg name="link" />
-                </div>
-
-                {/* Texts / Bodies */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.text_en')}</label>
-                        <textarea
-                            {...register('text_en')}
-                            rows={3}
-                            className={`${INPUT_CLASS} ${errors.text_en ? 'border-red-500' : ''}`}
-                        />
-                        <ErrorMsg name="text_en" />
-                    </div>
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.text_ar')}</label>
-                        <textarea
-                            {...register('text_ar')}
-                            rows={3}
-                            className={`${INPUT_CLASS} ${errors.text_ar ? 'border-red-500' : ''}`}
-                        />
-                        <ErrorMsg name="text_ar" />
-                    </div>
-                </div>
 
                 {/* Image */}
                 <ImageDropzone

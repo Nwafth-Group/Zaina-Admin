@@ -181,22 +181,6 @@ export default function CouponDetailsModal({ couponId, onClose }) {
                                                                 <p className="text-[10px] text-gray-400 italic">{t('details.no_visit_types')}</p>
                                                             )}
                                                         </div>
-
-                                                        {/* allowed shifts pivot */}
-                                                        <div>
-                                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">{t('details.allowed_shifts')}</p>
-                                                            {s.pivot?.allowed_shifts && s.pivot.allowed_shifts.length > 0 ? (
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {s.pivot.allowed_shifts.map((sh, sIdx) => (
-                                                                        <span key={sIdx} className="text-[10px] font-mono bg-white text-[#E91E63] px-1.5 py-0.5 rounded border border-gray-100 font-bold">
-                                                                            {sh.start_time} - {sh.end_time}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <p className="text-[10px] text-gray-400 italic">{t('details.no_shifts')}</p>
-                                                            )}
-                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>

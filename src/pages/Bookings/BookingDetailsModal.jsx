@@ -73,6 +73,20 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
     };
     const isToday = booking?.raw_booking_date === getLocalDateString();
 
+    const hasPassedEndTime = () => {
+        if (!booking || !booking.raw_booking_date || !booking.raw_end_time) return false;
+        const bookingDateStr = booking.raw_booking_date;
+        const startTimeStr = booking.raw_start_time || '00:00:00';
+        const endTimeStr = booking.raw_end_time || '00:00:00';
+        const start = new Date(`${bookingDateStr}T${startTimeStr}`);
+        let end = new Date(`${bookingDateStr}T${endTimeStr}`);
+        if (end < start) {
+            end.setDate(end.getDate() + 1);
+        }
+        return new Date() >= end;
+    };
+    const isEndTimePassed = hasPassedEndTime();
+
     const confirmCancel = () => {
         changeStatus('cancelled', cancelNote.trim());
         setCancelOpen(false);
@@ -135,7 +149,9 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                 disabled={busy}
                             >
                                 {!isWorkingStatus && <option value="" disabled>—</option>}
-                                <option value="Upcoming">{t('status.Upcoming')}</option>
+                                <option value="Upcoming" disabled={status === 'inService'}>
+                                    {t('status.Upcoming')}
+                                </option>
                                 <option value="inService" disabled={!isToday}>
                                     {t('status.inService')} {!isToday && (isArabic ? ' (يوم الخدمة فقط)' : ' (Service day only)')}
                                 </option>
@@ -146,8 +162,8 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                         <button
                             type="button"
                             onClick={() => changeStatus('completed')}
-                            disabled={busy || !isToday}
-                            title={!isToday ? (isArabic ? 'متاح فقط في يوم الخدمة' : 'Only available on scheduled service day') : ''}
+                            disabled={busy || !isEndTimePassed}
+                            title={!isEndTimePassed ? (isArabic ? 'متاح فقط بعد انتهاء وقت الخدمة' : 'Only available after the service end time has passed') : ''}
                             className="px-4 py-2.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
                         >
                             {t('details.mark_completed')}

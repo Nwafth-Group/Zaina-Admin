@@ -3,8 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, getRoles } from '../utils/permissions.js';
 
-const Sidebar = ({ isOpen, setIsOpen }) => {
-    const { t } = useTranslation('common');
+const Sidebar = ({ isOpen, setIsOpen, companyData }) => {
+    const { t, i18n } = useTranslation('common');
+    const isArabic = i18n.language?.startsWith('ar');
     const location = useLocation();
 
     // Show the logged-in admin's (translated) role under the brand name.
@@ -51,10 +52,20 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 </button>
 
                 <div className="p-6 border-b border-gray-50 flex flex-col items-center justify-center mt-4 md:mt-0">
-                    <div className="w-16 h-16 bg-[#FDF0F3] text-[#E91E63] rounded-full flex items-center justify-center text-2xl font-bold mb-3 shadow-sm">
-                        Z
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-800">{t('sidebar.title')}</h2>
+                    {companyData?.logo_url ? (
+                        <img 
+                            src={companyData.logo_url} 
+                            alt="Logo" 
+                            className="w-16 h-16 object-contain mb-3 rounded-xl shadow-sm"
+                        />
+                    ) : (
+                        <div className="w-16 h-16 bg-[#FDF0F3] text-[#E91E63] rounded-full flex items-center justify-center text-2xl font-bold mb-3 shadow-sm">
+                            {companyData ? (isArabic ? companyData.name_ar?.charAt(0) : companyData.name_en?.charAt(0)) : 'Z'}
+                        </div>
+                    )}
+                    <h2 className="text-xl font-bold text-gray-800 text-center">
+                        {companyData ? (isArabic ? companyData.name_ar : companyData.name_en) : t('sidebar.title')}
+                    </h2>
                     {roleLabel && <p className="text-xs text-gray-500 mt-1">{roleLabel}</p>}
                 </div>
 

@@ -36,7 +36,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
     const [selectedAreaIds, setSelectedAreaIds] = useState([]);
 
     const [isForAllServices, setIsForAllServices] = useState(true);
-    const [selectedServices, setSelectedServices] = useState([]); // [{ id, allowed_visit_types: [], allowed_shifts: [{start_time, end_time}] }]
+    const [selectedServices, setSelectedServices] = useState([]); // [{ id, allowed_visit_types: [] }]
 
     // User search search-bar states
     const [userSearch, setUserSearch] = useState('');
@@ -107,7 +107,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                 id: s.id,
                 name: s.name,
                 allowed_visit_types: s.pivot?.allowed_visit_types || [],
-                allowed_shifts: s.pivot?.allowed_shifts || []
             })));
         }
     }, [fullCoupon, isEditMode, reset]);
@@ -137,14 +136,18 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
         }
         const delay = setTimeout(async () => {
             try {
-                const response = await axiosInstance.get(`/admin/users?type=customer&search=${userSearch}&per_page=10`);
+                let url = `/admin/users?type=customer&search=${encodeURIComponent(userSearch)}&per_page=10`;
+                if (!isForAllCities && selectedCityIds.length > 0) {
+                    url += `&city_id=${selectedCityIds.join(',')}`;
+                }
+                const response = await axiosInstance.get(url);
                 setUserSearchResults(response.data.data.items || []);
             } catch (err) {
                 console.error(err);
             }
         }, 300);
         return () => clearTimeout(delay);
-    }, [userSearch]);
+    }, [userSearch, isForAllCities, selectedCityIds]);
 
     // Mutations for submit
     const submitMutation = useMutation({
@@ -171,7 +174,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                 payload.services = selectedServices.map(s => ({
                     id: s.id,
                     allowed_visit_types: s.allowed_visit_types.length > 0 ? s.allowed_visit_types : null,
-                    allowed_shifts: s.allowed_shifts.length > 0 ? s.allowed_shifts : null,
                 }));
             }
 
@@ -254,7 +256,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             if (exists) {
                 return prev.filter(s => s.id !== service.id);
             } else {
-                return [...prev, { id: service.id, name: service.name, allowed_visit_types: [], allowed_shifts: [] }];
+                return [...prev, { id: service.id, name: service.name, allowed_visit_types: [] }];
             }
         });
     };
@@ -604,65 +606,18 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                                             />
                                                             <span>{isArabic ? 'زيارة واحدة' : 'Single Visit'}</span>
                                                         </label>
-                                                        <label className="inline-flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
-                                                            <input 
-                                                                type="checkbox"
-                                                                checked={selS.allowed_visit_types.includes('three_visits_per_week') || selS.allowed_visit_types.includes('3_days_per_week')}
-                                                                onChange={() => toggleServiceVisitType(selS.id, 'three_visits_per_week')}
-                                                                className="w-3.5 h-3.5 rounded text-[#E91E63] border-gray-300"
-                                                            />
-                                                            <span>{isArabic ? '٣ زيارات / أسبوع' : '3 Visits/Week'}</span>
-                                                        </label>
+                                                        {selS.id !== 2 && selS.id !== 3 && (
+                                                            <label className="inline-flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+                                                                <input 
+                                                                    type="checkbox"
+                                                                    checked={selS.allowed_visit_types.includes('three_visits_per_week') || selS.allowed_visit_types.includes('3_days_per_week')}
+                                                                    onChange={() => toggleServiceVisitType(selS.id, 'three_visits_per_week')}
+                                                                    className="w-3.5 h-3.5 rounded text-[#E91E63] border-gray-300"
+                                                                />
+                                                                <span>{isArabic ? '٣ زيارات / أسبوع' : '3 Visits/Week'}</span>
+                                                            </label>
+                                                        )}
                                                     </div>
-                                                </div>
-
-                                                {/* Allowed shifts */}
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between items-center">
-                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase">{t('details.allowed_shifts')}</label>
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={() => addServiceShift(selS.id)}
-                                                            className="text-[10px] font-semibold text-[#E91E63] hover:underline"
-                                                        >
-                                                            + {t('form.service_settings.add_shift')}
-                                                        </button>
-                                                    </div>
-
-                                                    {selS.allowed_shifts.length === 0 ? (
-                                                        <p className="text-[10px] text-gray-400 italic">{t('details.no_shifts')}</p>
-                                                    ) : (
-                                                        <div className="space-y-2">
-                                                            {selS.allowed_shifts.map((shift, sIdx) => (
-                                                                <div key={sIdx} className="flex gap-2 items-center">
-                                                                    <div className="flex-1">
-                                                                        <input 
-                                                                            type="time" 
-                                                                            value={shift.start_time}
-                                                                            onChange={(e) => updateServiceShift(selS.id, sIdx, 'start_time', e.target.value)}
-                                                                            className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:border-[#E91E63] outline-none"
-                                                                        />
-                                                                    </div>
-                                                                    <span className="text-gray-400 text-xs">→</span>
-                                                                    <div className="flex-1">
-                                                                        <input 
-                                                                            type="time" 
-                                                                            value={shift.end_time}
-                                                                            onChange={(e) => updateServiceShift(selS.id, sIdx, 'end_time', e.target.value)}
-                                                                            className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:border-[#E91E63] outline-none"
-                                                                        />
-                                                                    </div>
-                                                                    <button 
-                                                                        type="button" 
-                                                                        onClick={() => removeServiceShift(selS.id, sIdx)}
-                                                                        className="text-red-500 hover:text-red-700 text-xs px-1"
-                                                                    >
-                                                                        ✕
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
                                         ))}

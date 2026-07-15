@@ -9,7 +9,8 @@ import ProfileModal from '../component/ProfileModal.jsx';
 import UserMenu from '../component/UserMenu.jsx';
 
 const AdminLayout = () => {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const isArabic = i18n.language?.startsWith('ar');
   const [adminName, setAdminName] = useState('');
   // Bumped whenever the cached user is refreshed, to force the sidebar to
   // re-evaluate permission-gated links against the fresh data.
@@ -43,6 +44,16 @@ const AdminLayout = () => {
     retry: false,
   });
 
+  // Fetch company info dynamically for header and sidebar branding
+  const { data: companyData } = useQuery({
+    queryKey: ['companyInfo'],
+    queryFn: async () => {
+      const res = await axiosInstance.get('/admin/company-info');
+      return res.data.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
+
   useEffect(() => {
     if (!me) return;
     try {
@@ -66,8 +77,13 @@ const AdminLayout = () => {
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden font-main">
       
       {/* تمرير خصائص الفتح والإغلاق للسايدبار */}
-      {/* key forces a re-render once the cached permissions are refreshed */}
-      <Sidebar key={authVersion} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      {/* key forces a re-render once the cached permissions or logo updates */}
+      <Sidebar 
+        key={`${authVersion}-${companyData?.logo_url || ''}-${companyData?.name_en || ''}`} 
+        isOpen={isSidebarOpen} 
+        setIsOpen={setIsSidebarOpen} 
+        companyData={companyData}
+      />
 
       {/* المحتوى الرئيسي */}
       <main className="flex-1 flex flex-col overflow-hidden relative w-full">
@@ -86,7 +102,7 @@ const AdminLayout = () => {
              </button>
 
              <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-               {t('sidebar.title')}
+               {companyData ? (isArabic ? companyData.name_ar : companyData.name_en) : t('sidebar.title')}
              </h1>
           </div>
           

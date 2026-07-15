@@ -101,7 +101,6 @@ export default function Coupons() {
                 payload.services = (fullDetails.services || []).map(s => ({
                     id: s.id,
                     allowed_visit_types: s.pivot?.allowed_visit_types || null,
-                    allowed_shifts: s.pivot?.allowed_shifts || null,
                 }));
             }
             return axiosInstance.put(`/admin/coupons/${coupon.id}`, payload);

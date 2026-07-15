@@ -10,7 +10,6 @@ import Pagination from '../../component/Pagination.jsx';
 
 const DEFAULT_FILTERS = {
     status: '',
-    type: '',
     sort_by: 'created_at',
     sort_dir: 'desc',
     per_page: 15,
@@ -75,7 +74,6 @@ export default function Banners() {
 
     const activeFilterCount =
         (filters.status ? 1 : 0) +
-        (filters.type ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
     const { data: paginatedData, isLoading, isError, error } = useQuery({
@@ -179,16 +177,14 @@ export default function Banners() {
                         <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">
                             <th className="px-4 md:px-6 py-4 text-start w-20">{t('table.image')}</th>
                             <th className="px-4 py-4 text-start">{t('table.title')}</th>
-                            <th className="px-4 py-4 text-start w-28">{t('table.type')}</th>
                             <th className="px-4 py-4 text-start w-32">{t('table.status')}</th>
-                            <th className="px-4 py-4 text-start">{t('table.body')}</th>
                             <th className="px-4 py-4 text-center w-24">{t('table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
                         {isLoading ? (
                             <tr>
-                                <td colSpan="6" className="py-16 text-center text-gray-500 font-medium">
+                                <td colSpan="4" className="py-16 text-center text-gray-500 font-medium">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                         <span>{t('loading')}</span>
@@ -197,14 +193,13 @@ export default function Banners() {
                             </tr>
                         ) : banners.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="py-16 text-center text-gray-400 font-medium">
+                                <td colSpan="4" className="py-16 text-center text-gray-400 font-medium">
                                     {t('no_data')}
                                 </td>
                             </tr>
                         ) : (
                             banners.map((banner) => {
                                 const title = isAr ? banner.title_ar : banner.title_en;
-                                const text = isAr ? banner.text_ar : banner.text_en;
                                 return (
                                     <tr key={banner.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-4 md:px-6 py-3.5">
@@ -222,18 +217,10 @@ export default function Banners() {
                                             {title || <span className="text-gray-400 font-normal">--</span>}
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${banner.type === 'coupon' ? 'bg-purple-50 text-purple-700 border border-purple-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
-                                                {t(`types.${banner.type}`, { defaultValue: banner.type })}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3.5">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${banner.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${banner.status === 'active' ? 'bg-green-600' : 'bg-gray-400'}`} />
                                                 {banner.status === 'active' ? t('status.active') : t('status.inactive')}
                                             </span>
-                                        </td>
-                                        <td className="px-4 py-3.5 text-xs text-gray-500 max-w-[200px] truncate" title={text}>
-                                            {text || <span className="text-gray-300">--</span>}
                                         </td>
                                         <td className="px-4 py-3.5 text-center">
                                             <RowActionsMenu
@@ -329,15 +316,7 @@ export default function Banners() {
                             </select>
                         </div>
 
-                        {/* Type Filter */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.type_label')}</label>
-                            <select value={draftFilters.type} onChange={(e) => updateDraft('type', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.all_types')}</option>
-                                <option value="general">{t('types.general')}</option>
-                                <option value="coupon">{t('types.coupon')}</option>
-                            </select>
-                        </div>
+
 
                         {/* Sort Order */}
                         <div>
