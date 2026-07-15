@@ -64,8 +64,29 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
     const isTerminal = status === 'completed' || status === 'cancelled';
     const busy = statusMutation.isPending;
 
+    const getCairoDate = () => {
+        const now = new Date();
+        const options = { timeZone: 'Africa/Cairo', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+        const formatter = new Intl.DateTimeFormat('en-US', options);
+        const parts = formatter.formatToParts(now);
+        
+        const partValues = {};
+        parts.forEach(p => {
+            partValues[p.type] = p.value;
+        });
+        
+        return new Date(
+            partValues.year,
+            partValues.month - 1,
+            partValues.day,
+            partValues.hour,
+            partValues.minute,
+            partValues.second
+        );
+    };
+
     const getLocalDateString = () => {
-        const d = new Date();
+        const d = getCairoDate();
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
@@ -83,7 +104,7 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
         if (end < start) {
             end.setDate(end.getDate() + 1);
         }
-        return new Date() >= end;
+        return getCairoDate() >= end;
     };
     const isEndTimePassed = hasPassedEndTime();
 

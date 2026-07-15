@@ -4,15 +4,25 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
+const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
 // Helper to get the start of Saturday-to-Friday week
 const getSaturdayStartStr = (dateStr) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
+    const d = parseLocalDate(dateStr);
     const day = d.getDay(); // 0 (Sun) to 6 (Sat)
     const daysFromSaturday = (day + 1) % 7; // Saturday(6) -> 0, Sunday(0) -> 1, ..., Friday(5) -> 6
     const satDate = new Date(d);
     satDate.setDate(d.getDate() - daysFromSaturday);
-    return satDate.toISOString().split('T')[0];
+    
+    const year = satDate.getFullYear();
+    const month = String(satDate.getMonth() + 1).padStart(2, '0');
+    const dayOfMonth = String(satDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${dayOfMonth}`;
 };
 
 export default function RescheduleBookingModal({ booking, onClose }) {

@@ -65,6 +65,8 @@
     "not_expired": "Valid"
   },
   "form": {
+    "submit": "Save",
+    "cancel": "Cancel",
     "title_add": "Add Coupon",
     "title_edit": "Edit Coupon",
     "name": "Name",

@@ -313,8 +313,8 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             formId="coupon-form"
             onSubmit={handleSubmit(onSubmit)}
             isSubmitting={submitMutation.isPending}
-            cancelLabel={t('keep')}
-            submitLabel={t('details.close')}
+            cancelLabel={t('form.cancel')}
+            submitLabel={t('form.submit')}
         >
             {/* Section 1: Basic Configuration */}
             <FormSection icon="info" title={t('details.basic_info')}>
@@ -401,77 +401,6 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             {/* Section 3: Targeting Rules */}
             <FormSection icon="user" title={t('details.targeting')}>
                 <div className="space-y-6">
-                    {/* User targeting constraint */}
-                    <div>
-                        <label className={LABEL_CLASS}>{t('form.is_for_all_users')}</label>
-                        <OptionCards
-                            value={isForAllUsers ? 'all' : 'specific'}
-                            onChange={(v) => setIsForAllUsers(v === 'all')}
-                            options={[
-                                { value: 'all', label: t('details.all_users'), desc: t('form.all_users_desc') },
-                                { value: 'specific', label: t('form.specific_users_desc'), desc: t('form.specific_users_desc') },
-                            ]}
-                        />
-
-                        {!isForAllUsers && (
-                            <div className="mt-3 space-y-3 bg-gray-50/50 p-4 border border-gray-100 rounded-xl">
-                                <div className="relative">
-                                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </span>
-                                    <input 
-                                        type="text" 
-                                        value={userSearch} 
-                                        onChange={(e) => setUserSearch(e.target.value)}
-                                        placeholder={isArabic ? 'ابحث عن العميل بالاسم أو البريد...' : 'Search customer by name or email...'}
-                                        className="w-full ps-9 pe-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] bg-white"
-                                    />
-                                    {userSearchResults.length > 0 && (
-                                        <ul className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-lg divide-y divide-gray-50">
-                                            {userSearchResults.map((u) => (
-                                                <li 
-                                                    key={u.id} 
-                                                    onClick={() => handleAddUser(u)}
-                                                    className="px-4 py-2 hover:bg-[#FDF0F3] hover:text-[#E91E63] cursor-pointer text-xs flex justify-between"
-                                                >
-                                                    <span className="font-semibold">{u.name}</span>
-                                                    <span className="text-gray-400">{u.email}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-
-                                {/* selected users list */}
-                                {selectedUserIds.length > 0 && (
-                                    <div className="max-h-40 overflow-y-auto space-y-1.5 pt-2">
-                                        {selectedUserIds.map((userId) => {
-                                            // Quick details lookup if user is already fetched
-                                            const uObj = fullCoupon?.users?.find(x => x.id === userId) || userSearchResults.find(x => x.id === userId);
-                                            return (
-                                                <div key={userId} className="flex justify-between items-center p-2 bg-white rounded-lg border border-gray-100 text-xs">
-                                                    <div className="min-w-0">
-                                                        <span className="font-semibold text-gray-800 truncate block">{uObj?.name || `User ID: ${userId}`}</span>
-                                                        {uObj?.email && <span className="text-gray-400 truncate block">{uObj.email}</span>}
-                                                    </div>
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => handleRemoveUser(userId)}
-                                                        className="text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded"
-                                                    >
-                                                        {t('form.service_settings.remove')}
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
                     {/* Cities & Areas targeting constraint */}
                     <div>
                         <label className={LABEL_CLASS}>{t('form.is_for_all_cities')}</label>
@@ -529,6 +458,86 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                                     );
                                                 })}
                                         </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* User targeting constraint */}
+                    <div>
+                        <label className={LABEL_CLASS}>{t('form.is_for_all_users')}</label>
+                        <OptionCards
+                            value={isForAllUsers ? 'all' : 'specific'}
+                            onChange={(v) => setIsForAllUsers(v === 'all')}
+                            options={[
+                                { value: 'all', label: t('details.all_users'), desc: t('form.all_users_desc') },
+                                { value: 'specific', label: t('form.specific_users_desc'), desc: t('form.specific_users_desc') },
+                            ]}
+                        />
+
+                        {!isForAllUsers && (
+                            <div className="mt-3 space-y-3 bg-gray-50/50 p-4 border border-gray-100 rounded-xl">
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        value={userSearch} 
+                                        onChange={(e) => setUserSearch(e.target.value)}
+                                        placeholder={isArabic ? 'ابحث بالاسم، البريد أو رقم الجوال...' : 'Search customer by name, email or mobile number...'}
+                                        className="w-full ps-9 pe-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] bg-white"
+                                    />
+                                    {userSearchResults.length > 0 && (
+                                        <ul className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-lg divide-y divide-gray-50">
+                                            {userSearchResults.map((u) => {
+                                                const uName = u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || `User ID: ${u.id}`;
+                                                return (
+                                                    <li 
+                                                        key={u.id} 
+                                                        onClick={() => handleAddUser(u)}
+                                                        className="px-4 py-2 hover:bg-[#FDF0F3] hover:text-[#E91E63] cursor-pointer text-xs flex flex-col gap-0.5 text-start"
+                                                    >
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-gray-800">{uName}</span>
+                                                            {u.phone_number && <span className="text-gray-500 font-medium text-[10px]">{u.phone_number}</span>}
+                                                        </div>
+                                                        {u.email && <span className="text-gray-400 text-[10px] block text-start">{u.email}</span>}
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
+                                </div>
+
+                                {/* selected users list */}
+                                {selectedUserIds.length > 0 && (
+                                    <div className="max-h-40 overflow-y-auto space-y-1.5 pt-2">
+                                        {selectedUserIds.map((userId) => {
+                                            const uObj = fullCoupon?.users?.find(x => x.id === userId) || userSearchResults.find(x => x.id === userId);
+                                            const uName = uObj?.name || `${uObj?.first_name || ''} ${uObj?.last_name || ''}`.trim() || `User ID: ${userId}`;
+                                            return (
+                                                <div key={userId} className="flex justify-between items-center p-2 bg-white rounded-lg border border-gray-100 text-xs">
+                                                    <div className="min-w-0 text-start">
+                                                        <span className="font-semibold text-gray-800 truncate block">{uName}</span>
+                                                        <div className="text-[10px] text-gray-400 flex flex-col gap-0.5 mt-0.5">
+                                                            {uObj?.phone_number && <span className="block">{uObj.phone_number}</span>}
+                                                            {uObj?.email && <span className="block">{uObj.email}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => handleRemoveUser(userId)}
+                                                        className="text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded"
+                                                    >
+                                                        {t('form.service_settings.remove')}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

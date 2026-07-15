@@ -65,6 +65,8 @@
     "not_expired": "صالح"
   },
   "form": {
+    "submit": "حفظ",
+    "cancel": "إلغاء",
     "title_add": "إضافة كوبون جديد",
     "title_edit": "تعديل الكوبون",
     "name": "الاسم",
