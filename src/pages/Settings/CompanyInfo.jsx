@@ -23,6 +23,8 @@ export default function CompanyInfo() {
     const [snapchat, setSnapchat] = useState('');
     const [tiktok, setTiktok] = useState('');
     const [linkedin, setLinkedin] = useState('');
+    const [googlePlay, setGooglePlay] = useState('');
+    const [appStore, setAppStore] = useState('');
     
     // File upload state
     const [logoFile, setLogoFile] = useState(null);
@@ -49,6 +51,8 @@ export default function CompanyInfo() {
                 setSnapchat(data.snapchat_link || '');
                 setTiktok(data.tiktok_link || '');
                 setLinkedin(data.linkedin_link || '');
+                setGooglePlay(data.google_play_link || '');
+                setAppStore(data.app_store_link || '');
                 setLogoPreview(data.logo_url || '');
             }
         }
@@ -69,6 +73,8 @@ export default function CompanyInfo() {
             setSnapchat(companyData.snapchat_link || '');
             setTiktok(companyData.tiktok_link || '');
             setLinkedin(companyData.linkedin_link || '');
+            setGooglePlay(companyData.google_play_link || '');
+            setAppStore(companyData.app_store_link || '');
             setLogoPreview(companyData.logo_url || '');
         }
     }, [companyData]);
@@ -117,6 +123,8 @@ export default function CompanyInfo() {
         formData.append('snapchat_link', snapchat);
         formData.append('tiktok_link', tiktok);
         formData.append('linkedin_link', linkedin);
+        formData.append('google_play_link', googlePlay);
+        formData.append('app_store_link', appStore);
 
         if (logoFile) {
             formData.append('logo', logoFile);
@@ -304,6 +312,30 @@ export default function CompanyInfo() {
                                 value={linkedin}
                                 onChange={(e) => setLinkedin(e.target.value)}
                                 placeholder="https://linkedin.com/company/username"
+                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                Google Play Link (Android)
+                            </label>
+                            <input
+                                type="url"
+                                value={googlePlay}
+                                onChange={(e) => setGooglePlay(e.target.value)}
+                                placeholder="https://play.google.com/store/apps/details?id=..."
+                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                App Store Link (iOS)
+                            </label>
+                            <input
+                                type="url"
+                                value={appStore}
+                                onChange={(e) => setAppStore(e.target.value)}
+                                placeholder="https://apps.apple.com/app/..."
                                 className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>

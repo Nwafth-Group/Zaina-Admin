@@ -43,7 +43,8 @@ function DocumentTile({ label, url, t }) {
 }
 
 export default function ReviewUserModal({ userId, onClose }) {
-    const { t } = useTranslation('users');
+    const { t, i18n } = useTranslation('users');
+    const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
     const [isRejecting, setIsRejecting] = useState(false);
@@ -150,6 +151,18 @@ export default function ReviewUserModal({ userId, onClose }) {
                                     <span className="block text-gray-400">{t('review_modal.email')}</span>
                                     <span className="text-gray-800 break-all">{user.email || '-'}</span>
                                 </div>
+                                {user.invited_by && (
+                                    <div className="col-span-2 mt-2 p-3 bg-pink-50/50 border border-pink-100/50 rounded-xl flex items-center justify-between">
+                                        <div>
+                                            <span className="block text-xs font-semibold text-pink-600">{isArabic ? 'تمت دعوته بواسطة' : 'Invited By'}</span>
+                                            <span className="text-sm font-bold text-gray-800">{user.invited_by.full_name} ({user.invited_by.referral_code})</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-xs text-gray-400">{isArabic ? 'البريد الإلكتروني / الهاتف' : 'Email / Phone'}</span>
+                                            <span className="text-xs text-gray-600" dir="ltr">{user.invited_by.phone_number || user.invited_by.email || '-'}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Previous rejection reason, if any */}
