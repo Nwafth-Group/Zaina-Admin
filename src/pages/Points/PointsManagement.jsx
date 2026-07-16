@@ -385,8 +385,16 @@ export default function PointsManagement() {
                                                 </div>
                                             </td>
                                             <td className="p-4 md:p-5">
-                                                <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-semibold uppercase">
-                                                    {rule.rule_category}
+                                                <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-semibold">
+                                                    {rule.rule_category === 'referral'
+                                                        ? (isArabic ? 'دعوة صديق' : 'Referral')
+                                                        : rule.rule_category === 'social_media'
+                                                        ? (isArabic ? 'وسائل التواصل' : 'Social Media')
+                                                        : rule.rule_category === 'booking'
+                                                        ? (isArabic ? 'إتمام حجز' : 'Booking Complete')
+                                                        : rule.rule_category === 'booking_count'
+                                                        ? (isArabic ? 'عدد حجوزات' : 'Booking Count')
+                                                        : rule.rule_category}
                                                 </span>
                                             </td>
                                             <td className="p-4 md:p-5 text-[#E91E63] font-bold">
@@ -668,7 +676,6 @@ export default function PointsManagement() {
                             {[
                                 { value: '', label: isArabic ? 'جميع العمليات' : 'All Types' },
                                 { value: 'earn', label: isArabic ? 'كسب' : 'Earn' },
-                                { value: 'redeem', label: isArabic ? 'استرداد' : 'Redeem' },
                                 { value: 'refund', label: isArabic ? 'إرجاع' : 'Refund' },
                                 { value: 'expire', label: isArabic ? 'انتهاء الصلاحية' : 'Expire' },
                                 { value: 'adjustment', label: isArabic ? 'اضافة نقاط للمستخدمين' : 'Add Points to Users' },
@@ -865,10 +872,10 @@ export default function PointsManagement() {
                                         onChange={(e) => setRuleForm({ ...ruleForm, rule_category: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white"
                                     >
-                                        <option value="social_media">Social Media</option>
-                                        <option value="referral">Referral</option>
-                                        <option value="booking">Booking Complete</option>
-                                        <option value="booking_count">Booking Count Cycle</option>
+                                        <option value="social_media">{isArabic ? 'متابعة التواصل الاجتماعي' : 'Social Media'}</option>
+                                        <option value="referral">{isArabic ? 'دعوة صديق' : 'Referral'}</option>
+                                        <option value="booking">{isArabic ? 'إتمام حجز خدمة' : 'Booking Complete'}</option>
+                                        <option value="booking_count">{isArabic ? 'دورة حجوزات متكررة' : 'Booking Count Cycle'}</option>
                                     </select>
                                 </div>
                                 <div>
