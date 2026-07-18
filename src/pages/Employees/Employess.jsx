@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
 import EmployeeActionModal from './EmployeeActionModal';
-import RowActionsMenu, { EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 import { hasPermission } from '../../utils/permissions.js';
 
@@ -118,6 +118,19 @@ export default function Employees() {
         },
         onSuccess: (response) => {
             toast.success(response.data?.message || "تم تغيير الحالة بنجاح");
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || "حدث خطأ أثناء العملية.");
+        }
+    });
+
+    const deleteEmployeeMutation = useMutation({
+        mutationFn: (employeeId) => {
+            return axiosInstance.delete(`/admin/employees/${employeeId}`);
+        },
+        onSuccess: (response) => {
+            toast.success(response.data?.message || (isArabic ? "تم حذف الموظف بنجاح" : "Employee deleted successfully"));
             queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
         onError: (error) => {
@@ -332,20 +345,32 @@ export default function Employees() {
                                         <RowActionsMenu
                                             label={t('actions.edit')}
                                             items={[
-                                                {
+                                                hasPermission('employees.edit') && {
                                                     key: 'edit',
                                                     label: t('actions.edit'),
                                                     icon: <EditIcon />,
                                                     onClick: () => setActionModal({ isOpen: true, employeeToEdit: employee }),
                                                 },
-                                                {
+                                                hasPermission('employees.edit') && {
                                                     key: 'toggle',
                                                     label: t('actions.toggle_status'),
                                                     icon: <ToggleIcon />,
                                                     onClick: () => toggleStatusMutation.mutate(employee.id),
                                                     disabled: toggleStatusMutation.isPending,
                                                 },
-                                            ]}
+                                                hasPermission('employees.delete') && {
+                                                    key: 'delete',
+                                                    label: isArabic ? 'حذف' : 'Delete',
+                                                    icon: <TrashIcon />,
+                                                    danger: true,
+                                                    onClick: () => {
+                                                        if (window.confirm(isArabic ? 'هل أنت متأكد من رغبتك في حذف هذا الموظف؟' : 'Are you sure you want to delete this employee?')) {
+                                                            deleteEmployeeMutation.mutate(employee.id);
+                                                        }
+                                                    },
+                                                    disabled: deleteEmployeeMutation.isPending,
+                                                },
+                                            ].filter(Boolean)}
                                         />
                                     </td>
                                 </tr>

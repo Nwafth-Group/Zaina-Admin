@@ -5,8 +5,9 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import AreaActionModal from './AreaActionModal';
 import LocationHeader from './LocationHeader.jsx';
-import RowActionsMenu, { EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
+import { hasPermission } from '../../utils/permissions.js';
 
 export default function Areas() {
     const { t, i18n } = useTranslation('locations');
@@ -28,6 +29,15 @@ export default function Areas() {
     const toggle = useMutation({
         mutationFn: (id) => axiosInstance.post(`/admin/areas/${id}/toggle-status`),
         onSuccess: () => { toast.success(t('common.toggled')); queryClient.invalidateQueries({ queryKey: ['areas'] }); },
+        onError: (e) => toast.error(e.response?.data?.message || t('common.error')),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => axiosInstance.delete(`/admin/areas/${id}`),
+        onSuccess: () => {
+            toast.success(t('common.deleted') || 'Deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['areas'] });
+        },
         onError: (e) => toast.error(e.response?.data?.message || t('common.error')),
     });
 
@@ -96,6 +106,18 @@ export default function Areas() {
                                                 items={[
                                                     { key: 'edit', label: t('common.edit'), icon: <EditIcon />, onClick: () => setModal({ open: true, area: a }) },
                                                     { key: 'toggle', label: t('common.toggle_status'), icon: <ToggleIcon />, onClick: () => toggle.mutate(a.id), disabled: toggle.isPending },
+                                                    {
+                                                        key: 'delete',
+                                                        label: isArabic ? 'حذف' : 'Delete',
+                                                        icon: <TrashIcon />,
+                                                        danger: true,
+                                                        onClick: () => {
+                                                            if (window.confirm(isArabic ? 'هل أنت متأكد من رغبتك في حذف هذه المنطقة؟' : 'Are you sure you want to delete this area?')) {
+                                                                deleteMutation.mutate(a.id);
+                                                            }
+                                                        },
+                                                        disabled: deleteMutation.isPending,
+                                                    },
                                                 ]}
                                             />
                                         </td>

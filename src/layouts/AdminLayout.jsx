@@ -18,8 +18,21 @@ const AdminLayout = () => {
 
   // حالة للتحكم بفتح وإغلاق القائمة الجانبية على شاشات الموبايل
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Desktop sidebar collapse state
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true';
+  });
+  
   // null = closed; otherwise the tab to open the profile modal on.
   const [profileTab, setProfileTab] = useState(null);
+
+  const toggleSidebar = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   // جلب اسم الأدمن من التخزين المحلي عند تحميل الهيكل
   useEffect(() => {
@@ -74,7 +87,7 @@ const AdminLayout = () => {
   }, [me]);
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden font-main">
+    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden font-main" dir={isArabic ? 'rtl' : 'ltr'}>
       
       {/* تمرير خصائص الفتح والإغلاق للسايدبار */}
       {/* key forces a re-render once the cached permissions or logo updates */}
@@ -82,26 +95,41 @@ const AdminLayout = () => {
         key={`${authVersion}-${companyData?.logo_url || ''}-${companyData?.name_en || ''}`} 
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen} 
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
         companyData={companyData}
       />
 
       {/* المحتوى الرئيسي */}
       <main className="flex-1 flex flex-col overflow-hidden relative w-full">
         
-        {/* الترويسة العلوية (Header) */}
-        <header className="bg-white shadow-sm p-4 flex justify-between items-center px-4 md:px-8 border-b border-gray-100 z-10">
+        {/* الترويسة العلوية (Header) - Glassmorphism style */}
+        <header className="backdrop-blur-md bg-white/80 shadow-sm p-4 flex justify-between items-center px-4 md:px-8 border-b border-gray-100 z-10 transition-all duration-300">
           <div className="flex items-center gap-4">
-             {/* زر فتح القائمة الجانبية (يظهر فقط على الموبايل) */}
+             {/* زر فتح / إغلاق القائمة الجانبية (للموبايل والديسك توب) */}
              <button 
-                onClick={() => setIsSidebarOpen(true)}
-                className="md:hidden p-2 text-gray-600 hover:text-[#E91E63] hover:bg-gray-50 rounded-lg transition-colors focus:outline-none"
+                onClick={() => {
+                  if (window.innerWidth < 768) {
+                    setIsSidebarOpen(true);
+                  } else {
+                    toggleSidebar();
+                  }
+                }}
+                className="md:hidden p-2 text-gray-600 hover:text-[#D94A78] hover:bg-rose-50 border border-gray-100 rounded-xl transition-all duration-200 focus:outline-none flex items-center justify-center shadow-sm"
+                title={isCollapsed ? t('sidebar.expand', { defaultValue: 'Expand Sidebar' }) : t('sidebar.collapse', { defaultValue: 'Collapse Sidebar' })}
              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                {isCollapsed ? (
+                  <svg className={`w-5 h-5 transition-transform duration-300 ${isArabic ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                  </svg>
+                ) : (
+                  <svg className={`w-5 h-5 transition-transform duration-300 ${isArabic ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+                  </svg>
+                )}
              </button>
 
-             <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
+             <h1 className="text-lg font-bold text-gray-800 hidden sm:block">
                {companyData ? (isArabic ? companyData.name_ar : companyData.name_en) : t('sidebar.title')}
              </h1>
           </div>

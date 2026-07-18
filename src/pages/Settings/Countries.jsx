@@ -5,9 +5,10 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import CountryActionModal from './CountryActionModal';
 import LocationHeader from './LocationHeader.jsx';
-import RowActionsMenu, { EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 import usePagedList from '../../hooks/usePagedList.js';
+import { hasPermission } from '../../utils/permissions.js';
 
 export default function Countries() {
     const { t, i18n } = useTranslation('locations');
@@ -26,6 +27,15 @@ export default function Countries() {
     const toggle = useMutation({
         mutationFn: (id) => axiosInstance.post(`/admin/countries/${id}/toggle-status`),
         onSuccess: () => { toast.success(t('common.toggled')); queryClient.invalidateQueries({ queryKey: ['countries'] }); },
+        onError: (e) => toast.error(e.response?.data?.message || t('common.error')),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => axiosInstance.delete(`/admin/countries/${id}`),
+        onSuccess: () => {
+            toast.success(t('common.deleted') || 'Deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['countries'] });
+        },
         onError: (e) => toast.error(e.response?.data?.message || t('common.error')),
     });
 
@@ -100,6 +110,18 @@ export default function Countries() {
                                                 items={[
                                                     { key: 'edit', label: t('common.edit'), icon: <EditIcon />, onClick: () => setModal({ open: true, country: c }) },
                                                     { key: 'toggle', label: t('common.toggle_status'), icon: <ToggleIcon />, onClick: () => toggle.mutate(c.id), disabled: toggle.isPending },
+                                                    {
+                                                        key: 'delete',
+                                                        label: isArabic ? 'حذف' : 'Delete',
+                                                        icon: <TrashIcon />,
+                                                        danger: true,
+                                                        onClick: () => {
+                                                            if (window.confirm(isArabic ? 'هل أنت متأكد من رغبتك في حذف هذه الدولة؟' : 'Are you sure you want to delete this country?')) {
+                                                                deleteMutation.mutate(c.id);
+                                                            }
+                                                        },
+                                                        disabled: deleteMutation.isPending,
+                                                    },
                                                 ]}
                                             />
                                         </td>

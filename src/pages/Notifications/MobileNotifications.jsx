@@ -90,22 +90,33 @@ export default function MobileNotifications() {
     const cancelMutation = useMutation({
         mutationFn: (id) => axiosInstance.patch(`/admin/mobile-notifications/${id}/cancel`),
         onSuccess: (response) => {
-            toast.success(response.data?.message || "تم إلغاء الإشعار بنجاح");
+            toast.success(response.data?.message || (isArabic ? "تم إلغاء الإشعار بنجاح" : "Notification cancelled successfully"));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || "حدث خطأ أثناء إلغاء الإشعار.");
+            toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء إلغاء الإشعار." : "Error cancelling notification."));
+        },
+    });
+
+    const sendNowMutation = useMutation({
+        mutationFn: (id) => axiosInstance.post(`/admin/mobile-notifications/${id}/send-now`),
+        onSuccess: (response) => {
+            toast.success(response.data?.message || (isArabic ? "تم إرسال الإشعار بنجاح" : "Notification sent successfully"));
+            queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء إرسال الإشعار." : "Error sending notification."));
         },
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id) => axiosInstance.delete(`/admin/mobile-notifications/${id}`),
         onSuccess: (response) => {
-            toast.success(response.data?.message || "تم حذف الإشعار بنجاح");
+            toast.success(response.data?.message || (isArabic ? "تم حذف الإشعار بنجاح" : "Notification deleted successfully"));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || "حدث خطأ أثناء حذف الإشعار.");
+            toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء حذف الإشعار." : "Error deleting notification."));
         },
     });
 
@@ -120,8 +131,12 @@ export default function MobileNotifications() {
             {/* Header Toolbar */}
             <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
                 <div>
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-800">{t('title', { defaultValue: 'إشعارات الهاتف' })}</h2>
-                    <p className="text-sm text-gray-500 mt-1">{t('subtitle', { defaultValue: 'جدولة وإرسال إشعارات فورية لتطبيق العملاء.' })}</p>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+                        {t('title', { defaultValue: isArabic ? 'إشعارات الهاتف' : 'Mobile Notifications' })}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        {t('subtitle', { defaultValue: isArabic ? 'جدولة وإرسال إشعارات فورية لتطبيق العملاء.' : 'Schedule and send push notifications to the customer app.' })}
+                    </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -136,7 +151,7 @@ export default function MobileNotifications() {
                             type="text"
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder={t('filters.search_placeholder', { defaultValue: 'البحث في الإشعارات...' })}
+                            placeholder={t('filters.search_placeholder', { defaultValue: isArabic ? 'البحث في الإشعارات...' : 'Search notifications...' })}
                             className={`${selectClass} w-full ps-9`}
                         />
                     </div>
@@ -149,7 +164,7 @@ export default function MobileNotifications() {
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
                         </svg>
-                        <span>{t('filters.button', { defaultValue: 'الفلاتر' })}</span>
+                        <span>{t('filters.button', { defaultValue: isArabic ? 'الفلاتر' : 'Filters' })}</span>
                         {activeFilterCount > 0 && (
                             <span className="absolute -top-2 -end-2 bg-[#E91E63] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                                 {activeFilterCount}
@@ -165,7 +180,7 @@ export default function MobileNotifications() {
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
-                        {t('add_new', { defaultValue: 'إنشاء إشعار' })}
+                        {t('add_new', { defaultValue: isArabic ? 'إنشاء إشعار' : 'Create Notification' })}
                     </button>
                 </div>
             </div>
@@ -175,29 +190,28 @@ export default function MobileNotifications() {
                 <table className="w-full text-start border-collapse">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">
-                            <th className="px-6 py-4 text-start">{t('table.title', { defaultValue: 'العنوان الداخلي' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.audience', { defaultValue: 'الجمهور المستهدف' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.platforms', { defaultValue: 'منصات الهاتف' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.schedule', { defaultValue: 'موعد الإرسال' })}</th>
-                            <th className="px-4 py-4 text-start w-32">{t('table.status', { defaultValue: 'الحالة' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.creator', { defaultValue: 'بواسطة' })}</th>
-                            <th className="px-4 py-4 text-center w-24">{t('table.actions', { defaultValue: 'الإجراءات' })}</th>
+                            <th className="px-6 py-4 text-start">{t('table.title', { defaultValue: isArabic ? 'العنوان الداخلي' : 'Internal Title' })}</th>
+                            <th className="px-4 py-4 text-start">{t('table.audience', { defaultValue: isArabic ? 'الجمهور المستهدف' : 'Target Audience' })}</th>
+                            <th className="px-4 py-4 text-start">{t('table.schedule', { defaultValue: isArabic ? 'موعد الإرسال' : 'Send Time' })}</th>
+                            <th className="px-4 py-4 text-start w-32">{t('table.status', { defaultValue: isArabic ? 'الحالة' : 'Status' })}</th>
+                            <th className="px-4 py-4 text-start">{t('table.creator', { defaultValue: isArabic ? 'بواسطة' : 'Created By' })}</th>
+                            <th className="px-4 py-4 text-center w-24">{t('table.actions', { defaultValue: isArabic ? 'الإجراءات' : 'Actions' })}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
                         {isLoading ? (
                             <tr>
-                                <td colSpan="7" className="py-16 text-center text-gray-500 font-medium">
+                                <td colSpan="6" className="py-16 text-center text-gray-500 font-medium">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                                        <span>{t('loading', { defaultValue: 'جاري تحميل الإشعارات...' })}</span>
+                                        <span>{t('loading', { defaultValue: isArabic ? 'جاري تحميل الإشعارات...' : 'Loading notifications...' })}</span>
                                     </div>
                                 </td>
                             </tr>
                         ) : notifications.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="py-16 text-center text-gray-400 font-medium">
-                                    {t('no_data', { defaultValue: 'لا توجد إشعارات مجدولة بعد.' })}
+                                <td colSpan="6" className="py-16 text-center text-gray-400 font-medium">
+                                    {t('no_data', { defaultValue: isArabic ? 'لا توجد إشعارات مجدولة بعد.' : 'No notifications scheduled yet.' })}
                                 </td>
                             </tr>
                         ) : (
@@ -215,20 +229,11 @@ export default function MobileNotifications() {
                                                 : 'bg-orange-50 text-orange-700 border border-orange-100'
                                         }`}>
                                             {notification.audience === 'all'
-                                                ? 'كل المستخدمين'
+                                                ? (isArabic ? 'كل المستخدمين' : 'All Users')
                                                 : notification.audience === 'active_customers'
-                                                ? 'العملاء النشطين'
-                                                : 'العملاء غير النشطين'}
+                                                ? (isArabic ? 'العملاء النشطين' : 'Active Customers')
+                                                : (isArabic ? 'العملاء غير النشطين' : 'Inactive Customers')}
                                         </span>
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex flex-wrap gap-1">
-                                            {notification.platforms.map((plat) => (
-                                                <span key={plat} className="inline-flex px-2 py-0.5 rounded text-xs font-bold bg-gray-100 text-gray-700 uppercase">
-                                                    {plat}
-                                                </span>
-                                            ))}
-                                        </div>
                                     </td>
                                     <td className="px-4 py-4 font-mono text-xs">
                                         {notification.send_date} {notification.send_time}
@@ -249,10 +254,10 @@ export default function MobileNotifications() {
                                                     : 'bg-gray-400'
                                             }`} />
                                             {notification.status === 'scheduled'
-                                                ? 'مجدول'
+                                                ? (isArabic ? 'مجدول' : 'Scheduled')
                                                 : notification.status === 'sent'
-                                                ? 'تم الإرسال'
-                                                : 'ملغى'}
+                                                ? (isArabic ? 'تم الإرسال' : 'Sent')
+                                                : (isArabic ? 'ملغى' : 'Cancelled')}
                                         </span>
                                     </td>
                                     <td className="px-4 py-4 text-xs text-gray-500">
@@ -260,25 +265,41 @@ export default function MobileNotifications() {
                                     </td>
                                     <td className="px-4 py-4 text-center">
                                         <RowActionsMenu
-                                            label={t('actions.title', { defaultValue: 'الإجراءات' })}
+                                            label={t('actions.title', { defaultValue: isArabic ? 'الإجراءات' : 'Actions' })}
                                             items={[
                                                 {
+                                                    key: 'send_now',
+                                                    label: isArabic ? 'إرسال الآن' : 'Send Now',
+                                                    icon: (
+                                                        <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                                                        </svg>
+                                                    ),
+                                                    onClick: () => {
+                                                        if (window.confirm(isArabic ? "هل أنت متأكد من إرسال هذا الإشعار الآن؟" : "Are you sure you want to send this notification now?")) {
+                                                            sendNowMutation.mutate(notification.id);
+                                                        }
+                                                    },
+                                                    disabled: sendNowMutation.isPending,
+                                                    hidden: notification.status === 'sent',
+                                                },
+                                                {
                                                     key: 'edit',
-                                                    label: t('actions.edit', { defaultValue: 'تعديل' }),
+                                                    label: t('actions.edit', { defaultValue: isArabic ? 'تعديل' : 'Edit' }),
                                                     icon: <EditIcon />,
                                                     onClick: () => setActionModal({ isOpen: true, notificationToEdit: notification }),
                                                     hidden: notification.status !== 'scheduled',
                                                 },
                                                 {
                                                     key: 'cancel',
-                                                    label: t('actions.cancel', { defaultValue: 'إلغاء الإرسال' }),
+                                                    label: t('actions.cancel', { defaultValue: isArabic ? 'إلغاء الإرسال' : 'Cancel Scheduling' }),
                                                     icon: (
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                                         </svg>
                                                     ),
                                                     onClick: () => {
-                                                        if (window.confirm("هل أنت متأكد من إلغاء جدولة هذا الإشعار؟")) {
+                                                        if (window.confirm(isArabic ? "هل أنت متأكد من إلغاء جدولة هذا الإشعار؟" : "Are you sure you want to cancel this scheduled notification?")) {
                                                             cancelMutation.mutate(notification.id);
                                                         }
                                                     },
@@ -287,7 +308,7 @@ export default function MobileNotifications() {
                                                 },
                                                 {
                                                     key: 'delete',
-                                                    label: t('actions.delete', { defaultValue: 'حذف' }),
+                                                    label: t('actions.delete', { defaultValue: isArabic ? 'حذف' : 'Delete' }),
                                                     danger: true,
                                                     icon: (
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -295,7 +316,7 @@ export default function MobileNotifications() {
                                                         </svg>
                                                     ),
                                                     onClick: () => {
-                                                        if (window.confirm("هل أنت متأكد من حذف هذا الإشعار؟")) {
+                                                        if (window.confirm(isArabic ? "هل أنت متأكد من حذف هذا الإشعار؟" : "Are you sure you want to delete this notification?")) {
                                                             deleteMutation.mutate(notification.id);
                                                         }
                                                     },
@@ -316,7 +337,7 @@ export default function MobileNotifications() {
             <div className="p-4 md:p-6 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <Pagination meta={meta} onPageChange={setPage} />
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{t('pagination.rows_per_page', { defaultValue: 'عدد الأسطر:' })}</span>
+                    <span className="text-xs text-gray-500">{t('pagination.rows_per_page', { defaultValue: isArabic ? 'عدد الأسطر:' : 'Rows per page:' })}</span>
                     <select
                         value={filters.per_page}
                         onChange={(e) => {
@@ -343,7 +364,7 @@ export default function MobileNotifications() {
                         : `right-0 ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`
                 }`}>
                     <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-800">{t('filters.title', { defaultValue: 'الفلاتر' })}</h3>
+                        <h3 className="text-lg font-bold text-gray-800">{t('filters.title', { defaultValue: isArabic ? 'الفلاتر' : 'Filters' })}</h3>
                         <button onClick={() => setIsFilterOpen(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" aria-label="close">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -354,33 +375,33 @@ export default function MobileNotifications() {
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {/* Status */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.status_label', { defaultValue: 'حالة الإرسال' })}</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.status_label', { defaultValue: isArabic ? 'حالة الإرسال' : 'Send Status' })}</label>
                             <select value={draftFilters.status} onChange={(e) => updateDraft('status', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.all_statuses', { defaultValue: 'كل الحالات' })}</option>
-                                <option value="scheduled">مجدول</option>
-                                <option value="sent">تم الإرسال</option>
-                                <option value="cancelled">ملغى</option>
+                                <option value="">{t('filters.all_statuses', { defaultValue: isArabic ? 'كل الحالات' : 'All Statuses' })}</option>
+                                <option value="scheduled">{isArabic ? 'مجدول' : 'Scheduled'}</option>
+                                <option value="sent">{isArabic ? 'تم الإرسال' : 'Sent'}</option>
+                                <option value="cancelled">{isArabic ? 'ملغى' : 'Cancelled'}</option>
                             </select>
                         </div>
 
                         {/* Audience */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.audience_label', { defaultValue: 'الجمهور المستهدف' })}</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.audience_label', { defaultValue: isArabic ? 'الجمهور المستهدف' : 'Target Audience' })}</label>
                             <select value={draftFilters.audience} onChange={(e) => updateDraft('audience', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.all_audiences', { defaultValue: 'كل الجماهير' })}</option>
-                                <option value="all">كل المستخدمين</option>
-                                <option value="active_customers">العملاء النشطين</option>
-                                <option value="inactive_customers">العملاء غير النشطين</option>
+                                <option value="">{t('filters.all_audiences', { defaultValue: isArabic ? 'كل الجماهير' : 'All Audiences' })}</option>
+                                <option value="all">{isArabic ? 'كل المستخدمين' : 'All Users'}</option>
+                                <option value="active_customers">{isArabic ? 'العملاء النشطين' : 'Active Customers'}</option>
+                                <option value="inactive_customers">{isArabic ? 'العملاء غير النشطين' : 'Inactive Customers'}</option>
                             </select>
                         </div>
 
                         {/* Sorting */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.sort_label', { defaultValue: 'ترتيب حسب' })}</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.sort_label', { defaultValue: isArabic ? 'ترتيب حسب' : 'Sort By' })}</label>
                             <select value={`${draftFilters.sort_by}:${draftFilters.sort_dir}`} onChange={(e) => handleSortChange(e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="created_at:desc">الأحدث إضافة</option>
-                                <option value="send_date:asc">الأقرب موعد إرسال</option>
-                                <option value="send_date:desc">الأبعد موعد إرسال</option>
+                                <option value="created_at:desc">{isArabic ? 'الأحدث إضافة' : 'Newest'}</option>
+                                <option value="send_date:asc">{isArabic ? 'الأقرب موعد إرسال' : 'Soonest Schedule'}</option>
+                                <option value="send_date:desc">{isArabic ? 'الأبعد موعد إرسال' : 'Furthest Schedule'}</option>
                             </select>
                         </div>
                     </div>
@@ -391,13 +412,13 @@ export default function MobileNotifications() {
                             onClick={resetFilters}
                             className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors"
                         >
-                            {t('filters.reset', { defaultValue: 'إعادة تعيين' })}
+                            {t('filters.reset', { defaultValue: isArabic ? 'إعادة تعيين' : 'Reset' })}
                         </button>
                         <button
                             onClick={applyFilters}
                             className="flex-1 px-4 py-2 bg-[#E91E63] text-white rounded-lg hover:bg-[#D81B60] font-medium transition-colors"
                         >
-                            {t('filters.done', { defaultValue: 'تطبيق' })}
+                            {t('filters.done', { defaultValue: isArabic ? 'تطبيق' : 'Apply' })}
                         </button>
                     </div>
                 </aside>

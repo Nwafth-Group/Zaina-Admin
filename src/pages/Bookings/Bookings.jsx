@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
-import BookingDetailsModal from './BookingDetailsModal';
+
 import RescheduleBookingModal from './RescheduleBookingModal';
 import RowActionsMenu, { EyeIcon, CancelIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
+import { hasPermission } from '../../utils/permissions.js';
 
 const DEFAULT_FILTERS = {
     status: '',
@@ -44,6 +46,7 @@ const STATUS_TABS = [
 
 export default function Bookings() {
     const { t, i18n } = useTranslation('bookings');
+    const navigate = useNavigate();
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
@@ -52,7 +55,6 @@ export default function Bookings() {
     const [filters, setFilters] = useState(DEFAULT_FILTERS); // committed drawer filters
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS); // staged until "Apply"
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [detailsId, setDetailsId] = useState(null);   // booking open in the details modal
     const [cancelTarget, setCancelTarget] = useState(null); // booking pending cancel confirm
     const [cancelNote, setCancelNote] = useState('');
     const [rescheduleTarget, setRescheduleTarget] = useState(null);
@@ -239,13 +241,10 @@ export default function Bookings() {
                         <tr>
                             <th className="px-4 py-4">{t('table.ref')}</th>
                             <th className="px-4 py-4">{t('table.customer')}</th>
-                            <th className="px-4 py-4">{t('table.service')}</th>
-                            <th className="px-4 py-4 whitespace-nowrap">{isArabic ? 'نوع السعر' : 'Price Type'}</th>
-                            <th className="px-4 py-4 whitespace-nowrap">{isArabic ? 'جنس العمالة' : 'Gender'}</th>
-                            <th className="px-4 py-4 text-center whitespace-nowrap">{isArabic ? 'العدد المطلوب' : 'Req. Workers'}</th>
-                            <th className="px-4 py-4">{t('table.visit_type')}</th>
+                            <th className="px-4 py-4">{t('table.service_visit_type')}</th>
+                            <th className="px-4 py-4 whitespace-nowrap">{t('table.price_type')}</th>
                             <th className="px-4 py-4">{t('table.schedule')}</th>
-                            <th className="px-4 py-4 text-center">{isArabic ? 'العمالة المسندة' : 'Assigned Workers'}</th>
+                            <th className="px-4 py-4 text-center">{t('table.assigned_workers')}</th>
                             <th className="px-4 py-4 text-center">{t('table.amount')}</th>
                             <th className="px-4 py-4 text-center">{t('table.status')}</th>
                             <th className="px-4 py-4 text-center">{t('table.payment')}</th>
@@ -255,7 +254,7 @@ export default function Bookings() {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="13" className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
                                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
@@ -267,11 +266,11 @@ export default function Bookings() {
                             </tr>
                         ) : bookings.length === 0 ? (
                             <tr>
-                                <td colSpan="13" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
+                                <td colSpan="10" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
                             </tr>
                         ) : (
                             bookings.map((b) => (
-                                <tr key={b.id} onClick={() => setDetailsId(b.id)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
+                                <tr key={b.id} onClick={() => navigate(`/bookings/${b.id}`)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
                                     {/* Reference */}
                                     <td className="px-4 py-3">
                                         <span className="font-mono text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">{b.booking_ref}</span>
@@ -283,40 +282,18 @@ export default function Bookings() {
                                         {b.customer_phone && <p className="text-xs text-gray-400 mt-0.5" dir="ltr">{b.customer_phone}</p>}
                                     </td>
  
-                                    {/* Service */}
+                                    {/* Service / Visit Type */}
                                     <td className="px-4 py-3">
-                                        <span className="text-sm font-medium text-gray-600 line-clamp-1">{b.service_name || '—'}</span>
+                                        <p className="text-sm font-semibold text-gray-800 line-clamp-1">{b.service_name || '—'}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5 whitespace-nowrap">
+                                            {t(`visit_types.${b.visit_type}`, b.visit_type)}
+                                        </p>
                                     </td>
 
                                     {/* Price Type */}
                                     <td className="px-4 py-3">
                                         <span className="text-sm text-gray-600 whitespace-nowrap">
-                                            {b.pricing_type === 'per_hour' 
-                                                ? (isArabic ? 'بالساعة' : 'Per Hour') 
-                                                : (isArabic ? 'بالخدمة' : 'Per Service')}
-                                        </span>
-                                    </td>
-
-                                    {/* Gender */}
-                                    <td className="px-4 py-3">
-                                        <span className="text-sm text-gray-600 whitespace-nowrap">
-                                            {b.worker_gender 
-                                                ? (isArabic 
-                                                    ? (b.worker_gender === 'Male' ? 'ذكور' : 'إناث') 
-                                                    : b.worker_gender) 
-                                                : '—'}
-                                        </span>
-                                    </td>
-
-                                    {/* Requested Workers */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className="text-sm font-medium text-gray-700">{b.number_of_workers || 1}</span>
-                                    </td>
-
-                                    {/* Visit Type */}
-                                    <td className="px-4 py-3">
-                                        <span className="text-xs font-semibold bg-gray-50 text-gray-700 px-2.5 py-1 rounded-full border border-gray-100 whitespace-nowrap">
-                                            {t(`visit_types.${b.visit_type}`, b.visit_type)}
+                                            {t(`pricing_types.${b.pricing_type}`, b.pricing_type)}
                                         </span>
                                     </td>
  
@@ -359,28 +336,28 @@ export default function Bookings() {
                                                     key: 'details',
                                                     label: t('actions.show_details'),
                                                     icon: <EyeIcon />,
-                                                    onClick: () => setDetailsId(b.id),
+                                                    onClick: () => navigate(`/bookings/${b.id}`),
                                                 },
-                                                {
+                                                hasPermission('bookings.edit') && {
                                                     key: 'reschedule',
-                                                    label: isArabic ? 'إعادة جدولة' : 'Reschedule',
+                                                    label: t('actions.reschedule'),
                                                     icon: (
                                                         <svg className="w-4 h-4 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
                                                     ),
-                                                    hidden: b.status === 'completed' || b.status === 'cancelled',
+                                                    hidden: b.status !== 'Upcoming' && b.status !== 'Pending Assignment',
                                                     onClick: () => setRescheduleTarget(b),
                                                 },
-                                                {
+                                                hasPermission('bookings.edit') && {
                                                     key: 'cancel',
                                                     label: t('actions.cancel'),
                                                     icon: <CancelIcon />,
                                                     danger: true,
-                                                    hidden: b.status === 'completed' || b.status === 'cancelled',
+                                                    hidden: b.status !== 'Upcoming' && b.status !== 'Pending Assignment',
                                                     onClick: () => setCancelTarget(b),
                                                 },
-                                            ]}
+                                            ].filter(Boolean)}
                                         />
                                     </td>
                                 </tr>
@@ -478,10 +455,6 @@ export default function Bookings() {
                 </aside>
             </div>
 
-            {/* Details modal */}
-            {detailsId && (
-                <BookingDetailsModal bookingId={detailsId} onClose={() => setDetailsId(null)} />
-            )}
 
             {/* Cancel confirmation (row menu) */}
             {cancelTarget && (

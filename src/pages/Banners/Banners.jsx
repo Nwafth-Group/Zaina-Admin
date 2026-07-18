@@ -5,8 +5,9 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
 import BannerActionModal from './BannerActionModal';
-import RowActionsMenu, { EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
+import { hasPermission } from '../../utils/permissions.js';
 
 const DEFAULT_FILTERS = {
     status: '',
@@ -226,28 +227,24 @@ export default function Banners() {
                                             <RowActionsMenu
                                                 label={t('actions.title')}
                                                 items={[
-                                                    {
+                                                    hasPermission('banners.edit') && {
                                                         key: 'edit',
                                                         label: t('actions.edit'),
                                                         icon: <EditIcon />,
                                                         onClick: () => setActionModal({ isOpen: true, bannerToEdit: banner }),
                                                     },
-                                                    {
+                                                    hasPermission('banners.edit') && {
                                                         key: 'toggle',
                                                         label: t('actions.toggle_status'),
                                                         icon: <ToggleIcon />,
                                                         onClick: () => toggleStatusMutation.mutate(banner.id),
                                                         disabled: toggleStatusMutation.isPending,
                                                     },
-                                                    {
+                                                    hasPermission('banners.delete') && {
                                                         key: 'delete',
                                                         label: t('actions.delete', { defaultValue: 'حذف' }),
                                                         danger: true,
-                                                        icon: (
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        ),
+                                                        icon: <TrashIcon />,
                                                         onClick: () => {
                                                             if (window.confirm("هل أنت متأكد من حذف هذا الإعلان؟")) {
                                                                 deleteMutation.mutate(banner.id);
@@ -255,7 +252,7 @@ export default function Banners() {
                                                         },
                                                         disabled: deleteMutation.isPending,
                                                     },
-                                                ]}
+                                                ].filter(Boolean)}
                                             />
                                         </td>
                                     </tr>

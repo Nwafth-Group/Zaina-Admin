@@ -94,8 +94,8 @@ export default function ResetPasswordModal({ userId, onClose }) {
                         <input
                             type="password"
                             {...register('password')}
-                            className={`w-full px-4 py-3 border rounded-xl text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#E91E63] outline-none transition-all ${
-                                errors.password ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full px-4 h-[72px] border rounded-[24px] text-gray-800 bg-[#F8F9FB] focus:bg-white focus:ring-2 focus:ring-[#D94A78] outline-none transition-all ${
+                                errors.password ? 'border-red-500' : 'border-[#D94A78]'
                             }`}
                         />
                         {errors.password && (
@@ -110,8 +110,8 @@ export default function ResetPasswordModal({ userId, onClose }) {
                         <input
                             type="password"
                             {...register('password_confirmation')}
-                            className={`w-full px-4 py-3 border rounded-xl text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#E91E63] outline-none transition-all ${
-                                errors.password_confirmation ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full px-4 h-[72px] border rounded-[24px] text-gray-800 bg-[#F8F9FB] focus:bg-white focus:ring-2 focus:ring-[#D94A78] outline-none transition-all ${
+                                errors.password_confirmation ? 'border-red-500' : 'border-[#D94A78]'
                             }`}
                         />
                         {errors.password_confirmation && (

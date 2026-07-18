@@ -4,13 +4,20 @@
     "ref": "Reference",
     "customer": "Customer",
     "service": "Service",
+    "service_visit_type": "Service / Visit Type",
+    "price_type": "Price Type",
     "schedule": "Schedule",
     "workers": "Workers",
+    "assigned_workers": "Assigned Workers",
     "amount": "Amount",
     "status": "Status",
     "payment": "Payment",
     "visit_type": "Visit Type",
     "actions": "Actions"
+  },
+  "pricing_types": {
+    "per_hour": "Per Hour",
+    "per_service": "Per Service"
   },
   "visit_types": {
     "single_visit": "Single Visit",
@@ -22,7 +29,8 @@
   },
   "actions": {
     "show_details": "Show details",
-    "cancel": "Cancel booking"
+    "cancel": "Cancel booking",
+    "reschedule": "Reschedule"
   },
   "menu": {
     "details": "Booking details",

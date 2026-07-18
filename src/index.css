@@ -1,3 +1,86 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Enforce border, background and border-radius globally for inputs/selects.
+     We DO NOT set height: 72px here globally so toolbar inputs/searches remain compact (e.g. 40px/48px).
+     Spacious form input heights are handled explicitly on individual form components (h-[72px]). */
+  input[type="text"]:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(:disabled),
+  input[type="email"]:not(:disabled),
+  input[type="password"]:not(:disabled),
+  input[type="number"]:not(:disabled),
+  input[type="tel"]:not(:disabled),
+  input[type="url"]:not(:disabled),
+  input[type="search"]:not(:disabled),
+  input[type="time"]:not(:disabled),
+  input[type="date"]:not(:disabled),
+  select:not(:disabled) {
+    border: 1px solid #D94A78 !important;
+    background-color: #F8F9FB !important;
+    border-radius: 24px !important;
+  }
+
+  textarea:not(:disabled) {
+    border: 1px solid #D94A78 !important;
+    background-color: #F8F9FB !important;
+    border-radius: 24px !important;
+  }
+
+  input[type="text"]:disabled,
+  input[type="email"]:disabled,
+  input[type="password"]:disabled,
+  input[type="number"]:disabled,
+  input[type="tel"]:disabled,
+  input[type="url"]:disabled,
+  input[type="search"]:disabled,
+  input[type="time"]:disabled,
+  input[type="date"]:disabled,
+  select:disabled {
+    border-radius: 24px !important;
+  }
+
+  textarea:disabled {
+    border-radius: 24px !important;
+  }
+
+  /* Table styling rules - aligned with security-contract (Aqar) theme */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  thead {
+    background-color: #F8F9FA !important;
+  }
+
+  thead th {
+    color: #475569 !important; /* Slate-600 text - clean, premium and readable */
+    font-weight: 700 !important;
+    font-size: 0.75rem !important; /* 12px text */
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 12px 16px !important; /* Compact header padding */
+    border-bottom: 1.5px solid #E2E8F0 !important; /* Slate-200 divider */
+    text-align: start !important;
+  }
+
+  tbody tr {
+    transition: background-color 0.2s ease-in-out !important;
+    border-bottom: 1px solid #F1F5F9 !important; /* Border between rows */
+  }
+
+  tbody tr:hover {
+    background-color: rgba(217, 74, 120, 0.03) !important; /* Very soft rose hover highlight */
+  }
+
+  tbody td {
+    padding: 14px 16px !important; /* Compact high-readability padding */
+    color: #334155 !important; /* Slate-700 text color */
+    vertical-align: middle !important;
+  }
+
+  tbody tr:last-child {
+    border-bottom: none !important;
+  }
+}

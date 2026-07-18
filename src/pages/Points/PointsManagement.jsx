@@ -26,7 +26,6 @@ export default function PointsManagement() {
         status: true,
         action_type: 'url',
         action_link: '',
-        trigger_event: '',
         required_booking_count: '',
         frequency_type: 'one_time',
         eligible_services: [],
@@ -134,6 +133,28 @@ export default function PointsManagement() {
         }, 300);
         return () => clearTimeout(delayDebounce);
     }, [customerSearchInput]);
+
+    // Auto-lock values based on rule category
+    useEffect(() => {
+        if (ruleForm.rule_category === 'social_media') {
+            setRuleForm(prev => ({
+                ...prev,
+                frequency_type: 'one_time',
+                action_type: 'url'
+            }));
+        } else if (ruleForm.rule_category === 'referral') {
+            setRuleForm(prev => ({
+                ...prev,
+                frequency_type: 'repeatable',
+                action_type: 'invite_friend'
+            }));
+        } else if (ruleForm.rule_category === 'booking') {
+            setRuleForm(prev => ({
+                ...prev,
+                action_type: 'url'
+            }));
+        }
+    }, [ruleForm.rule_category]);
 
     // Create / Update Rule mutation
     const saveRuleMutation = useMutation({
@@ -257,7 +278,6 @@ export default function PointsManagement() {
             status: true,
             action_type: 'url',
             action_link: '',
-            trigger_event: '',
             required_booking_count: '',
             frequency_type: 'one_time',
             eligible_services: [],
@@ -279,7 +299,6 @@ export default function PointsManagement() {
             status: Boolean(rule.status),
             action_type: rule.action_type || 'url',
             action_link: rule.action_link || '',
-            trigger_event: rule.trigger_event || '',
             required_booking_count: rule.required_booking_count || '',
             frequency_type: rule.frequency_type || 'one_time',
             eligible_services: rule.eligible_services || [],
@@ -392,8 +411,6 @@ export default function PointsManagement() {
                                                         ? (isArabic ? 'وسائل التواصل' : 'Social Media')
                                                         : rule.rule_category === 'booking'
                                                         ? (isArabic ? 'إتمام حجز' : 'Booking Complete')
-                                                        : rule.rule_category === 'booking_count'
-                                                        ? (isArabic ? 'عدد حجوزات' : 'Booking Count')
                                                         : rule.rule_category}
                                                 </span>
                                             </td>
@@ -875,7 +892,6 @@ export default function PointsManagement() {
                                         <option value="social_media">{isArabic ? 'متابعة التواصل الاجتماعي' : 'Social Media'}</option>
                                         <option value="referral">{isArabic ? 'دعوة صديق' : 'Referral'}</option>
                                         <option value="booking">{isArabic ? 'إتمام حجز خدمة' : 'Booking Complete'}</option>
-                                        <option value="booking_count">{isArabic ? 'دورة حجوزات متكررة' : 'Booking Count Cycle'}</option>
                                     </select>
                                 </div>
                                 <div>
@@ -897,7 +913,8 @@ export default function PointsManagement() {
                                     <select
                                         value={ruleForm.frequency_type}
                                         onChange={(e) => setRuleForm({ ...ruleForm, frequency_type: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white"
+                                        disabled={ruleForm.rule_category === 'social_media' || ruleForm.rule_category === 'referral'}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
                                     >
                                         <option value="one_time">One Time</option>
                                         <option value="repeatable">Repeatable</option>
@@ -916,13 +933,13 @@ export default function PointsManagement() {
                                 </div>
                             </div>
 
-                            {ruleForm.rule_category === 'booking_count' && (
+                            {ruleForm.rule_category === 'booking' && (
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'عدد الحجوزات المطلوبة للدورة' : 'Required Booking Count'}</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'عدد الحجوزات المطلوبة' : 'Required Booking Count'}</label>
                                     <input
                                         type="number"
                                         min="1"
-                                        placeholder="e.g. 3"
+                                        placeholder="e.g. 1"
                                         value={ruleForm.required_booking_count}
                                         onChange={(e) => setRuleForm({ ...ruleForm, required_booking_count: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm"
@@ -938,7 +955,8 @@ export default function PointsManagement() {
                                         <select
                                             value={ruleForm.action_type}
                                             onChange={(e) => setRuleForm({ ...ruleForm, action_type: e.target.value })}
-                                            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white"
+                                            disabled={ruleForm.rule_category === 'social_media'}
+                                            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
                                         >
                                             <option value="url">Open Link (URL)</option>
                                             <option value="invite_friend">Invite Friend</option>
@@ -958,28 +976,16 @@ export default function PointsManagement() {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'صلاحية النقاط بالشهور لهذه القاعدة' : 'Points Validity (Months)'}</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        placeholder={isArabic ? 'تلقائي من الإعدادات العامة' : 'Default from settings'}
-                                        value={ruleForm.points_expiration_months}
-                                        onChange={(e) => setRuleForm({ ...ruleForm, points_expiration_months: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'حدث التفعيل البرمجي' : 'Trigger Event Name'}</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. facebook_follow"
-                                        value={ruleForm.trigger_event}
-                                        onChange={(e) => setRuleForm({ ...ruleForm, trigger_event: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm"
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'صلاحية النقاط بالشهور لهذه القاعدة' : 'Points Validity (Months)'}</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    placeholder={isArabic ? 'تلقائي من الإعدادات العامة' : 'Default from settings'}
+                                    value={ruleForm.points_expiration_months}
+                                    onChange={(e) => setRuleForm({ ...ruleForm, points_expiration_months: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm"
+                                />
                             </div>
 
                             <button

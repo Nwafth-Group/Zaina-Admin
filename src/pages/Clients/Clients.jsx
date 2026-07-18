@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
-import ReviewUserModal from './ReviewUserModal.jsx';
 import ResetPasswordModal from '../Users/ResetPasswordModal.jsx';
 import RowActionsMenu, { ReviewIcon, KeyIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
+import { hasPermission } from '../../utils/permissions.js';
 
 // Quick-filter by KYC verification status (applies immediately).
 const VERIFICATION_TABS = [
@@ -26,6 +27,7 @@ const VERIFICATION_STYLES = {
 
 export default function Clients() {
     const { t } = useTranslation('users');
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -33,7 +35,6 @@ export default function Clients() {
     const [search, setSearch] = useState('');
     const [verification, setVerification] = useState('');
 
-    const [reviewUserId, setReviewUserId] = useState(null);
     const [resetPasswordUserId, setResetPasswordUserId] = useState(null);
 
     // Debounce the free-text search before it hits the API.
@@ -146,7 +147,11 @@ export default function Clients() {
                             clients.map((client) => {
                                 const vStatus = client.verification_status || 'unverified';
                                 return (
-                                    <tr key={client.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
+                                    <tr 
+                                        key={client.id} 
+                                        onClick={() => navigate(`/clients/${client.id}`)}
+                                        className="bg-white border-b hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
                                         <td className="px-6 py-4 font-medium text-gray-900">{client.full_name || '-'}</td>
                                         <td className="px-6 py-4">{client.email || '-'}</td>
                                         <td className="px-6 py-4" dir="ltr">{client.mobile_number || '-'}</td>
@@ -160,7 +165,7 @@ export default function Clients() {
                                                 {client.status === 'active' ? t('status.active') : t('status.inactive')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <RowActionsMenu
                                                 label={t('table.actions')}
                                                 items={[
@@ -168,22 +173,22 @@ export default function Clients() {
                                                         key: 'review',
                                                         label: t('actions.review'),
                                                         icon: <ReviewIcon />,
-                                                        onClick: () => setReviewUserId(client.id),
+                                                        onClick: () => navigate(`/clients/${client.id}`),
                                                     },
-                                                    {
+                                                    hasPermission('users.edit') && {
                                                         key: 'reset',
                                                         label: t('actions.reset_password'),
                                                         icon: <KeyIcon />,
                                                         onClick: () => setResetPasswordUserId(client.id),
                                                     },
-                                                    {
+                                                    hasPermission('users.edit') && {
                                                         key: 'toggle',
                                                         label: t('actions.toggle_status'),
                                                         icon: <ToggleIcon />,
                                                         onClick: () => toggleStatusMutation.mutate(client.id),
                                                         disabled: toggleStatusMutation.isPending,
                                                     },
-                                                ]}
+                                                ].filter(Boolean)}
                                             />
                                         </td>
                                     </tr>
@@ -197,7 +202,6 @@ export default function Clients() {
             {/* Pagination */}
             <Pagination meta={meta} onPageChange={setCurrentPage} />
 
-            {reviewUserId && <ReviewUserModal userId={reviewUserId} onClose={() => setReviewUserId(null)} />}
             {resetPasswordUserId && <ResetPasswordModal userId={resetPasswordUserId} onClose={() => setResetPasswordUserId(null)} />}
         </div>
     );

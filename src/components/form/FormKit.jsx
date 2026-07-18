@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
  */
 
 export const INPUT_CLASS =
-    'w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] transition-colors bg-white';
+    'w-full px-4 h-[72px] border border-[#D94A78] rounded-[24px] outline-none focus:border-[#D94A78] transition-colors bg-[#F8F9FB]';
 export const LABEL_CLASS = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 /**
@@ -153,6 +153,116 @@ export function ImageDropzone({ register, watch, name = 'image', currentImage = 
                 )}
             </label>
             <input id={id} type="file" accept="image/*" {...register(name)} className="hidden" />
+        </div>
+    );
+}
+
+/**
+ * A reusable input field component with consistent styles matching the theme
+ * (background #F8F9FB, border #D94A78, border-radius 24px).
+ */
+export function InputField({ label, registration, error, type = 'text', className = '', ...props }) {
+    return (
+        <div>
+            {label && <label className={LABEL_CLASS}>{label}</label>}
+            <input
+                type={type}
+                {...registration}
+                className={`${INPUT_CLASS} ${error ? 'border-red-500 focus:border-red-500' : ''} ${className}`}
+                {...props}
+            />
+            {error && <p className="text-red-500 text-xs mt-1.5 px-1 font-medium">{error.message}</p>}
+        </div>
+    );
+}
+
+/**
+ * A highly styled, reusable Table component matching modern layout structures.
+ */
+export function Table({ headers, children, loading, colSpan, className = '' }) {
+    return (
+        <div className={`overflow-hidden border border-gray-100/80 rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] bg-white w-full flex-1 ${className}`}>
+            <div className="overflow-x-auto w-full">
+                <table className="w-full text-sm text-left rtl:text-right text-gray-600 border-collapse">
+                    <thead className="bg-[#F8F9FB] border-b border-gray-100/80 shrink-0">
+                        <tr>
+                            {headers.map((h, i) => (
+                                <th 
+                                    key={i} 
+                                    className={`px-6 py-4.5 text-xs font-bold text-gray-600 uppercase tracking-wider ${h.className || ''}`}
+                                    style={h.style}
+                                >
+                                    {h.label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100/60">
+                        {loading ? (
+                            <tr>
+                                <td colSpan={colSpan || headers.length} className="px-6 py-16 text-center text-gray-400">
+                                    <div className="flex justify-center items-center gap-3">
+                                        <svg className="animate-spin h-5 w-5 text-[#D94A78]" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        <span className="text-sm font-medium text-gray-500">جاري التحميل...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : children}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * A highly animated and styled, reusable FilterDrawer component.
+ */
+export function FilterDrawer({ isOpen, onClose, onReset, onApply, children, title }) {
+    return (
+        <div className={`fixed inset-0 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+            <aside className={`absolute top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col transform transition-all duration-300 ltr:right-0 rtl:left-0 ${
+                isOpen ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full'
+            }`}>
+                <div className="flex items-center justify-between p-5 border-b border-gray-100/50">
+                    <h3 className="text-lg font-bold text-gray-800">{title || 'تصفية النتائج'}</h3>
+                    <button 
+                        type="button"
+                        onClick={onClose} 
+                        className="p-1.5 text-gray-400 hover:text-[#D94A78] hover:bg-rose-50 rounded-xl transition-all duration-200" 
+                        aria-label="close"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+                    {children}
+                </div>
+
+                <div className="p-4 border-t border-gray-100/50 bg-gray-50/50 flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onReset}
+                        className="flex-1 px-4 py-2.5 border border-gray-200 rounded-full text-gray-600 hover:bg-gray-100 font-semibold text-sm transition-all duration-200"
+                    >
+                        إعادة ضبط
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onApply}
+                        className="flex-1 px-4 py-2.5 bg-[#D94A78] hover:bg-[#c13e68] text-white rounded-full font-semibold text-sm transition-all duration-200 shadow-sm"
+                    >
+                        تطبيق
+                    </button>
+                </div>
+            </aside>
         </div>
     );
 }

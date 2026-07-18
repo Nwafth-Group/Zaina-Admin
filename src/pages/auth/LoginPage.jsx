@@ -137,37 +137,37 @@ export default function LoginPage() {
                                         type="email"
                                         placeholder={t('email_placeholder') || 'admin@ziena.com'}
                                         {...register('email')}
-                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} py-4 bg-slate-50 border rounded-2xl text-[#212121] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none transition-all duration-200 ${
-                                            errors.email ? 'border-red-400 focus:ring-red-400' : 'border-slate-200'
+                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-[72px] bg-[#F8F9FB] border rounded-[24px] text-[#212121] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
+                                            errors.email ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
                                         }`}
                                     />
                                 </div>
                                 {errors.email && (
                                     <p className="text-red-500 text-xs mt-2 px-2 font-medium">{errors.email.message}</p>
                                 )}
-                            </div>
-                            
-                            {/* Password Field */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2 px-1">
-                                    <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                                        {isRtl ? 'كلمة المرور' : 'Password'}
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-4' : 'left-0 pl-4'} flex items-center pointer-events-none text-slate-400`}>
-                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                    </div>
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        placeholder={t('password_placeholder') || '••••••••'}
-                                        {...register('password')}
-                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} py-4 bg-slate-50 border rounded-2xl text-[#212121] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none transition-all duration-200 ${
-                                            errors.password ? 'border-red-400 focus:ring-red-400' : 'border-slate-200'
-                                        }`}
-                                    />
+                             </div>
+                             
+                             {/* Password Field */}
+                             <div>
+                                 <div className="flex justify-between items-center mb-2 px-1">
+                                     <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                         {isRtl ? 'كلمة المرور' : 'Password'}
+                                     </label>
+                                 </div>
+                                 <div className="relative">
+                                     <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-4' : 'left-0 pl-4'} flex items-center pointer-events-none text-slate-400`}>
+                                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                         </svg>
+                                     </div>
+                                     <input
+                                         type={showPassword ? 'text' : 'password'}
+                                         placeholder={t('password_placeholder') || '••••••••'}
+                                         {...register('password')}
+                                         className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-[72px] bg-[#F8F9FB] border rounded-[24px] text-[#212121] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
+                                             errors.password ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
+                                         }`}
+                                     />
                                     {/* Password Toggle Button */}
                                     <button
                                         type="button"

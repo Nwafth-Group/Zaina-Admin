@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const MENU_WIDTH = 192; // matches w-48
+const MENU_WIDTH = 200; // slightly wider for better spacing
 
 /**
- * A three-dots (kebab) row-actions dropdown.
+ * A premium, beautiful three-dots (kebab) row-actions dropdown.
  *
  * Rendered through a portal with fixed positioning so it is never clipped by a
  * table's `overflow-x-auto` wrapper. Pass an array of action items:
@@ -25,12 +25,12 @@ export default function RowActionsMenu({ items = [], label = 'Actions' }) {
         // Align the menu's end edge under the trigger, clamped to the viewport.
         const left = Math.min(Math.max(r.right - MENU_WIDTH, 8), window.innerWidth - MENU_WIDTH - 8);
         
-        // Estimate the menu height: each item is ~40px plus 8px padding
-        const estimatedHeight = visible.length * 40 + 8;
+        // Estimate the menu height: each item is ~42px plus 12px padding
+        const estimatedHeight = visible.length * 42 + 12;
         const spaceBelow = window.innerHeight - r.bottom;
         const showAbove = spaceBelow < estimatedHeight && r.top > estimatedHeight;
         
-        const top = showAbove ? r.top - estimatedHeight - 4 : r.bottom + 4;
+        const top = showAbove ? r.top - estimatedHeight - 6 : r.bottom + 6;
         setCoords({ top, left });
     }, [visible.length]);
 
@@ -59,10 +59,14 @@ export default function RowActionsMenu({ items = [], label = 'Actions' }) {
             <button
                 ref={btnRef}
                 onClick={toggle}
-                className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                className={`p-2 rounded-xl transition-all duration-200 outline-none ${
+                    open 
+                        ? 'bg-pink-50 text-[#E91E63] scale-95 shadow-inner' 
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50 active:scale-95'
+                }`}
                 aria-label={label}
             >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                 </svg>
             </button>
@@ -71,20 +75,29 @@ export default function RowActionsMenu({ items = [], label = 'Actions' }) {
                 <>
                     <div className="fixed inset-0 z-[100]" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
                     <div
-                        style={{ top: coords.top, left: coords.left, width: MENU_WIDTH }}
-                        className="fixed z-[101] bg-white rounded-lg shadow-lg border border-gray-100 py-1"
+                        style={{ 
+                            top: coords.top, 
+                            left: coords.left, 
+                            width: MENU_WIDTH,
+                            transformOrigin: 'top right',
+                        }}
+                        className="fixed z-[101] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 p-1.5 animate-in fade-in zoom-in-95 duration-100 transition-all"
                     >
                         {visible.map((it) => (
                             <button
                                 key={it.key}
                                 disabled={it.disabled}
                                 onClick={(e) => { e.stopPropagation(); setOpen(false); it.onClick?.(); }}
-                                className={`w-full text-start px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                    it.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-50'
+                                className={`w-full text-start px-3.5 py-2.5 text-xs font-bold rounded-xl flex items-center gap-3 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
+                                    it.danger 
+                                        ? 'text-red-500 hover:bg-red-50 hover:text-red-700 hover:translate-x-0.5 rtl:hover:-translate-x-0.5' 
+                                        : 'text-gray-500 hover:bg-pink-50/50 hover:text-[#E91E63] hover:translate-x-0.5 rtl:hover:-translate-x-0.5'
                                 }`}
                             >
                                 {it.icon && (
-                                    <span className={`shrink-0 ${it.danger ? 'text-red-500' : 'text-gray-400'}`}>{it.icon}</span>
+                                    <span className={`shrink-0 transition-transform group-hover:scale-110 ${
+                                        it.danger ? 'text-red-500' : 'text-gray-400 group-hover:text-[#E91E63]'
+                                    }`}>{it.icon}</span>
                                 )}
                                 <span className="truncate">{it.label}</span>
                             </button>
@@ -100,7 +113,7 @@ export default function RowActionsMenu({ items = [], label = 'Actions' }) {
 /* ── Shared menu icons (w-4 h-4, currentColor) ───────────────────────────── */
 
 const Icon = ({ d }) => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d={d} />
     </svg>
 );
@@ -111,3 +124,4 @@ export const KeyIcon = () => <Icon d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743
 export const ReviewIcon = () => <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />;
 export const EyeIcon = () => <Icon d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />;
 export const CancelIcon = () => <Icon d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />;
+export const TrashIcon = () => <Icon d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />;

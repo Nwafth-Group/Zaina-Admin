@@ -7,7 +7,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axiosInstance from '../api/axios.js';
 
-const INPUT = 'w-full px-4 py-2.5 border rounded-xl text-gray-800 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#E91E63] outline-none transition-all';
+const INPUT = 'w-full px-4 h-[72px] border border-[#D94A78] rounded-[24px] text-gray-800 bg-[#F8F9FB] focus:bg-white focus:ring-2 focus:ring-[#D94A78] outline-none transition-all';
 const LABEL = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 export default function ProfileModal({ onClose, onUpdated, initialTab = 'account' }) {

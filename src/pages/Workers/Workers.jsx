@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
 import WorkerActionModal from './WorkerActionModal';
-import WorkerDetailsModal from './WorkerDetailsModal';
-import RowActionsMenu, { EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import TagList from '../../component/TagList.jsx';
 import Pagination from '../../component/Pagination.jsx';
+import { hasPermission } from '../../utils/permissions.js';
 
 const DEFAULT_FILTERS = {
     status: '',
@@ -21,6 +22,7 @@ const DEFAULT_FILTERS = {
 
 export default function Workers() {
     const { t, i18n } = useTranslation('workers');
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const isArabic = i18n.language?.startsWith('ar');
 
@@ -31,7 +33,6 @@ export default function Workers() {
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS); // staged inside the drawer until "Apply"
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [actionModal, setActionModal] = useState({ isOpen: false, workerToEdit: null });
-    const [detailsId, setDetailsId] = useState(null);
 
     // Debounce the free-text search before it hits the API.
     useEffect(() => {
@@ -121,6 +122,17 @@ export default function Workers() {
         },
     });
 
+    const deleteWorkerMutation = useMutation({
+        mutationFn: (workerId) => axiosInstance.delete(`/admin/workers/${workerId}`),
+        onSuccess: (response) => {
+            toast.success(response.data?.message || (isArabic ? 'تم حذف العامل بنجاح' : 'Worker deleted successfully'));
+            queryClient.invalidateQueries({ queryKey: ['workers'] });
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'حدث خطأ أثناء العملية.');
+        },
+    });
+
     const workers = paginatedData?.items || [];
     const meta = paginatedData?.meta;
 
@@ -174,15 +186,17 @@ export default function Workers() {
                     </button>
 
                     {/* Add new */}
-                    <button
-                        onClick={() => setActionModal({ isOpen: true, workerToEdit: null })}
-                        className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        {t('add_new')}
-                    </button>
+                    {hasPermission('workers.create') && (
+                        <button
+                            onClick={() => setActionModal({ isOpen: true, workerToEdit: null })}
+                            className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            {t('add_new')}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -215,7 +229,7 @@ export default function Workers() {
                             </tr>
                         ) : (
                             workers.map((worker) => (
-                                <tr key={worker.id} onClick={() => setDetailsId(worker.id)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
+                                <tr key={worker.id} onClick={() => navigate(`/workers/${worker.id}`)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
                                     <td className="px-4 py-3 text-center">
                                         <div className="w-10 h-10 mx-auto rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
                                             {worker.image ? (
@@ -235,12 +249,12 @@ export default function Workers() {
                                                 {serviceLabel(worker.assigned_service)}
                                             </span>
                                         ) : (
-                                            <span className="text-xs text-gray-400">—</span>
+                                            <span className="text-gray-400 font-medium">—</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <div className="flex items-center justify-center gap-1 text-yellow-500 font-bold">
-                                            <span>{worker.rating || '0.00'}</span>
+                                        <div className="flex items-center justify-center gap-1 bg-yellow-50/50 border border-yellow-100/50 rounded-lg py-1 px-2 w-max mx-auto">
+                                            <span className="text-xs font-mono font-bold text-yellow-600 mt-0.5">{Number(worker.rating || 0).toFixed(2)}</span>
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                                         </div>
                                     </td>
@@ -252,24 +266,40 @@ export default function Workers() {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                                        <RowActionsMenu
-                                            label={t('actions.edit')}
-                                            items={[
-                                                {
-                                                    key: 'edit',
-                                                    label: t('actions.edit'),
-                                                    icon: <EditIcon />,
-                                                    onClick: () => setActionModal({ isOpen: true, workerToEdit: worker }),
-                                                },
-                                                {
-                                                    key: 'toggle',
-                                                    label: t('actions.toggle_status'),
-                                                    icon: <ToggleIcon />,
-                                                    onClick: () => toggleStatusMutation.mutate(worker.id),
-                                                    disabled: toggleStatusMutation.isPending,
-                                                },
-                                            ]}
-                                        />
+                                        {hasPermission('workers.edit') ? (
+                                            <RowActionsMenu
+                                                label={t('actions.edit')}
+                                                items={[
+                                                    {
+                                                        key: 'edit',
+                                                        label: t('actions.edit'),
+                                                        icon: <EditIcon />,
+                                                        onClick: () => setActionModal({ isOpen: true, workerToEdit: worker }),
+                                                    },
+                                                    {
+                                                        key: 'toggle',
+                                                        label: t('actions.toggle_status'),
+                                                        icon: <ToggleIcon />,
+                                                        onClick: () => toggleStatusMutation.mutate(worker.id),
+                                                        disabled: toggleStatusMutation.isPending,
+                                                    },
+                                                    hasPermission('workers.delete') && {
+                                                        key: 'delete',
+                                                        label: isArabic ? 'حذف' : 'Delete',
+                                                        icon: <TrashIcon />,
+                                                        danger: true,
+                                                        onClick: () => {
+                                                            if (window.confirm(isArabic ? 'هل أنت متأكد من رغبتك في حذف هذا العامل؟' : 'Are you sure you want to delete this worker?')) {
+                                                                deleteWorkerMutation.mutate(worker.id);
+                                                            }
+                                                        },
+                                                        disabled: deleteWorkerMutation.isPending,
+                                                    },
+                                                ].filter(Boolean)}
+                                            />
+                                        ) : (
+                                            <span className="text-gray-300 text-xs font-medium">—</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))
@@ -372,10 +402,6 @@ export default function Workers() {
                     workerToEdit={actionModal.workerToEdit}
                     onClose={() => setActionModal({ isOpen: false, workerToEdit: null })}
                 />
-            )}
-
-            {detailsId && (
-                <WorkerDetailsModal workerId={detailsId} onClose={() => setDetailsId(null)} />
             )}
 
         </div>
