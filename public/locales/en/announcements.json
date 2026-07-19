@@ -11,7 +11,8 @@
   },
   "actions": {
     "title": "Actions",
-    "edit": "Edit"
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "sections": {
     "details": {

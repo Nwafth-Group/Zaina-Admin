@@ -82,10 +82,10 @@ export function SelectField({ registration, children, className = '', disabled =
  * Radio cards that show every option at once (no dropdown). Each option may
  * carry a `dot` colour class. Used for status selectors.
  */
-export function OptionCards({ value, onChange, options, columns = 2 }) {
+export function OptionCards({ value, onChange, options, columns = 2, disabled = false }) {
     const cols = columns === 3 ? 'grid-cols-3' : columns === 1 ? 'grid-cols-1' : 'grid-cols-2';
     return (
-        <div className={`grid gap-2 ${cols}`} role="radiogroup">
+        <div className={`grid gap-2 ${cols} ${disabled ? 'opacity-70 pointer-events-none' : ''}`} role="radiogroup">
             {options.map((opt) => {
                 const active = String(value) === String(opt.value);
                 return (
@@ -94,8 +94,9 @@ export function OptionCards({ value, onChange, options, columns = 2 }) {
                         type="button"
                         role="radio"
                         aria-checked={active}
-                        onClick={() => onChange(opt.value)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${active ? 'border-[#E91E63] bg-[#FDF0F3]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                        disabled={disabled}
+                        onClick={() => !disabled && onChange(opt.value)}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${active ? 'border-[#E91E63] bg-[#FDF0F3]' : 'border-gray-200 bg-white hover:border-gray-300'} ${disabled ? 'cursor-not-allowed bg-gray-50' : ''}`}
                     >
                         <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${active ? 'border-[#E91E63]' : 'border-gray-300'}`}>
                             {active && <span className="h-2 w-2 rounded-full bg-[#E91E63]" />}

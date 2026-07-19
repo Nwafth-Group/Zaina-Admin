@@ -78,21 +78,15 @@ export default function MobileNotificationActionModal({ notificationToEdit, onCl
             onClose();
         },
         onError: (error) => {
-            const validationErrors = error.response?.data?.errors;
+            const validationErrors = error.response?.data?.errors || error.response?.data?.params;
             if (validationErrors) {
                 Object.entries(validationErrors).forEach(([key, messages]) => {
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
-
-                const firstErrKey = Object.keys(validationErrors)[0];
-                const firstErrMsg = validationErrors[firstErrKey];
-                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
-                toast.error(message || (isArabic ? 'حدث خطأ في التحقق من البيانات.' : 'Validation error occurred.'));
-            } else {
-                const msg = error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء العملية.' : 'An error occurred during the request.');
-                toast.error(msg);
             }
+            const msg = error.response?.data?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed');
+            toast.error(msg);
         },
     });
 

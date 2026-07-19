@@ -80,14 +80,8 @@ export default function CityActionModal({ cityToEdit, onClose }) {
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
-
-                const firstErrKey = Object.keys(validationErrors)[0];
-                const firstErrMsg = validationErrors[firstErrKey];
-                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
-                toast.error(message || t('common.error'));
-            } else {
-                toast.error(error.response?.data?.message || t('common.error'));
             }
+            toast.error(error.response?.data?.message || t('common.error'));
         },
     });
 

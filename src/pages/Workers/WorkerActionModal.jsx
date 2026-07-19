@@ -8,6 +8,30 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, OptionCards, ImageDropzone, FormSection, SelectField } from '../../components/form/FormKit';
+const ARAB_COUNTRIES = [
+    { code: 'Saudi Arabia', nameAr: 'المملكة العربية السعودية', nameEn: 'Saudi Arabia' },
+    { code: 'Egypt', nameAr: 'جمهورية مصر العربية', nameEn: 'Egypt' },
+    { code: 'Jordan', nameAr: 'الأردن', nameEn: 'Jordan' },
+    { code: 'Syria', nameAr: 'سوريا', nameEn: 'Syria' },
+    { code: 'Lebanon', nameAr: 'لبنان', nameEn: 'Lebanon' },
+    { code: 'Palestine', nameAr: 'فلسطين', nameEn: 'Palestine' },
+    { code: 'Iraq', nameAr: 'العراق', nameEn: 'Iraq' },
+    { code: 'Kuwait', nameAr: 'الكويت', nameEn: 'Kuwait' },
+    { code: 'UAE', nameAr: 'الإمارات العربية المتحدة', nameEn: 'United Arab Emirates' },
+    { code: 'Qatar', nameAr: 'قطر', nameEn: 'Qatar' },
+    { code: 'Bahrain', nameAr: 'البحرين', nameEn: 'Bahrain' },
+    { code: 'Oman', nameAr: 'عمان', nameEn: 'Oman' },
+    { code: 'Yemen', nameAr: 'اليمن', nameEn: 'Yemen' },
+    { code: 'Sudan', nameAr: 'السودان', nameEn: 'Sudan' },
+    { code: 'Libya', nameAr: 'ليبيا', nameEn: 'Libya' },
+    { code: 'Tunisia', nameAr: 'تونس', nameEn: 'Tunisia' },
+    { code: 'Algeria', nameAr: 'الجزائر', nameEn: 'Algeria' },
+    { code: 'Morocco', nameAr: 'المغرب', nameEn: 'Morocco' },
+    { code: 'Mauritania', nameAr: 'موريتانيا', nameEn: 'Mauritania' },
+    { code: 'Somalia', nameAr: 'الصومال', nameEn: 'Somalia' },
+    { code: 'Djibouti', nameAr: 'جيبوتي', nameEn: 'Djibouti' },
+    { code: 'Comoros', nameAr: 'جزر القمر', nameEn: 'Comoros' },
+];
 
 export default function WorkerActionModal({ workerToEdit, onClose }) {
     const { t, i18n } = useTranslation('workers');
@@ -103,27 +127,15 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
             onClose();
         },
         onError: (error) => {
-            const validationErrors = error.response?.data?.errors;
+            const validationErrors = error.response?.data?.errors || error.response?.data?.params;
             if (validationErrors) {
                 Object.entries(validationErrors).forEach(([key, messages]) => {
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
-
-                const firstErrKey = Object.keys(validationErrors)[0];
-                const firstErrMsg = validationErrors[firstErrKey];
-                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
-                toast.error(message || (isArabic ? 'حدث خطأ في التحقق من البيانات.' : 'Validation error occurred.'));
-            } else {
-                const errorMsg = error.response?.data?.message;
-                if (errorMsg && (errorMsg.includes('Phone') || errorMsg.includes('الهاتف'))) {
-                    toast.error(isArabic ? 'رقم الهاتف مستخدم بالفعل من قبل عامل آخر.' : 'Phone number is already used by another worker.');
-                } else if (errorMsg && (errorMsg.includes('ID') || errorMsg.includes('الهوية'))) {
-                    toast.error(isArabic ? 'رقم الهوية مستخدم بالفعل من قبل عامل آخر.' : 'ID number is already used by another worker.');
-                } else {
-                    toast.error(errorMsg || (isArabic ? 'يرجى التحقق من صحة البيانات المدخلة.' : 'Please check the entered information.'));
-                }
             }
+            const errorMsg = error.response?.data?.message;
+            toast.error(errorMsg || (isArabic ? 'يرجى التحقق من صحة البيانات المدخلة.' : 'Please check the entered information.'));
         },
     });
 
@@ -159,7 +171,14 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label className={LABEL_CLASS}>{t('form.nationality')}</label>
-                        <input {...register('nationality')} className={`${INPUT_CLASS} ${errors.nationality ? 'border-red-500' : ''}`} />
+                        <SelectField registration={register('nationality')}>
+                            <option value="">{isArabic ? 'اختر الجنسية' : 'Select nationality'}</option>
+                            {ARAB_COUNTRIES.map((c) => (
+                                <option key={c.code} value={c.code}>
+                                    {isArabic ? c.nameAr : c.nameEn}
+                                </option>
+                            ))}
+                        </SelectField>
                         <ErrorMsg name="nationality" />
                     </div>
                     <div>

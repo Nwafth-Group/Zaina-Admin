@@ -9,7 +9,7 @@ import axiosInstance from '../api/axios';
  * logout. Opens on mouse-over (and click, for touch). The logout flow lives here
  * now that it was moved out of the sidebar.
  */
-export default function UserMenu({ adminName, onOpenProfile }) {
+export default function UserMenu({ adminName, adminRoles = [], onOpenProfile }) {
     const { t } = useTranslation('common');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -45,7 +45,11 @@ export default function UserMenu({ adminName, onOpenProfile }) {
             >
                 <div className="text-right rtl:text-left hidden sm:block">
                     <p className="text-sm font-bold text-gray-800">{adminName || t('header.super_admin')}</p>
-                    <p className="text-xs text-gray-500">{t('header.welcome')}</p>
+                    <p className="text-xs text-gray-400 font-medium leading-none mt-0.5">
+                        {adminRoles && adminRoles.length > 0 
+                            ? adminRoles.map(r => t(`roles.${r}`, { defaultValue: r })).join(', ') 
+                            : t('header.welcome')}
+                    </p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#E91E63] to-[#F4A9BC] text-white flex items-center justify-center font-bold shadow-md text-lg">
                     {adminName ? adminName.charAt(0).toUpperCase() : 'Z'}

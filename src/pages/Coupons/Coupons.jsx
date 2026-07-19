@@ -276,6 +276,7 @@ export default function Coupons() {
                                                     key: 'edit',
                                                     label: t('form.title_edit'),
                                                     icon: <EditIcon />,
+                                                    disabled: !!(c.end_date && new Date(c.end_date) < new Date()) || !!(c.usage_limit !== null && c.used_count >= c.usage_limit),
                                                     onClick: () => setActionModal({ isOpen: true, couponToEdit: c }),
                                                 },
                                                 {
@@ -283,13 +284,14 @@ export default function Coupons() {
                                                     label: t('status.' + (c.status === 'active' ? 'inactive' : 'active')),
                                                     icon: <ToggleIcon />,
                                                     onClick: () => toggleStatusMutation.mutate(c),
-                                                    disabled: toggleStatusMutation.isPending,
+                                                    disabled: toggleStatusMutation.isPending || !!(c.end_date && new Date(c.end_date) < new Date()) || !!(c.usage_limit !== null && c.used_count >= c.usage_limit),
                                                 },
                                                 {
                                                     key: 'delete',
                                                     label: t('yes_delete'),
                                                     icon: <TrashIcon />,
                                                     danger: true,
+                                                    disabled: c.used_count > 0 || !!(c.end_date && new Date(c.end_date) < new Date()) || !!(c.usage_limit !== null && c.used_count >= c.usage_limit),
                                                     onClick: () => setDeleteTarget(c),
                                                 },
                                             ]}

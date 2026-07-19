@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
 import AnnouncementActionModal from './AnnouncementActionModal';
-import RowActionsMenu, { EditIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EditIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 
 export default function Announcements() {
     const { t, i18n } = useTranslation('announcements');
+    const queryClient = useQueryClient();
+    const isArabic = i18n.language?.startsWith('ar');
 
     const [actionModal, setActionModal] = useState({ isOpen: false, announcementToEdit: null });
     const [currentPage, setCurrentPage] = useState(1);
@@ -18,6 +21,25 @@ export default function Announcements() {
         queryFn: async () => (await axiosInstance.get(`/admin/announcements?page=${currentPage}`)).data.data,
         keepPreviousData: true,
     });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
+            return axiosInstance.delete(`/admin/announcements/${id}`);
+        },
+        onSuccess: (response) => {
+            toast.success(response.data?.message || (isArabic ? 'تم حذف الإعلان بنجاح' : 'Announcement deleted successfully'));
+            queryClient.invalidateQueries({ queryKey: ['announcements'] });
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء حذف الإعلان.' : 'Error deleting announcement.'));
+        },
+    });
+
+    const handleDelete = (id) => {
+        if (window.confirm(isArabic ? 'هل أنت متأكد من حذف هذا الإعلان؟' : 'Are you sure you want to delete this announcement?')) {
+            deleteMutation.mutate(id);
+        }
+    };
 
     const announcements = data?.items || [];
     const meta = data?.meta;
@@ -79,6 +101,13 @@ export default function Announcements() {
                                                 label: t('actions.edit'),
                                                 icon: <EditIcon />,
                                                 onClick: () => setActionModal({ isOpen: true, announcementToEdit: announcement }),
+                                            },
+                                            {
+                                                key: 'delete',
+                                                label: t('actions.delete') || (isArabic ? 'حذف' : 'Delete'),
+                                                icon: <TrashIcon />,
+                                                onClick: () => handleDelete(announcement.id),
+                                                danger: true,
                                             },
                                         ]}
                                     />

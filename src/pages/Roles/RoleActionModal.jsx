@@ -5,12 +5,19 @@ import axiosInstance from '../../api/axios.js';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useTranslation } from 'react-i18next';
 import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, SelectField, FormSection } from '../../components/form/FormKit';
 
 export default function RoleActionModal({ roleToEdit, onClose }) {
+    const { t } = useTranslation('common');
     const queryClient = useQueryClient();
     const isEditMode = !!roleToEdit;
+    const isProtected = roleToEdit?.name === 'Super Admin' || 
+        roleToEdit?.code?.toLowerCase() === 'customer' || 
+        roleToEdit?.code?.toLowerCase() === 'driver' || 
+        roleToEdit?.name?.toLowerCase() === 'customer' || 
+        roleToEdit?.name?.toLowerCase() === 'driver';
 
     // 1. Fetch grouped permissions list
     const { data: groupedPermissions = {}, isLoading: isPermissionsLoading } = useQuery({
@@ -28,10 +35,10 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
     const [selectedPermissions, setSelectedPermissions] = useState([]);
 
     const schema = yup.object().shape({
-        name: yup.string().required('اسم الدور مطلوب').max(100, 'الحد الأقصى 100 حرف'),
-        code: yup.string().required('كود الدور مطلوب').max(100, 'الحد الأقصى 100 حرف'),
-        description: yup.string().nullable().max(1000, 'الحد الأقصى 1000 حرف'),
-        status: yup.string().required('حالة الدور مطلوبة'),
+        name: yup.string().required(t('role_management.validation_name_required')).max(100, t('role_management.validation_name_max')),
+        code: yup.string().required(t('role_management.validation_code_required')).max(100, t('role_management.validation_code_max')),
+        description: yup.string().nullable().max(1000, t('role_management.validation_desc_max')),
+        status: yup.string().required(t('role_management.validation_status_required')),
     });
 
     const { register, handleSubmit, reset, setError, formState: { errors } } = useForm({
@@ -84,7 +91,7 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
             return axiosInstance[method](url, payload);
         },
         onSuccess: (response) => {
-            toast.success(response.data?.message || 'تم حفظ الدور بنجاح');
+            toast.success(response.data?.message || t('role_management.save_success'));
             queryClient.invalidateQueries({ queryKey: ['roles-list'] });
             onClose();
         },
@@ -95,20 +102,14 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
-
-                const firstErrKey = Object.keys(validationErrors)[0];
-                const firstErrMsg = validationErrors[firstErrKey];
-                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
-                toast.error(message || 'حدث خطأ أثناء حفظ البيانات.');
-            } else {
-                toast.error(error.response?.data?.message || 'حدث خطأ أثناء حفظ البيانات.');
             }
+            toast.error(error.response?.data?.message || t('role_management.save_error'));
         },
     });
 
     const onSubmit = (data) => {
         if (selectedPermissions.length === 0) {
-            toast.error('الرجاء اختيار صلاحية واحدة على الأقل لهذا الدور.');
+            toast.error(t('role_management.min_permissions_error'));
             return;
         }
         submitMutation.mutate(data);
@@ -120,37 +121,37 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
 
     return (
         <FullScreenFormModal
-            title={isEditMode ? 'تعديل الدور والصلاحيات' : 'إضافة دور جديد'}
+            title={isEditMode ? t('role_management.edit_role') : t('role_management.add_role')}
             onClose={onClose}
             formId="role-action-form"
             onSubmit={handleSubmit(onSubmit)}
             isLoading={isLoading}
             isSubmitting={submitMutation.isLoading}
-            cancelLabel="إلغاء"
-            submitLabel="حفظ الدور"
+            cancelLabel={t('role_management.cancel')}
+            submitLabel={t('role_management.save_role')}
         >
-            <FormSection icon="shield" title="بيانات الدور الأساسية" description="أدخل اسم الدور ووصفه العام">
+            <FormSection icon="shield" title={t('role_management.basic_info')} description={t('role_management.basic_info_desc')}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className={LABEL_CLASS}>اسم الدور (Role Name)</label>
+                        <label className={LABEL_CLASS}>{t('role_management.role_name_label')}</label>
                         <input
                             type="text"
                             {...register('name')}
-                            disabled={roleToEdit?.name === 'Super Admin'}
+                            disabled={isProtected}
                             className={INPUT_CLASS}
-                            placeholder="مثال: مدير المبيعات"
+                            placeholder={t('role_management.role_name_placeholder')}
                         />
                         <ErrorMsg name="name" />
                     </div>
 
                     <div>
-                        <label className={LABEL_CLASS}>الكود التعريفي (Role Code)</label>
+                        <label className={LABEL_CLASS}>{t('role_management.role_code_label')}</label>
                         <input
                             type="text"
                             {...register('code')}
-                            disabled={roleToEdit?.name === 'Super Admin'}
+                            disabled={isProtected}
                             className={INPUT_CLASS}
-                            placeholder="مثال: SALES_MANAGER"
+                            placeholder={t('role_management.role_code_placeholder')}
                         />
                         <ErrorMsg name="code" />
                     </div>
@@ -158,28 +159,29 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label className={LABEL_CLASS}>الوصف</label>
+                        <label className={LABEL_CLASS}>{t('role_management.description_label')}</label>
                         <textarea
                             rows="2"
                             {...register('description')}
+                            disabled={isProtected}
                             className={`${INPUT_CLASS} resize-none`}
-                            placeholder="اكتب وصفاً موجزاً لمهام هذا الدور..."
+                            placeholder={t('role_management.description_placeholder')}
                         />
                         <ErrorMsg name="description" />
                     </div>
 
                     <div>
-                        <label className={LABEL_CLASS}>حالة الدور</label>
-                        <SelectField registration={register('status')} disabled={roleToEdit?.name === 'Super Admin'}>
-                            <option value="active">نشط (Active)</option>
-                            <option value="inactive">غير نشط (Inactive)</option>
+                        <label className={LABEL_CLASS}>{t('role_management.status_label')}</label>
+                        <SelectField registration={register('status')} disabled={isProtected}>
+                            <option value="active">{t('role_management.active_option')}</option>
+                            <option value="inactive">{t('role_management.inactive_option')}</option>
                         </SelectField>
                         <ErrorMsg name="status" />
                     </div>
                 </div>
             </FormSection>
 
-            <FormSection icon="key" title="صلاحيات الدور (Permissions Grid)" description="حدد الصلاحيات المتاحة لهذا الدور حسب كل موديول">
+            <FormSection icon="key" title={t('role_management.permissions_title')} description={t('role_management.permissions_desc')}>
                 <div className="space-y-6">
                     {Object.entries(groupedPermissions).map(([moduleName, modulePermissions]) => {
                         const modulePermissionNames = modulePermissions.map((p) => p.name);
@@ -189,14 +191,15 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
                             <div key={moduleName} className="border border-gray-100 rounded-xl p-4 bg-gray-50/50">
                                 <div className="flex justify-between items-center border-b border-gray-100 pb-2.5 mb-3.5">
                                     <h4 className="text-md font-bold text-gray-800 capitalize">
-                                        {moduleName} (إدارة موديول)
+                                        {moduleName} ({t('role_management.module_management')})
                                     </h4>
                                     <button
                                         type="button"
+                                        disabled={isProtected}
                                         onClick={() => handleSelectAllModule(moduleName, modulePermissions)}
-                                        className="text-xs text-[#E91E63] hover:text-[#D81B60] font-semibold transition-colors"
+                                        className={`text-xs text-[#E91E63] hover:text-[#D81B60] font-semibold transition-colors ${isProtected ? 'opacity-40 cursor-not-allowed' : ''}`}
                                     >
-                                        {isAllSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+                                        {isAllSelected ? t('role_management.deselect_all') : t('role_management.select_all')}
                                     </button>
                                 </div>
 
@@ -210,11 +213,12 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
                                                     checked
                                                         ? 'bg-white border-[#E91E63] shadow-sm text-gray-800'
                                                         : 'bg-white/80 border-gray-200 text-gray-500 hover:bg-white'
-                                                }`}
+                                                } ${isProtected ? 'opacity-60 cursor-not-allowed' : ''}`}
                                             >
                                                 <input
                                                     type="checkbox"
                                                     checked={checked}
+                                                    disabled={isProtected}
                                                     onChange={() => handleCheckboxChange(permission.name)}
                                                     className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63]"
                                                 />

@@ -702,14 +702,12 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
-                
-                // Show first error in toast
-                const firstErrKey = Object.keys(validationErrors)[0];
-                const firstErrMsg = validationErrors[firstErrKey];
-                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
-                toast.error(message || (isArabic ? 'حدث خطأ في التحقق من البيانات.' : 'Validation error occurred.'));
+
+                // Show general error in toast
+                toast.error(respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'));
 
                 // Switch to error tab
+                const firstErrKey = Object.keys(validationErrors)[0];
                 const targetTab = fieldToTabMap[firstErrKey];
                 if (targetTab) {
                     setActiveTab(targetTab);

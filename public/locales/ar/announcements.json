@@ -11,7 +11,8 @@
   },
   "actions": {
     "title": "الإجراءات",
-    "edit": "تعديل"
+    "edit": "تعديل",
+    "delete": "حذف"
   },
   "sections": {
     "details": {

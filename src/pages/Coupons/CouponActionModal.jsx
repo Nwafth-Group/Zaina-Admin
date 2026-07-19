@@ -30,6 +30,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
     // Basic states for targeting rules
     const [isForAllUsers, setIsForAllUsers] = useState(true);
     const [selectedUserIds, setSelectedUserIds] = useState([]);
+    const [selectedUsers, setSelectedUsers] = useState([]);
     
     const [isForAllCities, setIsForAllCities] = useState(true);
     const [selectedCityIds, setSelectedCityIds] = useState([]);
@@ -99,6 +100,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
 
             setIsForAllUsers(Boolean(fullCoupon.is_for_all_users));
             setSelectedUserIds((fullCoupon.users || []).map(u => u.id));
+            setSelectedUsers(fullCoupon.users || []);
             setIsForAllCities(Boolean(fullCoupon.is_for_all_cities));
             setSelectedCityIds((fullCoupon.cities || []).map(c => c.id));
             setSelectedAreaIds((fullCoupon.areas || []).map(a => a.id));
@@ -213,6 +215,26 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             toast.error(t('form.validation.min_one_service'));
             return;
         }
+
+        if (isUsed && fullCoupon) {
+            if (data.end_date && fullCoupon.end_date) {
+                const newEndDate = new Date(data.end_date);
+                const oldEndDate = new Date(fullCoupon.end_date);
+                if (newEndDate < oldEndDate) {
+                    toast.error(isArabic ? 'لا يمكن تقليل مدة كوبون مستخدم بالفعل.' : 'Cannot reduce the duration of a used coupon.');
+                    return;
+                }
+            }
+
+            if (data.usage_limit !== '' && data.usage_limit !== null) {
+                const newLimit = Number(data.usage_limit);
+                if (newLimit < fullCoupon.used_count) {
+                    toast.error(isArabic ? 'حد الاستخدام لا يمكن أن يكون أقل من عدد مرات الاستخدام الحالي.' : 'Usage limit cannot be less than current usage count.');
+                    return;
+                }
+            }
+        }
+
         submitMutation.mutate(data);
     };
 
@@ -220,12 +242,17 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
     const handleAddUser = (user) => {
         if (!selectedUserIds.includes(user.id)) {
             setSelectedUserIds(prev => [...prev, user.id]);
+            setSelectedUsers(prev => {
+                if (prev.some(u => u.id === user.id)) return prev;
+                return [...prev, user];
+            });
         }
         setUserSearch('');
     };
 
     const handleRemoveUser = (userId) => {
         setSelectedUserIds(prev => prev.filter(id => id !== userId));
+        setSelectedUsers(prev => prev.filter(u => u.id !== userId));
     };
 
     // City & Area helpers
@@ -296,12 +323,27 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
         }));
     };
 
+    const isUsed = fullCoupon ? fullCoupon.used_count > 0 : false;
+    const isExpired = fullCoupon 
+        ? (fullCoupon.end_date && new Date(fullCoupon.end_date) < new Date()) || 
+          (fullCoupon.usage_limit !== null && fullCoupon.used_count >= fullCoupon.usage_limit)
+        : false;
+
+    const isFieldDisabled = (fieldName) => {
+        if (isExpired) return true;
+        if (isUsed) {
+            // Only end_date, usage_limit, and user_usage_limit can be edited.
+            return !['end_date', 'usage_limit', 'user_usage_limit', 'status'].includes(fieldName);
+        }
+        return false;
+    };
+
     const ErrorMsg = ({ name }) => errors[name] ? <p className="text-red-500 text-xs mt-1">{errors[name].message}</p> : null;
 
     if (isEditMode && isFetchingCoupon) {
         return (
             <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex justify-center items-center">
-                <svg className="animate-spin h-8 w-8 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                <svg className="animate-spin h-8 w-8 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
             </div>
         );
     }
@@ -313,15 +355,24 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             formId="coupon-form"
             onSubmit={handleSubmit(onSubmit)}
             isSubmitting={submitMutation.isPending}
+            submitDisabled={isExpired}
             cancelLabel={t('form.cancel')}
             submitLabel={t('form.submit')}
         >
+            {isExpired && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-semibold rounded-xl flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>{isArabic ? 'هذا الكوبون منتهي الصلاحية ولا يمكن التعديل عليه.' : 'This coupon has expired and cannot be modified.'}</span>
+                </div>
+            )}
             {/* Section 1: Basic Configuration */}
             <FormSection icon="info" title={t('details.basic_info')}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className={LABEL_CLASS}>{t('form.name')}</label>
-                        <input {...register('name')} className={`${INPUT_CLASS} ${errors.name ? 'border-red-500' : ''}`} />
+                        <input {...register('name')} disabled={isFieldDisabled('name')} className={`${INPUT_CLASS} ${errors.name ? 'border-red-500' : ''} ${isFieldDisabled('name') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                         <ErrorMsg name="name" />
                     </div>
 
@@ -329,8 +380,9 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                         <label className={LABEL_CLASS}>{t('form.code')}</label>
                         <input 
                             {...register('code')} 
+                            disabled={isFieldDisabled('code')}
                             placeholder="e.g. EXTRA50"
-                            className={`${INPUT_CLASS} ${errors.code ? 'border-red-500' : ''}`} 
+                            className={`${INPUT_CLASS} ${errors.code ? 'border-red-500' : ''} ${isFieldDisabled('code') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} 
                             onChange={(e) => setValue('code', e.target.value.toUpperCase())}
                         />
                         <ErrorMsg name="code" />
@@ -338,7 +390,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
 
                     <div>
                         <label className={LABEL_CLASS}>{t('form.type')}</label>
-                        <SelectField registration={register('type')}>
+                        <SelectField registration={register('type')} disabled={isFieldDisabled('type')}>
                             <option value="percentage">{t('types.percentage')}</option>
                             <option value="fixed">{t('types.fixed')}</option>
                         </SelectField>
@@ -346,7 +398,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
 
                     <div>
                         <label className={LABEL_CLASS}>{t('form.value')}</label>
-                        <input type="number" step="any" min="0" {...register('value')} className={`${INPUT_CLASS} ${errors.value ? 'border-red-500' : ''}`} />
+                        <input type="number" step="any" min="0" {...register('value')} disabled={isFieldDisabled('value')} className={`${INPUT_CLASS} ${errors.value ? 'border-red-500' : ''} ${isFieldDisabled('value') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                         <ErrorMsg name="value" />
                     </div>
                 </div>
@@ -357,30 +409,30 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className={LABEL_CLASS}>{t('form.start_date')}</label>
-                        <input type="datetime-local" {...register('start_date')} className={`${INPUT_CLASS} ${errors.start_date ? 'border-red-500' : ''}`} />
+                        <input type="datetime-local" {...register('start_date')} disabled={isFieldDisabled('start_date')} className={`${INPUT_CLASS} ${errors.start_date ? 'border-red-500' : ''} ${isFieldDisabled('start_date') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                         <ErrorMsg name="start_date" />
                     </div>
 
                     <div>
                         <label className={LABEL_CLASS}>{t('form.end_date')}</label>
-                        <input type="datetime-local" {...register('end_date')} className={`${INPUT_CLASS} ${errors.end_date ? 'border-red-500' : ''}`} />
+                        <input type="datetime-local" {...register('end_date')} disabled={isFieldDisabled('end_date')} className={`${INPUT_CLASS} ${errors.end_date ? 'border-red-500' : ''} ${isFieldDisabled('end_date') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                         <ErrorMsg name="end_date" />
                     </div>
 
                     <div>
                         <label className={LABEL_CLASS}>{t('form.usage_limit')}</label>
-                        <input type="number" min="1" {...register('usage_limit')} className={INPUT_CLASS} />
+                        <input type="number" min="1" {...register('usage_limit')} disabled={isFieldDisabled('usage_limit')} className={`${INPUT_CLASS} ${isFieldDisabled('usage_limit') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                     </div>
 
                     <div>
                         <label className={LABEL_CLASS}>{t('form.user_usage_limit')}</label>
-                        <input type="number" min="1" {...register('user_usage_limit')} className={`${INPUT_CLASS} ${errors.user_usage_limit ? 'border-red-500' : ''}`} />
+                        <input type="number" min="1" {...register('user_usage_limit')} disabled={isFieldDisabled('user_usage_limit')} className={`${INPUT_CLASS} ${errors.user_usage_limit ? 'border-red-500' : ''} ${isFieldDisabled('user_usage_limit') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                         <ErrorMsg name="user_usage_limit" />
                     </div>
 
                     <div>
                         <label className={LABEL_CLASS}>{t('form.completed_bookings_count')}</label>
-                        <input type="number" min="0" {...register('completed_bookings_count')} className={`${INPUT_CLASS} ${errors.completed_bookings_count ? 'border-red-500' : ''}`} />
+                        <input type="number" min="0" {...register('completed_bookings_count')} disabled={isFieldDisabled('completed_bookings_count')} className={`${INPUT_CLASS} ${errors.completed_bookings_count ? 'border-red-500' : ''} ${isFieldDisabled('completed_bookings_count') ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                         <ErrorMsg name="completed_bookings_count" />
                     </div>
 
@@ -389,6 +441,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                         <OptionCards
                             value={statusValue}
                             onChange={(v) => setValue('status', v, { shouldValidate: true })}
+                            disabled={isFieldDisabled('status')}
                             options={[
                                 { value: 'active', label: t('status.active'), dot: 'bg-green-500' },
                                 { value: 'inactive', label: t('status.inactive'), dot: 'bg-gray-400' },
@@ -407,6 +460,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                         <OptionCards
                             value={isForAllCities ? 'all' : 'specific'}
                             onChange={(v) => setIsForAllCities(v === 'all')}
+                            disabled={isFieldDisabled('is_for_all_cities')}
                             options={[
                                 { value: 'all', label: t('details.all_cities'), desc: t('form.all_cities_desc') },
                                 { value: 'specific', label: t('form.specific_cities_desc'), desc: t('form.specific_cities_desc') },
@@ -422,12 +476,13 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                         {cities.map((city) => {
                                             const checked = selectedCityIds.includes(city.id);
                                             return (
-                                                <label key={city.id} className="inline-flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+                                                <label key={city.id} className={`inline-flex items-center gap-1.5 text-xs text-gray-700 ${isFieldDisabled('cities') ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                                     <input 
                                                         type="checkbox"
                                                         checked={checked}
+                                                        disabled={isFieldDisabled('cities')}
                                                         onChange={() => toggleCity(city.id)}
-                                                        className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63]"
+                                                        className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63] disabled:opacity-50"
                                                     />
                                                     <span>{isArabic ? city.name_ar : city.name_en}</span>
                                                 </label>
@@ -446,12 +501,13 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                                 .map((area) => {
                                                     const checked = selectedAreaIds.includes(area.id);
                                                     return (
-                                                        <label key={area.id} className="inline-flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer p-1 border border-transparent hover:border-gray-100 rounded">
+                                                        <label key={area.id} className={`inline-flex items-center gap-1.5 text-xs text-gray-700 p-1 border border-transparent rounded ${isFieldDisabled('areas') ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-gray-100'}`}>
                                                             <input 
                                                                 type="checkbox"
                                                                 checked={checked}
+                                                                disabled={isFieldDisabled('areas')}
                                                                 onChange={() => toggleArea(area.id)}
-                                                                className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63]"
+                                                                className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63] disabled:opacity-50"
                                                             />
                                                             <span className="truncate">{isArabic ? area.name_ar : area.name_en}</span>
                                                         </label>
@@ -470,6 +526,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                         <OptionCards
                             value={isForAllUsers ? 'all' : 'specific'}
                             onChange={(v) => setIsForAllUsers(v === 'all')}
+                            disabled={isFieldDisabled('is_for_all_users')}
                             options={[
                                 { value: 'all', label: t('details.all_users'), desc: t('form.all_users_desc') },
                                 { value: 'specific', label: t('form.specific_users_desc'), desc: t('form.specific_users_desc') },
@@ -487,11 +544,12 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                     <input 
                                         type="text" 
                                         value={userSearch} 
+                                        disabled={isFieldDisabled('users')}
                                         onChange={(e) => setUserSearch(e.target.value)}
                                         placeholder={isArabic ? 'ابحث بالاسم، البريد أو رقم الجوال...' : 'Search customer by name, email or mobile number...'}
-                                        className="w-full ps-9 pe-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] bg-white"
+                                        className={`w-full ps-9 pe-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#E91E63] bg-white ${isFieldDisabled('users') ? 'bg-gray-100 cursor-not-allowed opacity-55' : ''}`}
                                     />
-                                    {userSearchResults.length > 0 && (
+                                    {userSearchResults.length > 0 && !isFieldDisabled('users') && (
                                         <ul className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-lg divide-y divide-gray-50">
                                             {userSearchResults.map((u) => {
                                                 const uName = u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || `User ID: ${u.id}`;
@@ -517,21 +575,23 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                 {selectedUserIds.length > 0 && (
                                     <div className="max-h-40 overflow-y-auto space-y-1.5 pt-2">
                                         {selectedUserIds.map((userId) => {
-                                            const uObj = fullCoupon?.users?.find(x => x.id === userId) || userSearchResults.find(x => x.id === userId);
-                                            const uName = uObj?.name || `${uObj?.first_name || ''} ${uObj?.last_name || ''}`.trim() || `User ID: ${userId}`;
+                                            const uObj = selectedUsers.find(x => x.id === userId) || fullCoupon?.users?.find(x => x.id === userId) || userSearchResults.find(x => x.id === userId);
+                                            const uName = uObj ? (uObj.name || `${uObj.first_name || ''} ${uObj.last_name || ''}`.trim()) : '';
+                                            const displayName = uName ? `${uName} (ID: ${userId})` : `User ID: ${userId}`;
                                             return (
                                                 <div key={userId} className="flex justify-between items-center p-2 bg-white rounded-lg border border-gray-100 text-xs">
                                                     <div className="min-w-0 text-start">
-                                                        <span className="font-semibold text-gray-800 truncate block">{uName}</span>
+                                                        <span className="font-semibold text-gray-800 truncate block">{displayName}</span>
                                                         <div className="text-[10px] text-gray-400 flex flex-col gap-0.5 mt-0.5">
-                                                            {uObj?.phone_number && <span className="block">{uObj.phone_number}</span>}
                                                             {uObj?.email && <span className="block">{uObj.email}</span>}
+                                                            {uObj?.phone_number && <span className="block">{uObj.phone_number}</span>}
                                                         </div>
                                                     </div>
                                                     <button 
                                                         type="button" 
+                                                        disabled={isFieldDisabled('users')}
                                                         onClick={() => handleRemoveUser(userId)}
-                                                        className="text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded"
+                                                        className={`text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded ${isFieldDisabled('users') ? 'opacity-40 cursor-not-allowed' : ''}`}
                                                     >
                                                         {t('form.service_settings.remove')}
                                                     </button>
@@ -553,6 +613,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                     <OptionCards
                         value={isForAllServices ? 'all' : 'specific'}
                         onChange={(v) => setIsForAllServices(v === 'all')}
+                        disabled={isFieldDisabled('is_for_all_services')}
                         options={[
                             { value: 'all', label: t('details.all_services'), desc: t('form.all_services_desc') },
                             { value: 'specific', label: t('form.specific_services_desc'), desc: t('form.specific_services_desc') },
@@ -568,12 +629,13 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                     {services.map((s) => {
                                         const checked = selectedServices.some(item => item.id === s.id);
                                         return (
-                                            <label key={s.id} className="flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer">
+                                            <label key={s.id} className={`flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 ${isFieldDisabled('services') ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                                 <input 
                                                     type="checkbox"
                                                     checked={checked}
+                                                    disabled={isFieldDisabled('services')}
                                                     onChange={() => toggleServiceCheckbox(s)}
-                                                    className="w-4 h-4 rounded border-gray-300 text-[#E91E63] focus:ring-[#E91E63]"
+                                                    className="w-4 h-4 rounded border-gray-300 text-[#E91E63] focus:ring-[#E91E63] disabled:opacity-50"
                                                 />
                                                 <span className="truncate">{isArabic ? s.name_ar : s.name_en}</span>
                                             </label>
@@ -595,8 +657,9 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                                     <span className="text-xs font-bold text-gray-800">{isArabic ? services.find(x => x.id === selS.id)?.name_ar : services.find(x => x.id === selS.id)?.name_en}</span>
                                                     <button 
                                                         type="button" 
+                                                        disabled={isFieldDisabled('services')}
                                                         onClick={() => toggleServiceCheckbox(selS)}
-                                                        className="text-[10px] text-red-500 hover:text-red-700"
+                                                        className={`text-[10px] text-red-500 hover:text-red-700 ${isFieldDisabled('services') ? 'opacity-40 cursor-not-allowed' : ''}`}
                                                     >
                                                         {t('form.service_settings.remove')}
                                                     </button>
@@ -606,22 +669,24 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                                 <div>
                                                     <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase">{t('form.service_settings.select_types')}</label>
                                                     <div className="flex gap-4">
-                                                        <label className="inline-flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+                                                        <label className={`inline-flex items-center gap-1.5 text-xs text-gray-700 ${isFieldDisabled('services') ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                                             <input 
                                                                 type="checkbox"
                                                                 checked={selS.allowed_visit_types.includes('single_visit')}
+                                                                disabled={isFieldDisabled('services')}
                                                                 onChange={() => toggleServiceVisitType(selS.id, 'single_visit')}
-                                                                className="w-3.5 h-3.5 rounded text-[#E91E63] border-gray-300"
+                                                                className="w-3.5 h-3.5 rounded text-[#E91E63] border-gray-300 disabled:opacity-50"
                                                             />
                                                             <span>{isArabic ? 'زيارة واحدة' : 'Single Visit'}</span>
                                                         </label>
                                                         {selS.id !== 2 && selS.id !== 3 && (
-                                                            <label className="inline-flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+                                                            <label className={`inline-flex items-center gap-1.5 text-xs text-gray-700 ${isFieldDisabled('services') ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                                                 <input 
                                                                     type="checkbox"
                                                                     checked={selS.allowed_visit_types.includes('three_visits_per_week') || selS.allowed_visit_types.includes('3_days_per_week')}
+                                                                    disabled={isFieldDisabled('services')}
                                                                     onChange={() => toggleServiceVisitType(selS.id, 'three_visits_per_week')}
-                                                                    className="w-3.5 h-3.5 rounded text-[#E91E63] border-gray-300"
+                                                                    className="w-3.5 h-3.5 rounded text-[#E91E63] border-gray-300 disabled:opacity-50"
                                                                 />
                                                                 <span>{isArabic ? '٣ زيارات / أسبوع' : '3 Visits/Week'}</span>
                                                             </label>

@@ -56,20 +56,14 @@ export default function UserActionModal({ userId, onClose }) {
             onClose();
         },
         onError: (error) => {
-            const validationErrors = error.response?.data?.errors;
+            const validationErrors = error.response?.data?.errors || error.response?.data?.params;
             if (validationErrors) {
                 Object.entries(validationErrors).forEach(([key, messages]) => {
                     const message = Array.isArray(messages) ? messages[0] : messages;
                     setError(key, { type: 'server', message });
                 });
-
-                const firstErrKey = Object.keys(validationErrors)[0];
-                const firstErrMsg = validationErrors[firstErrKey];
-                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
-                toast.error(message || 'حدث خطأ في التحقق من البيانات.');
-            } else {
-                toast.error(error.response?.data?.message || 'حدث خطأ أثناء التحديث.');
             }
+            toast.error(error.response?.data?.message || 'حدث خطأ أثناء التحديث.');
         },
     });
 
