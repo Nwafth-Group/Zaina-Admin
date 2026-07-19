@@ -24,7 +24,7 @@ export default function AreaActionModal({ areaToEdit, onClose }) {
         status: yup.string().required(t('common.required')),
     });
 
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, watch, setValue, setError, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: { city_id: '', name_ar: '', name_en: '', code: '', status: 'active' },
     });
@@ -58,9 +58,20 @@ export default function AreaActionModal({ areaToEdit, onClose }) {
             onClose();
         },
         onError: (error) => {
-            const params = error.response?.data?.params;
-            if (params) toast.error(Object.values(params)[0]);
-            else toast.error(error.response?.data?.message || t('common.error'));
+            const validationErrors = error.response?.data?.errors || error.response?.data?.params;
+            if (validationErrors) {
+                Object.entries(validationErrors).forEach(([key, messages]) => {
+                    const message = Array.isArray(messages) ? messages[0] : messages;
+                    setError(key, { type: 'server', message });
+                });
+
+                const firstErrKey = Object.keys(validationErrors)[0];
+                const firstErrMsg = validationErrors[firstErrKey];
+                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
+                toast.error(message || t('common.error'));
+            } else {
+                toast.error(error.response?.data?.message || t('common.error'));
+            }
         },
     });
 

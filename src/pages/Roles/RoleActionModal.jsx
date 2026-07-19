@@ -34,7 +34,7 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
         status: yup.string().required('حالة الدور مطلوبة'),
     });
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, setError, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: { status: 'active', name: '', code: '', description: '' },
     });
@@ -89,11 +89,17 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
             onClose();
         },
         onError: (error) => {
-            const validationErrors = error.response?.data?.params;
+            const validationErrors = error.response?.data?.errors || error.response?.data?.params;
             if (validationErrors) {
-                // Show first error message from response params
-                const firstKey = Object.keys(validationErrors)[0];
-                toast.error(validationErrors[firstKey]);
+                Object.entries(validationErrors).forEach(([key, messages]) => {
+                    const message = Array.isArray(messages) ? messages[0] : messages;
+                    setError(key, { type: 'server', message });
+                });
+
+                const firstErrKey = Object.keys(validationErrors)[0];
+                const firstErrMsg = validationErrors[firstErrKey];
+                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
+                toast.error(message || 'حدث خطأ أثناء حفظ البيانات.');
             } else {
                 toast.error(error.response?.data?.message || 'حدث خطأ أثناء حفظ البيانات.');
             }

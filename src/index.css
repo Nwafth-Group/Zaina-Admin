@@ -1,8 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  body {
+    font-family: 'Cairo', sans-serif !important;
+  }
   /* Enforce border, background and border-radius globally for inputs/selects.
      We DO NOT set height: 72px here globally so toolbar inputs/searches remain compact (e.g. 40px/48px).
      Spacious form input heights are handled explicitly on individual form components (h-[72px]). */

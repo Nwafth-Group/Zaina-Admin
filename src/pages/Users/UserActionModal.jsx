@@ -26,7 +26,7 @@ export default function UserActionModal({ userId, onClose }) {
         role: yup.string().required(t('action_modal.validation_required')),
     });
 
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, watch, setValue, setError, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
     });
 
@@ -56,7 +56,20 @@ export default function UserActionModal({ userId, onClose }) {
             onClose();
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'حدث خطأ أثناء التحديث.');
+            const validationErrors = error.response?.data?.errors;
+            if (validationErrors) {
+                Object.entries(validationErrors).forEach(([key, messages]) => {
+                    const message = Array.isArray(messages) ? messages[0] : messages;
+                    setError(key, { type: 'server', message });
+                });
+
+                const firstErrKey = Object.keys(validationErrors)[0];
+                const firstErrMsg = validationErrors[firstErrKey];
+                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
+                toast.error(message || 'حدث خطأ في التحقق من البيانات.');
+            } else {
+                toast.error(error.response?.data?.message || 'حدث خطأ أثناء التحديث.');
+            }
         },
     });
 

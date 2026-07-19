@@ -39,7 +39,7 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
         service_id: yup.string().nullable().notRequired(),
     });
 
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, watch, setValue, setError, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: { 
             status: 'active', 
@@ -54,6 +54,7 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
     });
 
     const statusValue = watch('status');
+    const image = watch('image');
 
     useEffect(() => {
         if (isEditMode && fullWorkerData) {
@@ -65,7 +66,7 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
                 address: fullWorkerData.address || '',
                 gender: fullWorkerData.gender || 'male',
                 status: fullWorkerData.status || 'active',
-                service_id: fullWorkerData.assigned_service?.id ? String(fullWorkerData.assigned_service.id) : '',
+                service_id: fullWorkerData.services?.[0]?.id || ''
             });
         }
     }, [fullWorkerData, isEditMode, reset]);
@@ -73,7 +74,6 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
     const submitMutation = useMutation({
         mutationFn: async (data) => {
             const payload = new FormData();
-            if (isEditMode) payload.append('_method', 'PUT');
             payload.append('name', data.name);
             payload.append('phone_number', data.phone_number);
             payload.append('nationality', data.nationality);
@@ -82,10 +82,14 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
             payload.append('gender', data.gender);
             payload.append('status', data.status);
             
-            if (data.image && data.image[0]) {
-                payload.append('image', data.image[0]);
+            if (isEditMode) {
+                payload.append('_method', 'PUT');
             }
-            
+
+            if (image && image[0]) {
+                payload.append('image', image[0]);
+            }
+
             if (data.service_id) {
                 payload.append('services[]', data.service_id);
             }
@@ -99,13 +103,26 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
             onClose();
         },
         onError: (error) => {
-            const errorMsg = error.response?.data?.message;
-            if (errorMsg && (errorMsg.includes('Phone') || errorMsg.includes('الهاتف'))) {
-                toast.error(isArabic ? 'رقم الهاتف مستخدم بالفعل من قبل عامل آخر.' : 'Phone number is already used by another worker.');
-            } else if (errorMsg && (errorMsg.includes('ID') || errorMsg.includes('الهوية'))) {
-                toast.error(isArabic ? 'رقم الهوية مستخدم بالفعل من قبل عامل آخر.' : 'ID number is already used by another worker.');
+            const validationErrors = error.response?.data?.errors;
+            if (validationErrors) {
+                Object.entries(validationErrors).forEach(([key, messages]) => {
+                    const message = Array.isArray(messages) ? messages[0] : messages;
+                    setError(key, { type: 'server', message });
+                });
+
+                const firstErrKey = Object.keys(validationErrors)[0];
+                const firstErrMsg = validationErrors[firstErrKey];
+                const message = Array.isArray(firstErrMsg) ? firstErrMsg[0] : firstErrMsg;
+                toast.error(message || (isArabic ? 'حدث خطأ في التحقق من البيانات.' : 'Validation error occurred.'));
             } else {
-                toast.error(errorMsg || (isArabic ? 'يرجى التحقق من صحة البيانات المدخلة.' : 'Please check the entered information.'));
+                const errorMsg = error.response?.data?.message;
+                if (errorMsg && (errorMsg.includes('Phone') || errorMsg.includes('الهاتف'))) {
+                    toast.error(isArabic ? 'رقم الهاتف مستخدم بالفعل من قبل عامل آخر.' : 'Phone number is already used by another worker.');
+                } else if (errorMsg && (errorMsg.includes('ID') || errorMsg.includes('الهوية'))) {
+                    toast.error(isArabic ? 'رقم الهوية مستخدم بالفعل من قبل عامل آخر.' : 'ID number is already used by another worker.');
+                } else {
+                    toast.error(errorMsg || (isArabic ? 'يرجى التحقق من صحة البيانات المدخلة.' : 'Please check the entered information.'));
+                }
             }
         },
     });

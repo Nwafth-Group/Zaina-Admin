@@ -196,25 +196,29 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                 disabled={busy}
                             >
                                 {!isWorkingStatus && <option value="" disabled>—</option>}
-                                <option value="Upcoming" disabled={status === 'inService'}>
-                                    {t('status.Upcoming')}
-                                </option>
-                                <option value="inService" disabled={!isToday}>
-                                    {t('status.inService')} {!isToday && (isArabic ? ' (يوم الخدمة فقط)' : ' (Service day only)')}
-                                </option>
+                                {status !== 'inService' && (
+                                    <option value="Upcoming">
+                                        {t('status.Upcoming')}
+                                    </option>
+                                )}
+                                {isToday && (
+                                    <option value="inService">
+                                        {t('status.inService')}
+                                    </option>
+                                )}
                             </SelectField>
                         </div>
 
                         {/* Mark as completed */}
-                        <button
-                            type="button"
-                            onClick={() => changeStatus('completed')}
-                            disabled={busy || !isEndTimePassed}
-                            title={!isEndTimePassed ? (isArabic ? 'متاح فقط بعد انتهاء وقت الخدمة' : 'Only available after the service end time has passed') : ''}
-                            className="px-4 py-2.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
-                        >
-                            {t('details.mark_completed')}
-                        </button>
+                        {isEndTimePassed && (
+                            <button
+                                type="button"
+                                onClick={() => changeStatus('completed')}
+                                className="px-4 py-2.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                            >
+                                {t('details.mark_completed')}
+                            </button>
+                        )}
 
                         {/* More menu: cancel */}
                         <div className="relative ms-auto">
