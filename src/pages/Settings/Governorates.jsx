@@ -84,39 +84,41 @@ export default function Governorates() {
         );
     }
 
-    return (
-        <div>
-            <LocationHeader title={isArabic ? 'إدارة المحافظات' : 'Governorates Management'} />
+    const canManage = hasPermission('location.edit') || hasPermission('governorates.edit') || hasPermission('governorates.create');
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[60vh]">
-                {/* Header & Filter Controls */}
-                <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+    return (
+        <div className="min-h-screen bg-gray-50/50 p-6 space-y-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
+                {/* Header */}
+                <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-lg md:text-xl font-bold text-gray-800">
+                        <h1 className="text-lg font-bold text-gray-900">
                             {isArabic ? 'قائمة المحافظات' : 'Governorates List'}
-                        </h2>
-                        <p className="text-xs text-gray-400 mt-1">
+                        </h1>
+                        <p className="text-xs text-gray-500 mt-0.5">
                             {isArabic ? 'إدارة المحافظات وربطها بالدول والمدن في النظام' : 'Manage governorates linked to countries and cities'}
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                        {/* Country Filter */}
-                        <select
-                            value={selectedCountry}
-                            onChange={(e) => setSelectedCountry(e.target.value)}
-                            className="px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#E91E63] bg-white"
-                        >
-                            <option value="">{isArabic ? 'جميع الدول' : 'All Countries'}</option>
-                            {countries.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {nameOf(c)}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="flex items-center gap-3">
+                        {/* Country Filter Dropdown */}
+                        <div className="w-48">
+                            <select
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#E91E63]"
+                            >
+                                <option value="">{isArabic ? 'جميع الدول' : 'All Countries'}</option>
+                                {countries.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {nameOf(c)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        {/* Search Input */}
-                        <div className="relative flex-1 md:w-64">
+                        {/* Search input */}
+                        <div className="relative w-60">
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -130,7 +132,7 @@ export default function Governorates() {
                         </div>
 
                         {/* Add Button */}
-                        {hasPermission('location.edit') && (
+                        {canManage && (
                             <button
                                 type="button"
                                 onClick={() => setModal({ open: true, governorate: null })}
