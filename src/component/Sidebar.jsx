@@ -210,6 +210,16 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
                     permission: 'location.edit'
                 },
                 {
+                    to: '/settings/governorates',
+                    label: isArabic ? 'المحافظات' : 'Governorates',
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503-11.488l4.875 2.437c.381.19.622.58.622 1.006v9.458c0 .812-.86 1.33-1.593.963L15 14.25M9 6.75L3.486 9.507C3.105 9.697 2.864 10.087 2.864 10.513v9.458c0 .812.86 1.33 1.593.963L9 18.75m0-12l6 3m-6 3l6 3" />
+                        </svg>
+                    ),
+                    permission: 'location.edit'
+                },
+                {
                     to: '/settings/cities',
                     label: isArabic ? 'المدن' : 'Cities',
                     icon: (
@@ -245,7 +255,11 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
 
     // Filter invisible groups
     const renderedGroups = groups.map(group => {
-        const visibleItems = group.items.filter(item => !item.permission || hasPermission(item.permission));
+        const visibleItems = group.items.filter(item => {
+            if (!item.permission) return true;
+            if (Array.isArray(item.permission)) return item.permission.some(p => hasPermission(p));
+            return hasPermission(item.permission) || (item.to === '/settings/governorates' && (hasPermission('governorates.view') || hasPermission('governorates.edit')));
+        });
         return { ...group, items: visibleItems };
     }).filter(group => group.items.length > 0);
 
