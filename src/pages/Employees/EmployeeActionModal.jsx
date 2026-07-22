@@ -41,6 +41,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
         job_title: yup.string().required(t('validation.required')),
         gender: yup.string().required(t('validation.required')),
         status: yup.string().required(t('validation.required')),
+        monthly_points_limit: yup.number().typeError('Must be a number').nullable().transform((v, o) => o === '' ? null : v).min(0, 'Must be 0 or greater'),
         roles: yup.array().of(yup.string()).min(1, t('validation.required')),
         password: yup.string().when('$isEditMode', (isEdit, schema) => (
             isEdit[0] ? schema.nullable() : schema.required(t('validation.required')).min(6, t('validation.min_password'))
@@ -51,7 +52,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         context: { isEditMode },
-        defaultValues: { status: 'active', type: 'operation', gender: 'Male', roles: [] },
+        defaultValues: { status: 'active', type: 'operation', gender: 'Male', roles: [], monthly_points_limit: '' },
     });
 
     const statusValue = watch('status');
@@ -71,6 +72,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
                 gender: fullEmployeeData.gender || 'Male',
                 status: fullEmployeeData.status || 'active',
                 roles: fullEmployeeData.all_roles || [],
+                monthly_points_limit: fullEmployeeData.monthly_points_limit ?? '',
                 password: '',
             });
         }
@@ -90,7 +92,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
                     if (value && value[0]) {
                         formData.append('image', value[0]); // Upload first selected file
                     }
-                } else if (value !== undefined && value !== null) {
+                } else if (value !== undefined && value !== null && value !== '') {
                     if (key === 'password' && isEditMode && !value) return; // skip empty passwords
                     formData.append(key, value);
                 }
@@ -174,10 +176,15 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
             {/* Job */}
             <FormSection icon="briefcase" title={t('sections.job.title')} description={t('sections.job.desc')}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="col-span-full">
+                    <div>
                         <label className={LABEL_CLASS}>{t('form.job_title')}</label>
                         <input {...register('job_title')} className={`${INPUT_CLASS} ${errors.job_title ? 'border-red-500' : ''}`} />
                         <ErrorMsg name="job_title" />
+                    </div>
+                    <div>
+                        <label className={LABEL_CLASS}>الحد الشهري لمنح النقاط (Monthly Points Limit)</label>
+                        <input type="number" min="0" placeholder="مثال: 2000 (أو اتركه فارغاً لغير محدود)" {...register('monthly_points_limit')} className={`${INPUT_CLASS} ${errors.monthly_points_limit ? 'border-red-500' : ''}`} />
+                        <ErrorMsg name="monthly_points_limit" />
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

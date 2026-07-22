@@ -108,6 +108,7 @@
   "form": {
     "title_add": "Add New Service",
     "title_edit": "Edit Service",
+    "pricing_type": "Pricing Type",
     "tab_basic": "Basic Information",
     "tab_locations": "Locations & Pricing",
     "tab_durations": "Windows & Durations",

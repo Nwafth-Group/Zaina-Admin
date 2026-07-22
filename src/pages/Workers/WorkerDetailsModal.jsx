@@ -275,7 +275,14 @@ export default function WorkerDetailsModal({ workerId, onClose }) {
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <StarRow value={r.rating} />
+                                                        <div className="flex items-center gap-2">
+                                                            {r.status && (
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : r.status === 'rejected' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                                                    {r.status === 'approved' ? (isArabic ? 'معتمد' : 'Approved') : r.status === 'rejected' ? (isArabic ? 'مرفوض' : 'Rejected') : (isArabic ? 'قيد المراجعة' : 'Pending')}
+                                                                </span>
+                                                            )}
+                                                            <StarRow value={r.rating} />
+                                                        </div>
                                                     </div>
                                                     {r.comment && <p className="text-sm text-gray-600 mt-3">{r.comment}</p>}
                                                 </div>

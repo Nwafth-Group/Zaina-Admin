@@ -3,6 +3,7 @@
   "subtitle": "Manage your platform's locations and configuration.",
   "cards": {
     "countries": "Countries",
+    "governorates": "Governorates",
     "cities": "Cities",
     "areas": "Areas",
     "company_info": "Company Info"

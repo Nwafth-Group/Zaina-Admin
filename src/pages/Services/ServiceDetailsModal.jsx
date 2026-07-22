@@ -94,9 +94,26 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                         </span>
                     )}
                 </div>
-                <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors" aria-label={t('details.close')}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+                <div className="flex items-center gap-3">
+                    {service && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                window.location.href = `/services/${service.id}/edit`;
+                            }}
+                            className="px-4 py-1.5 rounded-xl bg-[#E91E63] text-white font-bold text-xs hover:bg-[#c2185b] transition-colors shadow-2xs flex items-center gap-1.5"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            <span>{t('actions.edit') || 'تعديل الخدمة'}</span>
+                        </button>
+                    )}
+                    <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label={t('details.close')}>
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
             </div>
 
             {/* Body */}
@@ -655,7 +672,14 @@ export default function ServiceDetailsModal({ serviceId, onClose }) {
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <StarRow value={r.rating} />
+                                                        <div className="flex items-center gap-2">
+                                                            {r.status && (
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : r.status === 'rejected' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                                                    {r.status === 'approved' ? (isArabic ? 'معتمد' : 'Approved') : r.status === 'rejected' ? (isArabic ? 'مرفوض' : 'Rejected') : (isArabic ? 'قيد المراجعة' : 'Pending')}
+                                                                </span>
+                                                            )}
+                                                            <StarRow value={r.rating} />
+                                                        </div>
                                                     </div>
                                                     {r.comment && <p className="text-sm text-gray-600 mt-3">{r.comment}</p>}
                                                 </div>

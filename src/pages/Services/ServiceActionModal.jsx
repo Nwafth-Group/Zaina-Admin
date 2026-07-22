@@ -246,6 +246,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                 const { min_workers } = this.parent;
                 return value >= min_workers;
             }),
+        covered_persons_per_worker: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(1),
         min_children: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable()
             .when('category_id', {
                 is: (val) => {
@@ -353,6 +354,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             max_duration: '',
             min_workers: 1,
             max_workers: 1,
+            covered_persons_per_worker: serviceToEdit?.covered_persons_per_worker || 1,
             min_children: '',
             max_children: '',
             child_age_groups: [],
@@ -400,7 +402,8 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const selectedCategory = useMemo(() => categories?.find(c => String(c.id) === String(watchCategoryId)), [categories, watchCategoryId]);
     const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
     const isBabysitting = (watchServiceCode === 'BABYSITTER_HOURLY') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('babysitting') || selectedCategory.name_en?.toLowerCase().includes('nanny') || selectedCategory.name_ar?.includes('أطفال') || selectedCategory.name_en?.toLowerCase().includes('babysitter')));
-    const isSecondOrThirdService = isHospitality || isBabysitting;
+    const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام'))) || (watchType === 'other');
+    const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure;
 
     useEffect(() => {
         if (isHospitality || isBabysitting) {
@@ -408,8 +411,14 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             setValue('three_days_checked', false);
             setValue('duration_unit', 'Hours');
             setValue('has_duration_range', true);
+        } else if (isPedicureManicure) {
+            setValue('single_visit_checked', true);
+            setValue('three_days_checked', false);
+            setValue('duration_unit', 'Hours');
+            setValue('has_duration_range', false);
+            setValue('default_duration', 2);
         }
-    }, [isHospitality, isBabysitting, setValue]);
+    }, [isHospitality, isBabysitting, isPedicureManicure, setValue]);
 
     // Handle Image Preview
     const imageList = watch('image');
@@ -1017,16 +1026,14 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                     <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
                                     <ErrorMsg name="base_price" />
                                 </div>
-                                {isSecondOrThirdService && (
-                                    <div className="mb-4">
-                                        <label className={LABEL_CLASS}>{isArabic ? 'نوع التسعير' : 'Pricing Type'}</label>
-                                        <SelectField registration={register('pricing_type')}>
-                                            <option value="per_hour">{isArabic ? 'سعر بالساعة' : 'Per Hour'}</option>
-                                            <option value="per_service">{isArabic ? 'سعر بالخدمة / الزيارة' : 'Per Service / Visit'}</option>
-                                        </SelectField>
-                                        <ErrorMsg name="pricing_type" />
-                                    </div>
-                                )}
+                                <div className="mb-4">
+                                    <label className={LABEL_CLASS}>{isArabic ? 'نوع التسعير' : 'Pricing Type'}</label>
+                                    <SelectField registration={register('pricing_type')}>
+                                        <option value="per_service">{isArabic ? 'سعر بالخدمة / الزيارة (Per Service)' : 'Per Service / Visit'}</option>
+                                        <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>
+                                    </SelectField>
+                                    <ErrorMsg name="pricing_type" />
+                                </div>
 
                                 <div className="space-y-3 pt-3 border-t border-gray-100">
                                     <div className="flex justify-between items-center">
@@ -1082,7 +1089,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                             )}
                                         </div>
 
-                                        {!isHospitality && !isBabysitting && (
+                                        {!isHospitality && !isBabysitting && !isPedicureManicure && (
                                             <div 
                                                 onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
                                                 className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
@@ -1167,32 +1174,34 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                 </div>
                             </div>
 
-                            <div className="space-y-4 pt-3 border-t border-gray-100">
-                                <label className={`flex items-center gap-2 cursor-pointer ${(watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3) ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                                    <input 
-                                        type="checkbox" 
-                                        {...register('has_duration_range')} 
-                                        disabled={watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3}
-                                        className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] disabled:opacity-50 disabled:cursor-not-allowed" 
-                                    />
-                                    <span className="text-sm font-semibold text-gray-700">{t('form.has_duration_range')}</span>
-                                </label>
-                                
-                                {watchHasDurationRange && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-lg bg-gray-50/50">
-                                        <div>
-                                            <label className={LABEL_CLASS}>{t('form.min_duration')}</label>
-                                            <input type="number" {...register('min_duration')} className={INPUT_CLASS} />
-                                            <ErrorMsg name="min_duration" />
+                            {!isPedicureManicure && (
+                                <div className="space-y-4 pt-3 border-t border-gray-100">
+                                    <label className={`flex items-center gap-2 cursor-pointer ${(watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3) ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                                        <input 
+                                            type="checkbox" 
+                                            {...register('has_duration_range')} 
+                                            disabled={watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3}
+                                            className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] disabled:opacity-50 disabled:cursor-not-allowed" 
+                                        />
+                                        <span className="text-sm font-semibold text-gray-700">{t('form.has_duration_range')}</span>
+                                    </label>
+                                    
+                                    {watchHasDurationRange && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-lg bg-gray-50/50">
+                                            <div>
+                                                <label className={LABEL_CLASS}>{t('form.min_duration')}</label>
+                                                <input type="number" {...register('min_duration')} className={INPUT_CLASS} />
+                                                <ErrorMsg name="min_duration" />
+                                            </div>
+                                            <div>
+                                                <label className={LABEL_CLASS}>{t('form.max_duration')}</label>
+                                                <input type="number" {...register('max_duration')} className={INPUT_CLASS} />
+                                                <ErrorMsg name="max_duration" />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className={LABEL_CLASS}>{t('form.max_duration')}</label>
-                                            <input type="number" {...register('max_duration')} className={INPUT_CLASS} />
-                                            <ErrorMsg name="max_duration" />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                                 <div>
@@ -1206,6 +1215,72 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                     <ErrorMsg name="max_workers" />
                                 </div>
                             </div>
+
+                            {/* Person-Based Worker Calculation Rule (Pedicure & Manicure / Other Services Only) */}
+                            {isPedicureManicure && (
+                                <div className="mt-4 p-4 border border-rose-200 bg-rose-50/40 rounded-2xl space-y-4">
+                                    <div>
+                                        <label className={LABEL_CLASS}>
+                                            {isArabic ? 'عدد الأشخاص المغطاة لكل عامل (Covered Persons Per Worker)' : 'Covered Persons Per Worker'}
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            {...register('covered_persons_per_worker')} 
+                                            placeholder="1" 
+                                            className={`${INPUT_CLASS} bg-white max-w-xs`} 
+                                        />
+                                        <ErrorMsg name="covered_persons_per_worker" />
+                                        <p className="text-xs text-gray-500 mt-1.5">
+                                            {isArabic 
+                                                ? 'حدد عدد الأشخاص الذين يمكن لعامل واحد خدمتهم. يحسب النظام الحد الأدنى للعمالة تلقائياً بناءً على اختيار العميل ولا يمكن للعميل تقليل عدد العمالة عن هذا الحد.'
+                                                : 'Number of persons one worker can serve. The system will calculate required minimum workers automatically during customer booking.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Example Calculation Table from User Story */}
+                                    <div className="bg-white p-3.5 rounded-xl border border-rose-100 shadow-sm text-xs">
+                                        <p className="font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                                            <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {isArabic ? 'جدول أمثلة وقواعد احتساب العمالة (من قصة المستخدم):' : 'Worker Calculation Rule Examples (From User Story):'}
+                                        </p>
+                                        
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-start border-collapse text-[11px]">
+                                                <thead>
+                                                    <tr className="bg-gray-50 text-gray-600 border-b border-gray-200">
+                                                        <th className="p-2 text-start">{isArabic ? 'عدد الأشخاص المطلوبة' : 'Number of Persons'}</th>
+                                                        <th className="p-2 text-start">{isArabic ? 'المغطى لكل عامل' : 'Persons Per Worker'}</th>
+                                                        <th className="p-2 text-start">{isArabic ? 'عدد العمالة المحسوب' : 'Required Workers'}</th>
+                                                        <th className="p-2 text-start">{isArabic ? 'مدة الخدمة' : 'Duration'}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100 font-medium">
+                                                    <tr>
+                                                        <td className="p-2">1</td>
+                                                        <td className="p-2">{watch('covered_persons_per_worker') || 1}</td>
+                                                        <td className="p-2 font-bold text-[#E91E63]">{Math.ceil(1 / (Number(watch('covered_persons_per_worker')) || 1))} {isArabic ? 'عامل' : 'worker'}</td>
+                                                        <td className="p-2">2 {isArabic ? 'ساعة' : 'hours'}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="p-2">2</td>
+                                                        <td className="p-2">{watch('covered_persons_per_worker') || 1}</td>
+                                                        <td className="p-2 font-bold text-[#E91E63]">{Math.ceil(2 / (Number(watch('covered_persons_per_worker')) || 1))} {isArabic ? 'عامل' : 'worker(s)'}</td>
+                                                        <td className="p-2">2 {isArabic ? 'ساعة' : 'hours'}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="p-2">3</td>
+                                                        <td className="p-2">{watch('covered_persons_per_worker') || 1}</td>
+                                                        <td className="p-2 font-bold text-[#E91E63]">{Math.ceil(3 / (Number(watch('covered_persons_per_worker')) || 1))} {isArabic ? 'عامل' : 'worker(s)'}</td>
+                                                        <td className="p-2">2 {isArabic ? 'ساعة' : 'hours'}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {isBabysitting && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">

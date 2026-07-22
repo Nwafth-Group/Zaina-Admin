@@ -56,9 +56,46 @@ export default function Bookings() {
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS); // staged until "Apply"
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [cancelTarget, setCancelTarget] = useState(null); // booking pending cancel confirm
-    const [cancelNote, setCancelNote] = useState('');
     const [rescheduleTarget, setRescheduleTarget] = useState(null);
     const [page, setPage] = useState(1);
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            const params = new URLSearchParams();
+
+            if (search.trim()) params.append('search', search.trim());
+            if (filters.status) params.append('status', filters.status);
+            if (filters.payment_status) params.append('payment_status', filters.payment_status);
+            if (filters.city_id) params.append('city_id', filters.city_id);
+            if (filters.area_id) params.append('area_id', filters.area_id);
+            if (filters.date_from) params.append('date_from', filters.date_from);
+            if (filters.date_to) params.append('date_to', filters.date_to);
+            if (filters.sort_by) params.append('sort_by', filters.sort_by);
+            if (filters.sort_dir) params.append('sort_dir', filters.sort_dir);
+
+            const response = await axiosInstance.get(`/admin/bookings/export?${params.toString()}`, {
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8;' }));
+            const link = document.createElement('a');
+            link.href = url;
+            const dateStr = new Date().toISOString().split('T')[0];
+            link.setAttribute('download', `bookings_export_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            toast.success(isArabic ? 'تم تصدير ملف الإكسل بنجاح' : 'Bookings exported successfully');
+        } catch (err) {
+            toast.error(isArabic ? 'حدث خطأ أثناء تصدير البيانات' : 'Failed to export bookings');
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     // Debounce the free-text search before it hits the API.
     useEffect(() => {
@@ -202,6 +239,7 @@ export default function Bookings() {
                     </div>
 
                     <button
+                        type="button"
                         onClick={openFilters}
                         className="relative inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                     >
@@ -214,6 +252,18 @@ export default function Bookings() {
                                 {activeFilterCount}
                             </span>
                         )}
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={isExporting}
+                        onClick={handleExportExcel}
+                        className="inline-flex items-center gap-2 border border-emerald-200 rounded-lg px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>{isExporting ? (isArabic ? 'جاري التصدير...' : 'Exporting...') : (isArabic ? 'تصدير إكسل' : 'Export Excel')}</span>
                     </button>
                 </div>
             </div>

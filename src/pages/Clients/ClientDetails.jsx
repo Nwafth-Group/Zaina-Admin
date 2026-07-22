@@ -236,10 +236,10 @@ export default function ClientDetails() {
 
                                     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
                                         <h4 className="text-sm font-bold text-gray-700 mb-4">{t('review_modal.documents')}</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                             <DocumentTile label={t('review_modal.id_front')} url={docs.id_front} t={t} />
                                             <DocumentTile label={t('review_modal.id_back')} url={docs.id_back} t={t} />
-                                            <DocumentTile label={t('review_modal.selfie')} url={docs.selfie} t={t} />
+                                            {docs.selfie && <DocumentTile label={t('review_modal.selfie')} url={docs.selfie} t={t} />}
                                         </div>
                                     </div>
 

@@ -152,9 +152,16 @@ export default function CouponDetailsModal({ couponId, onClose }) {
 
                             <FormSection icon="sparkles" title={t('details.service_constraints')}>
                                 {coupon.is_for_all_services ? (
-                                    <span className="text-xs font-semibold px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 rounded-md block text-center">
-                                        {t('details.all_services')}
-                                    </span>
+                                    <div className="space-y-2">
+                                        <span className="text-xs font-semibold px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 rounded-md block text-center">
+                                            {t('details.all_services')}
+                                        </span>
+                                        {coupon.min_workers && coupon.min_workers > 0 ? (
+                                            <p className="text-xs text-gray-600 text-center font-medium">
+                                                {isArabic ? `الحد الأدنى لعدد العاملات: ${coupon.min_workers}` : `Min Workers: ${coupon.min_workers}`}
+                                            </p>
+                                        ) : null}
+                                    </div>
                                 ) : (
                                     <div className="space-y-4">
                                         <span className="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md block text-center">
@@ -181,6 +188,14 @@ export default function CouponDetailsModal({ couponId, onClose }) {
                                                                 <p className="text-[10px] text-gray-400 italic">{t('details.no_visit_types')}</p>
                                                             )}
                                                         </div>
+
+                                                        {s.pivot?.min_workers && s.pivot.min_workers > 0 ? (
+                                                            <div className="pt-1 border-t border-gray-100">
+                                                                <p className="text-[10px] text-gray-600 font-semibold">
+                                                                    {isArabic ? `الحد الأدنى للعاملات: ${s.pivot.min_workers}` : `Min Workers: ${s.pivot.min_workers}`}
+                                                                </p>
+                                                            </div>
+                                                        ) : null}
                                                     </div>
                                                 ))}
                                             </div>

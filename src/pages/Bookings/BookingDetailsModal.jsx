@@ -220,32 +220,34 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                             </button>
                         )}
 
-                        {/* More menu: cancel */}
-                        <div className="relative ms-auto">
-                            <button
-                                type="button"
-                                onClick={() => setMoreOpen((o) => !o)}
-                                aria-label={t('details.more')}
-                                className="inline-flex items-center justify-center border border-gray-200 rounded-lg p-2.5 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                            </button>
-                            {moreOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setMoreOpen(false)} />
-                                    <div className="absolute end-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                                        <button
-                                            type="button"
-                                            onClick={() => { setCancelOpen(true); setMoreOpen(false); }}
-                                            className="w-full text-start px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            {t('details.cancel_booking')}
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        {/* More menu: cancel (Only allowed for Upcoming or Pending Assignment) */}
+                        {(status === 'Upcoming' || status === 'Pending Assignment') && (
+                            <div className="relative ms-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setMoreOpen((o) => !o)}
+                                    aria-label={t('details.more')}
+                                    className="inline-flex items-center justify-center border border-gray-200 rounded-lg p-2.5 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                                </button>
+                                {moreOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setMoreOpen(false)} />
+                                        <div className="absolute end-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setCancelOpen(true); setMoreOpen(false); }}
+                                                className="w-full text-start px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                {t('details.cancel_booking')}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -329,6 +331,9 @@ export default function BookingDetailsModal({ bookingId, onClose }) {
                                         )}
                                         {booking.number_of_children !== null && booking.number_of_children !== undefined && (
                                             <Row label={t('details.number_of_children')} value={booking.number_of_children} />
+                                        )}
+                                        {booking.number_of_persons !== null && booking.number_of_persons !== undefined && (
+                                            <Row label={isArabic ? 'عدد الأشخاص' : 'Number of Persons'} value={booking.number_of_persons} />
                                         )}
                                         {booking.child_age_groups && booking.child_age_groups.length > 0 && (
                                             <Row 

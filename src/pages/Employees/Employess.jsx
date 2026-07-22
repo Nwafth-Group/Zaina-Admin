@@ -287,6 +287,7 @@ export default function Employees() {
                             <th className="px-4 py-4">{t('table.contact')}</th>
                             <th className="px-4 py-4">{t('table.role')}</th>
                             <th className="px-4 py-4 text-center">{t('table.type')}</th>
+                            <th className="px-4 py-4 text-center">{isArabic ? 'حد النقاط الشهري' : 'Monthly Limit'}</th>
                             <th className="px-4 py-4 text-center">{t('table.status')}</th>
                             <th className="px-4 py-4 text-center">{t('table.actions')}</th>
                         </tr>
@@ -294,7 +295,7 @@ export default function Employees() {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                         <span className="text-lg font-medium">{t('loading')}</span>
@@ -303,7 +304,7 @@ export default function Employees() {
                             </tr>
                         ) : employees.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
+                                <td colSpan="8" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
                             </tr>
                         ) : (
                             employees.map((employee) => (
@@ -333,6 +334,15 @@ export default function Employees() {
                                     </td>
                                     <td className="px-4 py-3 text-center text-gray-600">
                                         {t(`types.${employee.type}`, { defaultValue: employee.type })}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        {employee.monthly_points_limit !== null && employee.monthly_points_limit > 0 ? (
+                                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">
+                                                {employee.monthly_points_limit.toLocaleString()} Pts
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 text-xs italic">{isArabic ? 'غير محدود' : 'Unlimited'}</span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${

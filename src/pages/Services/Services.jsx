@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -20,6 +21,7 @@ const DEFAULT_FILTERS = {
 };
 
 export default function Services() {
+    const navigate = useNavigate();
     const { t, i18n } = useTranslation('services');
     const queryClient = useQueryClient();
     const currentLang = i18n.language;
@@ -177,7 +179,7 @@ export default function Services() {
                     {/* Add new */}
                     {false && (
                         <button
-                            onClick={() => setActionModal({ isOpen: true, serviceToEdit: null })}
+                            onClick={() => navigate('/services/create')}
                             className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
                         >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -244,7 +246,7 @@ export default function Services() {
                                                         key: 'edit',
                                                         label: t('actions.edit'),
                                                         icon: <EditIcon />,
-                                                        onClick: () => setActionModal({ isOpen: true, serviceToEdit: service }),
+                                                        onClick: () => navigate(`/services/${service.id}/edit`),
                                                     },
                                                     {
                                                         key: 'toggle',

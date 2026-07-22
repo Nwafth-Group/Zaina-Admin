@@ -383,6 +383,9 @@ export default function BookingDetails() {
                                             {booking.number_of_children !== null && booking.number_of_children !== undefined && (
                                                 <Row label={t('details.number_of_children')} value={booking.number_of_children} />
                                             )}
+                                            {booking.number_of_persons !== null && booking.number_of_persons !== undefined && (
+                                                <Row label={isArabic ? 'عدد الأشخاص' : 'Number of Persons'} value={booking.number_of_persons} />
+                                            )}
                                             {booking.child_age_groups && booking.child_age_groups.length > 0 && (
                                                 <Row 
                                                     label={t('details.child_age_groups')} 

@@ -110,6 +110,7 @@
   "form": {
     "title_add": "إضافة خدمة جديدة",
     "title_edit": "تعديل الخدمة",
+    "pricing_type": "نوع التسعير",
     "tab_basic": "البيانات الأساسية",
     "tab_locations": "التغطية والأسعار",
     "tab_durations": "أوقات العمل والمدد",

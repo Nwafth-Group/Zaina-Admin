@@ -37,7 +37,8 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
     const [selectedAreaIds, setSelectedAreaIds] = useState([]);
 
     const [isForAllServices, setIsForAllServices] = useState(true);
-    const [selectedServices, setSelectedServices] = useState([]); // [{ id, allowed_visit_types: [] }]
+    const [minWorkers, setMinWorkers] = useState('');
+    const [selectedServices, setSelectedServices] = useState([]); // [{ id, allowed_visit_types: [], min_workers: '' }]
 
     // User search search-bar states
     const [userSearch, setUserSearch] = useState('');
@@ -105,10 +106,12 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             setSelectedCityIds((fullCoupon.cities || []).map(c => c.id));
             setSelectedAreaIds((fullCoupon.areas || []).map(a => a.id));
             setIsForAllServices(Boolean(fullCoupon.is_for_all_services));
+            setMinWorkers(fullCoupon.min_workers ?? '');
             setSelectedServices((fullCoupon.services || []).map(s => ({
                 id: s.id,
                 name: s.name,
                 allowed_visit_types: s.pivot?.allowed_visit_types || [],
+                min_workers: s.pivot?.min_workers ?? '',
             })));
         }
     }, [fullCoupon, isEditMode, reset]);
@@ -172,10 +175,14 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                     payload.areas = selectedAreaIds;
                 }
             }
-            if (!isForAllServices) {
+            if (isForAllServices) {
+                payload.min_workers = minWorkers !== '' && minWorkers !== null ? Number(minWorkers) : null;
+            } else {
+                payload.min_workers = null;
                 payload.services = selectedServices.map(s => ({
                     id: s.id,
                     allowed_visit_types: s.allowed_visit_types.length > 0 ? s.allowed_visit_types : null,
+                    min_workers: s.min_workers !== '' && s.min_workers !== null ? Number(s.min_workers) : null,
                 }));
             }
 
@@ -283,7 +290,7 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
             if (exists) {
                 return prev.filter(s => s.id !== service.id);
             } else {
-                return [...prev, { id: service.id, name: service.name, allowed_visit_types: [] }];
+                return [...prev, { id: service.id, name: service.name, allowed_visit_types: [], min_workers: '' }];
             }
         });
     };
@@ -295,6 +302,13 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                 ? s.allowed_visit_types.filter(t => t !== visitType)
                 : [...s.allowed_visit_types, visitType];
             return { ...s, allowed_visit_types: types };
+        }));
+    };
+
+    const updateServiceMinWorkers = (serviceId, value) => {
+        setSelectedServices(prev => prev.map(s => {
+            if (s.id !== serviceId) return s;
+            return { ...s, min_workers: value };
         }));
     };
 
@@ -620,6 +634,21 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                         ]}
                     />
 
+                    {isForAllServices && (
+                        <div className="mt-3 bg-white p-3 border border-gray-200 rounded-xl shadow-sm space-y-1">
+                            <label className={LABEL_CLASS}>{isArabic ? 'الحد الأدنى لعدد العاملات' : 'Minimum Workers'}</label>
+                            <input 
+                                type="number" 
+                                min="0"
+                                disabled={isFieldDisabled('is_for_all_services')}
+                                value={minWorkers}
+                                onChange={(e) => setMinWorkers(e.target.value)}
+                                placeholder={isArabic ? 'مثال: 2 (اتركه فارغاً أو 0 لعدم التقييد)' : 'e.g. 2 (leave empty or 0 for no limit)'}
+                                className={INPUT_CLASS}
+                            />
+                        </div>
+                    )}
+
                     {!isForAllServices && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-gray-50/50 p-4 border border-gray-100 rounded-xl max-h-[500px] overflow-y-auto">
                             {/* Left: select services */}
@@ -692,6 +721,22 @@ export default function CouponActionModal({ couponToEdit, onClose }) {
                                                             </label>
                                                         )}
                                                     </div>
+                                                </div>
+
+                                                {/* Min Workers for this service */}
+                                                <div className="pt-2 border-t border-gray-100">
+                                                    <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">
+                                                        {isArabic ? 'الحد الأدنى لعدد العاملات لهذه الخدمة' : 'Min Workers for this Service'}
+                                                    </label>
+                                                    <input 
+                                                        type="number" 
+                                                        min="0"
+                                                        disabled={isFieldDisabled('services')}
+                                                        value={selS.min_workers ?? ''}
+                                                        onChange={(e) => updateServiceMinWorkers(selS.id, e.target.value)}
+                                                        placeholder={isArabic ? 'مثال: 2 (اتركه فارغاً أو 0 لعدم التقييد)' : 'e.g. 2 (leave empty or 0 for no limit)'}
+                                                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E91E63] disabled:bg-gray-100 disabled:opacity-50"
+                                                    />
                                                 </div>
                                             </div>
                                         ))}

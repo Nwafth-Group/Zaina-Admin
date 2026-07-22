@@ -3,6 +3,7 @@
   "subtitle": "إدارة المواقع والإعدادات الخاصة بالمنصة.",
   "cards": {
     "countries": "الدول",
+    "governorates": "المحافظات",
     "cities": "المدن",
     "areas": "المناطق",
     "company_info": "بيانات الشركة"

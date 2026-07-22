@@ -12,6 +12,13 @@ const CARDS = [
         ),
     },
     {
+        key: 'governorates',
+        to: '/settings/governorates',
+        icon: (
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11h4v10" />
+        ),
+    },
+    {
         key: 'cities',
         to: '/settings/cities',
         icon: (

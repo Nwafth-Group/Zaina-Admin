@@ -23,6 +23,7 @@ export default function PointsManagement() {
         subtitle_en: '',
         points: 50,
         rule_category: 'social_media',
+        service_id: '',
         status: true,
         action_type: 'url',
         action_link: '',
@@ -114,6 +115,14 @@ export default function PointsManagement() {
         keepPreviousData: true,
     });
 
+    const { data: myQuotaData } = useQuery({
+        queryKey: ['my-points-quota'],
+        queryFn: async () => {
+            const res = await axiosInstance.get('/admin/points/my-quota');
+            return res.data?.data;
+        },
+    });
+
     // Customer search for adjustments
     useEffect(() => {
         if (!customerSearchInput.trim()) {
@@ -151,6 +160,12 @@ export default function PointsManagement() {
         } else if (ruleForm.rule_category === 'booking') {
             setRuleForm(prev => ({
                 ...prev,
+                action_type: 'url'
+            }));
+        } else if (ruleForm.rule_category === 'service') {
+            setRuleForm(prev => ({
+                ...prev,
+                frequency_type: 'repeatable',
                 action_type: 'url'
             }));
         }
@@ -219,6 +234,7 @@ export default function PointsManagement() {
             setSelectedCustomer(null);
             setCustomerSearchInput('');
             queryClient.invalidateQueries(['points-transactions']);
+            queryClient.invalidateQueries(['my-points-quota']);
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || 'Failed to apply adjustment');
@@ -411,6 +427,8 @@ export default function PointsManagement() {
                                                         ? (isArabic ? 'وسائل التواصل' : 'Social Media')
                                                         : rule.rule_category === 'booking'
                                                         ? (isArabic ? 'إتمام حجز' : 'Booking Complete')
+                                                        : rule.rule_category === 'service'
+                                                        ? (isArabic ? `خدمة مخصصة: ${rule.service ? (isArabic ? rule.service.name_ar : rule.service.name_en) : ''}` : `Service: ${rule.service ? rule.service.name_en : ''}`)
                                                         : rule.rule_category}
                                                 </span>
                                             </td>
@@ -553,6 +571,20 @@ export default function PointsManagement() {
                     <p className="text-sm text-gray-500">
                         {isArabic ? 'حدد العميل وابحث عن اسمه، ثم اختر خصم أو إضافة نقاط مع كتابة السبب.' : 'Select customer by name or phone, then choose to add/deduct points and provide a reason.'}
                     </p>
+
+                    {myQuotaData?.monthly_limit !== null && myQuotaData?.monthly_limit > 0 && (
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between text-xs font-bold text-amber-900 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span>{isArabic ? 'حصتك الشهرية المتبقية لمنح النقاط:' : 'Remaining Monthly Points Quota:'}</span>
+                            </div>
+                            <span className="bg-white px-3 py-1 rounded-lg border border-amber-200 text-amber-700 text-sm font-extrabold shadow-2xs">
+                                {myQuotaData.remaining_quota?.toLocaleString()} / {myQuotaData.monthly_limit?.toLocaleString()} Pts
+                            </span>
+                        </div>
+                    )}
 
                     <form onSubmit={handleAdjustmentSubmit} className="space-y-5">
                         {/* Customer Search select */}
@@ -893,7 +925,8 @@ export default function PointsManagement() {
                                     >
                                         <option value="social_media">{isArabic ? 'متابعة التواصل الاجتماعي' : 'Social Media'}</option>
                                         <option value="referral">{isArabic ? 'دعوة صديق' : 'Referral'}</option>
-                                        <option value="booking">{isArabic ? 'إتمام حجز خدمة' : 'Booking Complete'}</option>
+                                        <option value="booking">{isArabic ? 'إتمام حجز عام' : 'Booking Complete'}</option>
+                                        <option value="service">{isArabic ? 'خدمة مخصصة' : 'Specific Service'}</option>
                                     </select>
                                 </div>
                                 <div>
@@ -909,13 +942,32 @@ export default function PointsManagement() {
                                 </div>
                             </div>
 
+                            {ruleForm.rule_category === 'service' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'اختر الخدمة' : 'Select Service'}</label>
+                                    <select
+                                        value={ruleForm.service_id}
+                                        onChange={(e) => setRuleForm({ ...ruleForm, service_id: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white"
+                                        required
+                                    >
+                                        <option value="">{isArabic ? '-- اختر الخدمة --' : '-- Select Service --'}</option>
+                                        {servicesData && servicesData.map(svc => (
+                                            <option key={svc.id} value={svc.id}>
+                                                {isArabic ? svc.name_ar : svc.name_en}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'نوع التكرار' : 'Frequency'}</label>
                                     <select
                                         value={ruleForm.frequency_type}
                                         onChange={(e) => setRuleForm({ ...ruleForm, frequency_type: e.target.value })}
-                                        disabled={ruleForm.rule_category === 'social_media' || ruleForm.rule_category === 'referral'}
+                                        disabled={ruleForm.rule_category === 'social_media' || ruleForm.rule_category === 'referral' || ruleForm.rule_category === 'service'}
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#E91E63] text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
                                     >
                                         <option value="one_time">One Time</option>

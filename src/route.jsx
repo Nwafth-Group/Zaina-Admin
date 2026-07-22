@@ -12,6 +12,7 @@ import Clients from './pages/Clients/Clients.jsx';
 import ClientDetails from './pages/Clients/ClientDetails.jsx';
 import Categories from './pages/Categories/Categories.jsx';
 import Services from './pages/Services/Services.jsx';
+import ServiceFormPage from './pages/Services/ServiceFormPage.jsx';
 import Workers from './pages/Workers/Workers.jsx';
 import WorkerDetails from './pages/Workers/WorkerDetails.jsx';
 import Employees from './pages/Employees/Employess.jsx';
@@ -22,6 +23,7 @@ import Announcements from './pages/Announcements/Announcements.jsx';
 import Coupons from './pages/Coupons/Coupons.jsx';
 import Settings from './pages/Settings/Settings.jsx';
 import Countries from './pages/Settings/Countries.jsx';
+import Governorates from './pages/Settings/Governorates.jsx';
 import Cities from './pages/Settings/Cities.jsx';
 import Areas from './pages/Settings/Areas.jsx';
 import CompanyInfo from './pages/Settings/CompanyInfo.jsx';
@@ -30,6 +32,7 @@ import MobileNotifications from './pages/Notifications/MobileNotifications.jsx';
 import Reports from './pages/Reports/Reports.jsx';
 import LegalDocuments from './pages/LegalDocuments/LegalDocuments.jsx';
 import PointsManagement from './pages/Points/PointsManagement.jsx';
+import Reviews from './pages/Reviews/Reviews.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -85,6 +88,8 @@ export const router = createBrowserRouter([
           element: <PermissionRoute permission="services.view" />,
           children: [
             { path: 'services', element: <Services /> },
+            { path: 'services/create', element: <ServiceFormPage /> },
+            { path: 'services/:id/edit', element: <ServiceFormPage /> },
           ],
         },
         {
@@ -92,6 +97,12 @@ export const router = createBrowserRouter([
           children: [
             { path: 'workers', element: <Workers /> },
             { path: 'workers/:id', element: <WorkerDetails /> },
+          ],
+        },
+        {
+          element: <PermissionRoute permission="reviews.view" />,
+          children: [
+            { path: 'reviews', element: <Reviews /> },
           ],
         },
         {
@@ -156,6 +167,7 @@ export const router = createBrowserRouter([
           children: [
             { path: 'settings', element: <Settings /> },
             { path: 'settings/countries', element: <Countries /> },
+            { path: 'settings/governorates', element: <Governorates /> },
             { path: 'settings/cities', element: <Cities /> },
             { path: 'settings/areas', element: <Areas /> },
             { path: 'settings/company-info', element: <CompanyInfo /> },

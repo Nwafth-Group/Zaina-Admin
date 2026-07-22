@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
  */
 
 export const INPUT_CLASS =
-    'w-full px-4 h-[72px] border border-[#D94A78] rounded-[24px] outline-none focus:border-[#D94A78] transition-colors bg-[#F8F9FB]';
+    'w-full px-4 h-[46px] text-sm border border-[#D94A78] rounded-[14px] outline-none focus:border-[#D94A78] transition-colors bg-[#F8F9FB]';
 export const LABEL_CLASS = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 /**
