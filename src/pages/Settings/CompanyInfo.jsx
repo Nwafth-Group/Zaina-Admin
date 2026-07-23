@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
-import LocationHeader from './LocationHeader.jsx';
 
 export default function CompanyInfo() {
     const { t, i18n } = useTranslation('settings');
@@ -37,25 +36,6 @@ export default function CompanyInfo() {
             const res = await axiosInstance.get('/admin/company-info');
             return res.data.data;
         },
-        onSuccess: (data) => {
-            if (data) {
-                setNameAr(data.name_ar || '');
-                setNameEn(data.name_en || '');
-                setEmail(data.email || '');
-                setPhone(data.phone || '');
-                setWebsite(data.website || '');
-                setVatPercentage(data.vat_percentage || 0);
-                setFacebook(data.facebook_link || '');
-                setInstagram(data.instagram_link || '');
-                setTwitter(data.twitter_link || '');
-                setSnapchat(data.snapchat_link || '');
-                setTiktok(data.tiktok_link || '');
-                setLinkedin(data.linkedin_link || '');
-                setGooglePlay(data.google_play_link || '');
-                setAppStore(data.app_store_link || '');
-                setLogoPreview(data.logo_url || '');
-            }
-        }
     });
 
     // Populate form fields on initial fetch completion
@@ -99,11 +79,11 @@ export default function CompanyInfo() {
             return res.data;
         },
         onSuccess: () => {
-            toast.success(isArabic ? 'تم تحديث الإعدادات بنجاح!' : 'Company settings updated successfully!');
+            toast.success(isArabic ? 'تم تحديث البيانات بنجاح!' : 'Company settings updated successfully!');
             queryClient.invalidateQueries({ queryKey: ['companyInfo'] });
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث الإعدادات' : 'Failed to update settings'));
+            toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث البيانات' : 'Failed to update settings'));
         }
     });
 
@@ -136,43 +116,92 @@ export default function CompanyInfo() {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-[50vh]">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#E91E63]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E91E63]"></div>
             </div>
         );
     }
 
-    return (
-        <div className="px-1">
-            <LocationHeader title={isArabic ? 'بيانات الشركة' : 'Company Info'} />
+    const socialLinksCount = [facebook, instagram, twitter, snapchat, tiktok, linkedin].filter(Boolean).length;
 
-            <form onSubmit={handleSubmit} className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-8">
-                {/* General Info */}
+    return (
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h3 className="text-base font-bold text-gray-800 border-b pb-2">
+                    <h1 className="text-xl font-black text-gray-900 tracking-tight">
+                        {isArabic ? 'بيانات الشركة والمعلومات الأساسية' : 'Company Profile & Settings'}
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-1">
+                        {isArabic ? 'تحديث أسماء الشركة، بيانات التواصل، نسبة الضريبة، وروابط التواصل الاجتماعي.' : 'Manage company names, contact numbers, VAT rate, and app links.'}
+                    </p>
+                </div>
+            </div>
+
+            {/* Overview Summary Metric Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'اسم الشركة' : 'Company Name'}</p>
+                        <p className="text-sm font-black text-gray-900 mt-1 truncate max-w-[150px]">{isArabic ? (nameAr || '—') : (nameEn || '—')}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-pink-50 text-[#E91E63] flex items-center justify-center text-xl">🏢</div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'نسبة الضريبة (VAT)' : 'VAT Rate'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{vatPercentage}%</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">٪</div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'رقم الهاتف' : 'Contact Phone'}</p>
+                        <p className="text-xs font-black text-gray-900 mt-1" dir="ltr">{phone || '—'}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl">📞</div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'منصات التواصل' : 'Social Platforms'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{socialLinksCount} / 6</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xl">🌐</div>
+                </div>
+            </div>
+
+            {/* Form Container */}
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 space-y-8">
+                {/* General Info */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-extrabold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#E91E63]"></span>
                         {isArabic ? 'المعلومات العامة' : 'General Information'}
                     </h3>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 {isArabic ? 'اسم الشركة (بالعربية)' : 'Company Name (Arabic)'}
                             </label>
                             <input
                                 type="text"
                                 value={nameAr}
                                 onChange={(e) => setNameAr(e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs font-bold text-gray-900 focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 {isArabic ? 'اسم الشركة (بالإنجليزية)' : 'Company Name (English)'}
                             </label>
                             <input
                                 type="text"
                                 value={nameEn}
                                 onChange={(e) => setNameEn(e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs font-bold text-gray-900 focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                                 required
                             />
                         </div>
@@ -180,35 +209,36 @@ export default function CompanyInfo() {
                 </div>
 
                 {/* Contact and Pricing Info */}
-                <div>
-                    <h3 className="text-base font-bold text-gray-800 border-b pb-2">
+                <div className="space-y-4">
+                    <h3 className="text-sm font-extrabold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                         {isArabic ? 'معلومات الاتصال والضريبة' : 'Contact & Tax Settings'}
                     </h3>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 {isArabic ? 'البريد الإلكتروني' : 'Email Address'}
                             </label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs font-medium text-gray-900 focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 {isArabic ? 'رقم الهاتف' : 'Phone Number'}
                             </label>
                             <input
                                 type="text"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs font-medium text-gray-900 focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 {isArabic ? 'نسبة ضريبة القيمة المضافة (%)' : 'VAT Percentage (%)'}
                             </label>
                             <input
@@ -218,7 +248,7 @@ export default function CompanyInfo() {
                                 max="100"
                                 value={vatPercentage}
                                 onChange={(e) => setVatPercentage(parseFloat(e.target.value) || 0)}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs font-bold text-gray-900 focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                                 required
                             />
                         </div>
@@ -226,13 +256,14 @@ export default function CompanyInfo() {
                 </div>
 
                 {/* Social Media Links */}
-                <div>
-                    <h3 className="text-base font-bold text-gray-800 border-b pb-2">
+                <div className="space-y-4">
+                    <h3 className="text-sm font-extrabold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
                         {isArabic ? 'روابط مواقع التواصل الاجتماعي والموقع الإلكتروني' : 'Social Links & Website'}
                     </h3>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 {isArabic ? 'الموقع الإلكتروني' : 'Website URL'}
                             </label>
                             <input
@@ -240,11 +271,11 @@ export default function CompanyInfo() {
                                 value={website}
                                 onChange={(e) => setWebsite(e.target.value)}
                                 placeholder="https://example.com"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 Facebook Link
                             </label>
                             <input
@@ -252,11 +283,11 @@ export default function CompanyInfo() {
                                 value={facebook}
                                 onChange={(e) => setFacebook(e.target.value)}
                                 placeholder="https://facebook.com/username"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 Instagram Link
                             </label>
                             <input
@@ -264,11 +295,11 @@ export default function CompanyInfo() {
                                 value={instagram}
                                 onChange={(e) => setInstagram(e.target.value)}
                                 placeholder="https://instagram.com/username"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 Twitter / X Link
                             </label>
                             <input
@@ -276,11 +307,11 @@ export default function CompanyInfo() {
                                 value={twitter}
                                 onChange={(e) => setTwitter(e.target.value)}
                                 placeholder="https://twitter.com/username"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 Snapchat Link
                             </label>
                             <input
@@ -288,11 +319,11 @@ export default function CompanyInfo() {
                                 value={snapchat}
                                 onChange={(e) => setSnapchat(e.target.value)}
                                 placeholder="https://snapchat.com/add/username"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 TikTok Link
                             </label>
                             <input
@@ -300,11 +331,11 @@ export default function CompanyInfo() {
                                 value={tiktok}
                                 onChange={(e) => setTiktok(e.target.value)}
                                 placeholder="https://tiktok.com/@username"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 LinkedIn Link
                             </label>
                             <input
@@ -312,11 +343,11 @@ export default function CompanyInfo() {
                                 value={linkedin}
                                 onChange={(e) => setLinkedin(e.target.value)}
                                 placeholder="https://linkedin.com/company/username"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 Google Play Link (Android)
                             </label>
                             <input
@@ -324,11 +355,11 @@ export default function CompanyInfo() {
                                 value={googlePlay}
                                 onChange={(e) => setGooglePlay(e.target.value)}
                                 placeholder="https://play.google.com/store/apps/details?id=..."
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <label className="block font-bold text-gray-700 mb-1">
                                 App Store Link (iOS)
                             </label>
                             <input
@@ -336,36 +367,37 @@ export default function CompanyInfo() {
                                 value={appStore}
                                 onChange={(e) => setAppStore(e.target.value)}
                                 placeholder="https://apps.apple.com/app/..."
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs focus:border-[#E91E63] focus:ring-1 focus:ring-[#E91E63] outline-none"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Branding / Logo */}
-                <div>
-                    <h3 className="text-base font-bold text-gray-800 border-b pb-2">
+                <div className="space-y-4">
+                    <h3 className="text-sm font-extrabold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                         {isArabic ? 'شعار الشركة' : 'Company Logo'}
                     </h3>
-                    <div className="mt-4 flex flex-col md:flex-row items-center gap-6">
-                        <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50">
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-28 h-28 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0">
                             {logoPreview ? (
                                 <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
                             ) : (
-                                <span className="text-xs text-gray-400 font-medium">No Logo</span>
+                                <span className="text-xs text-gray-400 font-bold">No Logo</span>
                             )}
                         </div>
                         <div className="flex-1">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-700 mb-2">
                                 {isArabic ? 'تغيير الشعار' : 'Upload New Logo'}
                             </label>
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleLogoChange}
-                                className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#FDF0F3] file:text-[#E91E63] hover:file:bg-[#FBE3E8]"
+                                className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FDF0F3] file:text-[#E91E63] hover:file:bg-[#FBE3E8]"
                             />
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-[11px] text-gray-400 mt-2 font-medium">
                                 {isArabic ? 'الحد الأقصى للملف: 2 ميجابايت (PNG, JPG, SVG)' : 'Max file size: 2MB (PNG, JPG, SVG)'}
                             </p>
                         </div>
@@ -373,13 +405,13 @@ export default function CompanyInfo() {
                 </div>
 
                 {/* Actions */}
-                <div className="border-t pt-6 flex justify-end">
+                <div className="border-t border-gray-100 pt-4 flex justify-end">
                     <button
                         type="submit"
-                        disabled={updateMutation.isLoading}
-                        className="px-6 py-2.5 rounded-xl bg-[#E91E63] hover:bg-[#D81B60] active:bg-[#C2185B] text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
+                        disabled={updateMutation.isPending}
+                        className="px-5 py-2.5 rounded-lg bg-[#E91E63] hover:bg-[#D81B60] active:bg-[#C2185B] text-white font-bold text-xs transition shadow-sm disabled:opacity-50"
                     >
-                        {updateMutation.isLoading 
+                        {updateMutation.isPending 
                             ? (isArabic ? 'جاري الحفظ...' : 'Saving...') 
                             : (isArabic ? 'حفظ التعديلات' : 'Save Changes')
                         }

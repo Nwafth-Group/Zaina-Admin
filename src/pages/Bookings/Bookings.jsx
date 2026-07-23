@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +59,7 @@ export default function Bookings() {
     const [rescheduleTarget, setRescheduleTarget] = useState(null);
     const [page, setPage] = useState(1);
     const [isExporting, setIsExporting] = useState(false);
+    const [countsMap, setCountsMap] = useState({});
 
     const handleExportExcel = async () => {
         try {
@@ -176,6 +177,11 @@ export default function Bookings() {
 
     const bookings = pageData?.items || [];
     const meta = pageData?.meta;
+    const lastCountsRef = useRef({ all: 0, Upcoming: 0, inService: 0, completed: 0, cancelled: 0 });
+    if (pageData?.counts) {
+        lastCountsRef.current = pageData.counts;
+    }
+    const counts = pageData?.counts || lastCountsRef.current;
 
     // Categories feed the category multi-select.
     const { data: categories = [] } = useQuery({
@@ -216,49 +222,106 @@ export default function Bookings() {
     if (isError) return <div className="p-8 text-red-500 font-bold">{error.message}</div>;
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+        <div className="p-6 space-y-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-xl font-black text-gray-900">
+                    {isArabic ? 'إدارة الحجوزات' : 'Bookings Management'}
+                </h1>
+                <p className="text-xs text-gray-500 mt-1">
+                    {isArabic ? 'متابعة وإدارة كافة الحجوزات والزيارات والتخصيص وحالات الدفع في النظام' : 'Track and manage all service bookings, visit schedules, and payments.'}
+                </p>
+            </div>
 
-            {/* Header: title + search + filters */}
-            <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{t('title')}</h2>
+            {/* Summary Metric Tab Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {STATUS_TABS.map((tab) => {
+                    const active = filters.status === tab.value;
+                    let activeStyle = 'bg-[#E91E63] text-white border-[#E91E63] shadow-md';
+                    let iconBg = 'bg-pink-50 text-[#E91E63]';
+                    let icon = '📅';
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </span>
+                    if (tab.value === 'Upcoming') {
+                        activeStyle = 'bg-blue-600 text-white border-blue-600 shadow-md';
+                        iconBg = 'bg-blue-50 text-blue-600';
+                        icon = '🔹';
+                    } else if (tab.value === 'inService') {
+                        activeStyle = 'bg-amber-500 text-white border-amber-500 shadow-md';
+                        iconBg = 'bg-amber-50 text-amber-600';
+                        icon = '⏳';
+                    } else if (tab.value === 'completed') {
+                        activeStyle = 'bg-emerald-600 text-white border-emerald-600 shadow-md';
+                        iconBg = 'bg-emerald-50 text-emerald-600';
+                        icon = '✅';
+                    } else if (tab.value === 'cancelled') {
+                        activeStyle = 'bg-rose-600 text-white border-rose-600 shadow-md';
+                        iconBg = 'bg-rose-50 text-rose-600';
+                        icon = '❌';
+                    }
+
+                    return (
+                        <button
+                            key={tab.value || 'all'}
+                            type="button"
+                            onClick={() => selectStatus(tab.value)}
+                            className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${active ? activeStyle : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                        >
+                            <div>
+                                <p className={`text-xs font-bold ${active ? 'text-white/80' : 'text-gray-400'}`}>
+                                    {t(tab.label)}
+                                </p>
+                                <p className="text-2xl font-black mt-1">
+                                    {counts[tab.value || 'all'] ?? 0}
+                                </p>
+                            </div>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${active ? 'bg-white/20 text-white' : iconBg}`}>
+                                {icon}
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Filter controls bar */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-1 gap-3 w-full md:w-auto">
+                    {/* Search */}
+                    <div className="relative flex-1">
                         <input
                             type="text"
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
                             placeholder={t('filters.search_placeholder')}
-                            className={`${selectClass} w-full ps-9`}
+                            className="w-full pr-9 pl-4 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E91E63]"
                         />
+                        <svg className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
                     </div>
 
+                    {/* Drawer filter trigger */}
                     <button
                         type="button"
                         onClick={openFilters}
-                        className="relative inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        className="relative inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm shrink-0"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
                         </svg>
                         <span>{t('filters.button')}</span>
                         {activeFilterCount > 0 && (
-                            <span className="absolute -top-2 -end-2 bg-[#E91E63] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="bg-[#E91E63] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                 {activeFilterCount}
                             </span>
                         )}
                     </button>
 
+                    {/* Export Excel */}
                     <button
                         type="button"
                         disabled={isExporting}
                         onClick={handleExportExcel}
-                        className="inline-flex items-center gap-2 border border-emerald-200 rounded-lg px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors shadow-sm disabled:opacity-50"
+                        className="inline-flex items-center gap-2 border border-emerald-200 rounded-lg px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition shadow-sm disabled:opacity-50 shrink-0"
                     >
                         <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -268,117 +331,98 @@ export default function Bookings() {
                 </div>
             </div>
 
-            {/* Status quick-filter tab bar — selected tab highlighted, others plain */}
-            <div className="px-4 md:px-6 py-2.5 border-b border-gray-50 flex items-center justify-center gap-1 overflow-x-auto">
-                {STATUS_TABS.map((tab) => {
-                    const active = filters.status === tab.value;
-                    return (
-                        <button
-                            key={tab.value || 'all'}
-                            onClick={() => selectStatus(tab.value)}
-                            className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active ? 'bg-[#E91E63] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
-                        >
-                            {t(tab.label)}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto w-full">
-                <table className="w-full text-sm text-left rtl:text-right text-gray-500 min-w-[900px]">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-4 py-4">{t('table.ref')}</th>
-                            <th className="px-4 py-4">{t('table.customer')}</th>
-                            <th className="px-4 py-4">{t('table.service_visit_type')}</th>
-                            <th className="px-4 py-4 whitespace-nowrap">{t('table.price_type')}</th>
-                            <th className="px-4 py-4">{t('table.schedule')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.assigned_workers')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.amount')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.status')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.payment')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.actions')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
-                                    <div className="flex justify-center items-center gap-3">
-                                        <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
-                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-                                            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
-                                        </svg>
-                                        <span className="text-lg font-medium">{t('loading')}</span>
-                                    </div>
-                                </td>
+            {/* Data Table */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-right border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                <th className="py-3.5 px-4 text-center">{t('table.ref')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.customer')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.service_visit_type')}</th>
+                                <th className="py-3.5 px-4 text-center whitespace-nowrap">{t('table.price_type')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.schedule')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.assigned_workers')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.amount')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.payment')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
                             </tr>
-                        ) : bookings.length === 0 ? (
-                            <tr>
-                                <td colSpan="10" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
-                            </tr>
-                        ) : (
-                            bookings.map((b) => (
-                                <tr key={b.id} onClick={() => navigate(`/bookings/${b.id}`)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
-                                    {/* Reference */}
-                                    <td className="px-4 py-3">
-                                        <span className="font-mono text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">{b.booking_ref}</span>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="10" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                        {isArabic ? 'جاري تحميل الحجوزات...' : 'Loading bookings...'}
                                     </td>
- 
-                                    {/* Customer */}
-                                    <td className="px-4 py-3">
-                                        <p className="font-semibold text-gray-800 line-clamp-1">{b.customer_name || '—'}</p>
-                                        {b.customer_phone && <p className="text-xs text-gray-400 mt-0.5" dir="ltr">{b.customer_phone}</p>}
+                                </tr>
+                            ) : bookings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="10" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                        {t('no_data')}
                                     </td>
- 
-                                    {/* Service / Visit Type */}
-                                    <td className="px-4 py-3">
-                                        <p className="text-sm font-semibold text-gray-800 line-clamp-1">{b.service_name || '—'}</p>
-                                        <p className="text-xs text-gray-400 mt-0.5 whitespace-nowrap">
-                                            {t(`visit_types.${b.visit_type}`, b.visit_type)}
-                                        </p>
-                                    </td>
-
-                                    {/* Price Type */}
-                                    <td className="px-4 py-3">
-                                        <span className="text-sm text-gray-600 whitespace-nowrap">
-                                            {t(`pricing_types.${b.pricing_type}`, b.pricing_type)}
-                                        </span>
-                                    </td>
- 
-                                    {/* Schedule */}
-                                    <td className="px-4 py-3">
-                                        <p className="text-sm font-medium text-gray-700 whitespace-nowrap">{b.booking_date || '—'}</p>
-                                        {b.time_slot && <p className="text-xs text-gray-400 mt-0.5 whitespace-nowrap" dir="ltr">{b.time_slot}</p>}
-                                    </td>
-
-                                    {/* Workers */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className="inline-flex items-center justify-center min-w-[24px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">{b.workers_count}</span>
-                                    </td>
-
-                                    {/* Amount */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className="font-bold text-gray-800 whitespace-nowrap">{b.total_amount} <span className="text-xs font-normal text-gray-400">{b.currency}</span></span>
-                                    </td>
-
-                                    {/* Status */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${STATUS_STYLES[b.status] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                                            {t(`status.${b.status}`, b.status)}
-                                        </span>
-                                    </td>
-
-                                    {/* Payment */}
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${PAYMENT_STYLES[b.payment_status] || 'bg-gray-100 text-gray-600'}`}>
-                                            {t(`payment.${b.payment_status}`, b.payment_status)}
-                                        </span>
-                                    </td>
-
-                                    {/* Actions — clicks here must not trigger the row's open-details handler */}
-                                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                </tr>
+                            ) : (
+                                bookings.map((b) => (
+                                    <tr key={b.id} onClick={() => navigate(`/bookings/${b.id}`)} className="hover:bg-gray-50/80 transition cursor-pointer text-xs text-center">
+                                        {/* Reference */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className="font-mono text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">{b.booking_ref}</span>
+                                        </td>
+     
+                                        {/* Customer */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <p className="font-bold text-gray-900 line-clamp-1">{b.customer_name || '—'}</p>
+                                            {b.customer_phone && <p className="text-[11px] text-gray-400 mt-0.5" dir="ltr">{b.customer_phone}</p>}
+                                        </td>
+     
+                                        {/* Service / Visit Type */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <p className="font-bold text-gray-800 line-clamp-1">{b.service_name || '—'}</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5 whitespace-nowrap">
+                                                {t(`visit_types.${b.visit_type}`, b.visit_type)}
+                                            </p>
+                                        </td>
+    
+                                        {/* Price Type */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className="text-gray-600 whitespace-nowrap">
+                                                {t(`pricing_types.${b.pricing_type}`, b.pricing_type)}
+                                            </span>
+                                        </td>
+     
+                                        {/* Schedule */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <p className="font-bold text-gray-800 whitespace-nowrap">{b.booking_date || '—'}</p>
+                                            {b.time_slot && <p className="text-[11px] text-gray-400 mt-0.5 whitespace-nowrap" dir="ltr">{b.time_slot}</p>}
+                                        </td>
+    
+                                        {/* Workers */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className="inline-flex items-center justify-center min-w-[24px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">{b.workers_count}</span>
+                                        </td>
+    
+                                        {/* Amount */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className="font-black text-gray-900 whitespace-nowrap">{b.total_amount} <span className="text-[10px] font-normal text-gray-400">{b.currency}</span></span>
+                                        </td>
+    
+                                        {/* Status */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${STATUS_STYLES[b.status] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                                                {t(`status.${b.status}`, b.status)}
+                                            </span>
+                                        </td>
+    
+                                        {/* Payment */}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${PAYMENT_STYLES[b.payment_status] || 'bg-gray-100 text-gray-600'}`}>
+                                                {t(`payment.${b.payment_status}`, b.payment_status)}
+                                            </span>
+                                        </td>
+    
+                                        {/* Actions — clicks here must not trigger the row's open-details handler */}
+                                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                                         <RowActionsMenu
                                             label={t('table.actions')}
                                             items={[
@@ -416,6 +460,7 @@ export default function Bookings() {
                     </tbody>
                 </table>
             </div>
+        </div>
 
             {/* Pagination */}
             <Pagination meta={meta} onPageChange={setPage} />

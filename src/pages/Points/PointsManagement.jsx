@@ -291,6 +291,7 @@ export default function PointsManagement() {
             subtitle_en: '',
             points: 50,
             rule_category: 'social_media',
+            service_id: '',
             status: true,
             action_type: 'url',
             action_link: '',
@@ -312,6 +313,7 @@ export default function PointsManagement() {
             subtitle_en: rule.subtitle_en || '',
             points: rule.points || 0,
             rule_category: rule.rule_category || 'social_media',
+            service_id: rule.service_id ? String(rule.service_id) : (rule.service?.id ? String(rule.service.id) : ''),
             status: Boolean(rule.status),
             action_type: rule.action_type || 'url',
             action_link: rule.action_link || '',
@@ -338,30 +340,65 @@ export default function PointsManagement() {
     return (
         <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
             {/* Header section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                    <h1 className="text-xl font-black text-gray-900">
                         {isArabic ? 'إدارة نقاط الولاء' : 'Loyalty Points Management'}
                     </h1>
-                    <p className="text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                         {isArabic ? 'تكوين قواعد كسب النقاط، إعدادات الاسترداد، وتعديل أرصدة العملاء.' : 'Configure earning rules, redemption settings, and adjust customer balances.'}
                     </p>
                 </div>
                 {activeTab === 'rules' && (
                     <button
                         onClick={openCreateRuleModal}
-                        className="bg-[#E91E63] text-white px-5 py-3 rounded-xl shadow-md hover:bg-[#c2185b] transition-all duration-150 font-semibold text-sm flex items-center gap-2"
+                        className="bg-[#E91E63] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#D81B60] transition shadow-sm flex items-center gap-1.5 shrink-0"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
-                        {isArabic ? 'إضافة قاعدة جديدة' : 'Add New Rule'}
+                        <span>{isArabic ? 'إضافة قاعدة جديدة' : 'Add New Rule'}</span>
                     </button>
                 )}
             </div>
 
+            {/* Summary Metric Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'قواعد كسب النقاط' : 'Earning Rules'}</p>
+                        <p className="text-2xl font-black mt-1">{rulesData?.length || 0}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-pink-50 text-[#E91E63] flex items-center justify-center text-lg">🎁</div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'خدمات النقاط' : 'Service Points'}</p>
+                        <p className="text-2xl font-black mt-1">{servicesData?.length || 0}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">⚡</div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'حسابات العملاء' : 'Customer Accounts'}</p>
+                        <p className="text-2xl font-black mt-1">{customerResults?.length || '—'}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-lg">👥</div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'إجمالي السجلات' : 'Transactions Log'}</p>
+                        <p className="text-2xl font-black mt-1">{txData?.meta?.total || txData?.items?.length || 0}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg">📜</div>
+                </div>
+            </div>
+
             {/* Navigation Tabs */}
-            <div className="flex border-b border-gray-200 overflow-x-auto gap-1 mb-6 bg-white p-2 rounded-2xl shadow-sm">
+            <div className="flex border border-gray-200 overflow-x-auto gap-1 mb-6 bg-white p-1.5 rounded-xl shadow-sm">
                 {[
                     { id: 'rules', label: isArabic ? 'قواعد كسب النقاط' : 'Earning Rules' },
                     { id: 'services', label: isArabic ? 'نقاط الخدمات' : 'Service Points' },
@@ -371,10 +408,10 @@ export default function PointsManagement() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-shrink-0 px-5 py-3 rounded-xl font-semibold text-sm transition-all duration-150 ${
+                        className={`flex-shrink-0 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
                             activeTab === tab.id
-                            ? 'bg-[#FDF0F3] text-[#E91E63]'
-                            : 'text-gray-500 hover:text-[#E91E63] hover:bg-gray-50'
+                            ? 'bg-[#E91E63] text-white shadow-sm'
+                            : 'text-gray-600 hover:text-[#E91E63] hover:bg-gray-50'
                         }`}
                     >
                         {tab.label}
@@ -384,20 +421,20 @@ export default function PointsManagement() {
 
             {/* Tab: Earning Rules */}
             {activeTab === 'rules' && (
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left rtl:text-right border-collapse">
+                        <table className="w-full text-center border-collapse">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    <th className="p-4 md:p-5">{isArabic ? 'الاسم' : 'Name'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'الفئة' : 'Category'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'النقاط' : 'Points'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'التكرار' : 'Frequency'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'الحالة' : 'Status'}</th>
-                                    <th className="p-4 md:p-5 text-right rtl:text-left">{isArabic ? 'خيارات' : 'Actions'}</th>
+                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الاسم' : 'Name'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الفئة' : 'Category'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'النقاط' : 'Points'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'التكرار' : 'Frequency'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'خيارات' : 'Actions'}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                            <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                 {isRulesLoading ? (
                                     <tr>
                                         <td colSpan="6" className="text-center p-8 text-gray-400">
@@ -406,21 +443,21 @@ export default function PointsManagement() {
                                     </tr>
                                 ) : !rulesData || rulesData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="text-center p-8 text-gray-400">
+                                        <td colSpan="6" className="text-center p-8 text-gray-400 font-bold">
                                             {isArabic ? 'لا توجد قواعد مضافة بعد.' : 'No points earning rules found.'}
                                         </td>
                                     </tr>
                                 ) : (
                                     rulesData.map(rule => (
-                                        <tr key={rule.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="p-4 md:p-5 font-semibold text-gray-800">
+                                        <tr key={rule.id} className="hover:bg-gray-50/80 transition-colors text-center">
+                                            <td className="py-3 px-4 text-center font-bold text-gray-900">
                                                 <div>{isArabic ? rule.title_ar : rule.title_en}</div>
-                                                <div className="text-xs text-gray-400 font-normal mt-0.5">
+                                                <div className="text-[11px] text-gray-400 font-normal mt-0.5">
                                                     {isArabic ? rule.subtitle_ar : rule.subtitle_en}
                                                 </div>
                                             </td>
-                                            <td className="p-4 md:p-5">
-                                                <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-semibold">
+                                            <td className="py-3 px-4 text-center">
+                                                <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-bold">
                                                     {rule.rule_category === 'referral'
                                                         ? (isArabic ? 'دعوة صديق' : 'Referral')
                                                         : rule.rule_category === 'social_media'
@@ -432,31 +469,32 @@ export default function PointsManagement() {
                                                         : rule.rule_category}
                                                 </span>
                                             </td>
-                                            <td className="p-4 md:p-5 text-[#E91E63] font-bold">
+                                            <td className="py-3 px-4 text-center text-[#E91E63] font-black">
                                                 {rule.points} {isArabic ? 'نقطة' : 'Pts'}
                                             </td>
-                                            <td className="p-4 md:p-5">
-                                                <span className="text-gray-500 capitalize text-xs">
+                                            <td className="py-3 px-4 text-center">
+                                                <span className="text-gray-500 capitalize text-xs font-medium">
                                                     {rule.frequency_type?.replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="p-4 md:p-5">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                            <td className="py-3 px-4 text-center">
+                                                <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                     rule.status
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'bg-red-50 text-red-600'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-rose-50 text-rose-700 border-rose-200'
                                                 }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${rule.status ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
                                                     {rule.status ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
                                                 </span>
                                             </td>
-                                            <td className="p-4 md:p-5 text-right rtl:text-left">
-                                                <div className="flex justify-end gap-2">
+                                            <td className="py-3 px-4 text-center">
+                                                <div className="flex justify-center gap-2">
                                                     <button
                                                         onClick={() => openEditRuleModal(rule)}
                                                         className="text-gray-400 hover:text-[#E91E63] p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                                                         title="Edit"
                                                     >
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                         </svg>
                                                     </button>
@@ -470,7 +508,7 @@ export default function PointsManagement() {
                                                             className="text-gray-400 hover:text-red-500 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                                                             title="Delete"
                                                         >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                             </svg>
                                                         </button>
@@ -488,21 +526,21 @@ export default function PointsManagement() {
 
             {/* Tab: Service point settings */}
             {activeTab === 'services' && (
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left rtl:text-right border-collapse">
+                        <table className="w-full text-center border-collapse">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    <th className="p-4 md:p-5">{isArabic ? 'كود الخدمة' : 'Service Code'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'اسم الخدمة' : 'Service Name'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'السعر الأساسي' : 'Base Price'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'إمكانية الدفع بالنقاط' : 'Pay by Points'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'طريقة الاحتساب' : 'Calculation'}</th>
-                                    <th className="p-4 md:p-5">{isArabic ? 'النقاط المطلوبة' : 'Required Points'}</th>
-                                    <th className="p-4 md:p-5 text-right rtl:text-left">{isArabic ? 'تعديل' : 'Edit'}</th>
+                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'كود الخدمة' : 'Service Code'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'اسم الخدمة' : 'Service Name'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'السعر الأساسي' : 'Base Price'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'إمكانية الدفع بالنقاط' : 'Pay by Points'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'طريقة الاحتساب' : 'Calculation'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'النقاط المطلوبة' : 'Required Points'}</th>
+                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'تعديل' : 'Edit'}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                            <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                 {isServicesLoading ? (
                                     <tr>
                                         <td colSpan="7" className="text-center p-8 text-gray-400">
@@ -511,44 +549,45 @@ export default function PointsManagement() {
                                     </tr>
                                 ) : !servicesData || servicesData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="text-center p-8 text-gray-400">
+                                        <td colSpan="7" className="text-center p-8 text-gray-400 font-bold">
                                             {isArabic ? 'لا توجد خدمات مضافة.' : 'No services found.'}
                                         </td>
                                     </tr>
                                 ) : (
                                     servicesData.map(svc => (
-                                        <tr key={svc.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="p-4 md:p-5 font-mono text-xs font-bold text-gray-500">
+                                        <tr key={svc.id} className="hover:bg-gray-50/80 transition-colors text-center">
+                                            <td className="py-3 px-4 text-center font-mono text-xs font-bold text-gray-600">
                                                 {svc.service_code}
                                             </td>
-                                            <td className="p-4 md:p-5 font-semibold text-gray-800">
+                                            <td className="py-3 px-4 text-center font-bold text-gray-900">
                                                 {isArabic ? svc.name_ar : svc.name_en}
                                             </td>
-                                            <td className="p-4 md:p-5 font-bold">
+                                            <td className="py-3 px-4 text-center font-black text-gray-900">
                                                 {svc.base_price} EGP
                                             </td>
-                                            <td className="p-4 md:p-5">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                            <td className="py-3 px-4 text-center">
+                                                <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                     svc.points_redemption_enabled
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'bg-gray-50 text-gray-500'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-rose-50 text-rose-700 border-rose-200'
                                                 }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${svc.points_redemption_enabled ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
                                                     {svc.points_redemption_enabled ? (isArabic ? 'متاح' : 'Enabled') : (isArabic ? 'غير متاح' : 'Disabled')}
                                                 </span>
                                             </td>
-                                            <td className="p-4 md:p-5 capitalize text-xs">
+                                            <td className="py-3 px-4 text-center capitalize text-xs font-medium text-gray-600">
                                                 {svc.points_redemption_method === 'fixed' ? (isArabic ? 'ثابت' : 'Fixed') : (isArabic ? 'نسبة السعر' : 'Price-based')}
                                             </td>
-                                            <td className="p-4 md:p-5 text-[#E91E63] font-bold">
+                                            <td className="py-3 px-4 text-center text-[#E91E63] font-black">
                                                 {svc.points_redemption_method === 'fixed'
                                                     ? `${svc.points_required_fixed} Pts`
                                                     : `1 EGP = ${svc.points_conversion_rate} Pts`
                                                 }
                                             </td>
-                                            <td className="p-4 md:p-5 text-right rtl:text-left">
+                                            <td className="py-3 px-4 text-center">
                                                 <button
                                                     onClick={() => openEditServiceModal(svc)}
-                                                    className="text-[#E91E63] hover:text-[#c2185b] font-semibold text-xs transition-colors"
+                                                    className="text-[#E91E63] hover:text-[#c2185b] font-bold text-xs transition-colors"
                                                 >
                                                     {isArabic ? 'تعديل الإعدادات' : 'Configure'}
                                                 </button>
@@ -757,20 +796,20 @@ export default function PointsManagement() {
                     </div>
 
                     {/* Table ledger */}
-                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left rtl:text-right border-collapse">
+                            <table className="w-full text-center border-collapse">
                                 <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        <th className="p-4 md:p-5">{isArabic ? 'العميل' : 'Customer'}</th>
-                                        <th className="p-4 md:p-5">{isArabic ? 'النوع' : 'Type'}</th>
-                                        <th className="p-4 md:p-5">{isArabic ? 'النقاط' : 'Amount'}</th>
-                                        <th className="p-4 md:p-5">{isArabic ? 'الرصيد السابق/اللاحق' : 'Before/After'}</th>
-                                        <th className="p-4 md:p-5">{isArabic ? 'البيان' : 'Description'}</th>
-                                        <th className="p-4 md:p-5">{isArabic ? 'التاريخ' : 'Date'}</th>
+                                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'العميل' : 'Customer'}</th>
+                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'النوع' : 'Type'}</th>
+                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'النقاط' : 'Amount'}</th>
+                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'الرصيد السابق/اللاحق' : 'Before/After'}</th>
+                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'البيان' : 'Description'}</th>
+                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'التاريخ' : 'Date'}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                                <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                     {isTxLoading ? (
                                         <tr>
                                             <td colSpan="6" className="text-center p-8 text-gray-400">
@@ -779,7 +818,7 @@ export default function PointsManagement() {
                                         </tr>
                                     ) : !txData || !txData.items || txData.items.length === 0 ? (
                                         <tr>
-                                            <td colSpan="6" className="text-center p-8 text-gray-400">
+                                            <td colSpan="6" className="text-center p-8 text-gray-400 font-bold">
                                                 {isArabic ? 'لا توجد قيود مسجلة.' : 'No transactions recorded.'}
                                             </td>
                                         </tr>
@@ -790,47 +829,47 @@ export default function PointsManagement() {
                                             const isCredit = tx.type === 'earn' || tx.type === 'refund' || isAdjustmentCredit;
 
                                             return (
-                                                <tr key={tx.id} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="p-4 md:p-5 font-semibold text-gray-800">
+                                                <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors text-center">
+                                                    <td className="py-3 px-4 text-center font-bold text-gray-900">
                                                         {tx.user ? (
-                                                            <div>
+                                                            <div className="flex flex-col items-center justify-center text-center">
                                                                 <div>{tx.user.full_name}</div>
-                                                                <div className="text-xs text-gray-400 font-normal mt-0.5">{tx.user.phone_number}</div>
+                                                                <div className="text-[11px] text-gray-400 font-normal mt-0.5" dir="ltr">{tx.user.phone_number}</div>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-400">{isArabic ? 'مستخدم غير معروف' : 'Unknown User'}</span>
+                                                            <span className="text-gray-400 text-center">{isArabic ? 'مستخدم غير معروف' : 'Unknown User'}</span>
                                                         )}
                                                     </td>
-                                                    <td className="p-4 md:p-5">
-                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                                            tx.type === 'earn' ? 'bg-emerald-50 text-emerald-600' :
-                                                            tx.type === 'redeem' ? 'bg-rose-50 text-[#E91E63]' :
-                                                            tx.type === 'refund' ? 'bg-blue-50 text-blue-600' :
-                                                            tx.type === 'expire' ? 'bg-gray-100 text-gray-600' :
-                                                            'bg-amber-50 text-amber-700'
+                                                    <td className="py-3 px-4 text-center">
+                                                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                                                            tx.type === 'earn' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                            tx.type === 'redeem' ? 'bg-rose-50 text-[#E91E63] border border-rose-100' :
+                                                            tx.type === 'refund' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                                                            tx.type === 'expire' ? 'bg-gray-100 text-gray-600 border border-gray-200' :
+                                                            'bg-amber-50 text-amber-700 border border-amber-100'
                                                         }`}>
                                                             {tx.type}
                                                         </span>
                                                     </td>
-                                                    <td className={`p-4 md:p-5 font-bold ${
-                                                        isCredit ? 'text-emerald-600' : 'text-red-500'
+                                                    <td className={`py-3 px-4 text-center font-black ${
+                                                        isCredit ? 'text-emerald-600' : 'text-rose-600'
                                                     }`}>
                                                         {isCredit ? '+' : '-'}{Math.abs(tx.amount)} Pts
                                                     </td>
-                                                    <td className="p-4 md:p-5 text-gray-500 text-xs font-mono">
+                                                    <td className="py-3 px-4 text-center text-gray-500 text-xs font-mono font-bold">
                                                         {tx.points_before} &rarr; {tx.points_after}
                                                     </td>
-                                                    <td className="p-4 md:p-5">
-                                                        <div className="font-medium">{isArabic ? tx.title_ar : tx.title_en}</div>
+                                                    <td className="py-3 px-4 text-center">
+                                                        <div className="font-bold text-gray-900">{isArabic ? tx.title_ar : tx.title_en}</div>
                                                         {(tx.reason || tx.created_by) && (
-                                                            <div className="text-xs text-gray-400 mt-1">
+                                                            <div className="text-[11px] text-gray-400 mt-0.5">
                                                                 {tx.reason && <span>{isArabic ? 'السبب: ' : 'Reason: '}{tx.reason}</span>}
                                                                 {tx.created_by && <span className="mx-1">({isArabic ? 'بواسطة: ' : 'By: '}{tx.created_by})</span>}
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="p-4 md:p-5 text-xs text-gray-400 font-medium">
-                                                        {new Date(tx.created_at).toLocaleString(isArabic ? 'ar-EG' : 'en-US')}
+                                                    <td className="py-3 px-4 text-center text-[11px] text-gray-500 font-medium">
+                                                        {tx.created_at ? tx.created_at.substring(0, 10) : '—'}
                                                     </td>
                                                 </tr>
                                             );
@@ -987,7 +1026,7 @@ export default function PointsManagement() {
                                 </div>
                             </div>
 
-                            {ruleForm.rule_category === 'booking' && (
+                            {(ruleForm.rule_category === 'booking' || ruleForm.rule_category === 'service') && (
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{isArabic ? 'عدد الحجوزات المطلوبة' : 'Required Booking Count'}</label>
                                     <input

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -28,6 +28,8 @@ export default function MobileNotifications() {
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [actionModal, setActionModal] = useState({ isOpen: false, notificationToEdit: null });
+
+    const lastCountsRef = useRef({ all: 0, scheduled: 0, sent: 0, failed: 0 });
 
     // Debounce search input
     useEffect(() => {
@@ -87,6 +89,11 @@ export default function MobileNotifications() {
     const notifications = paginatedData?.items || [];
     const meta = paginatedData?.meta;
 
+    if (paginatedData?.counts) {
+        lastCountsRef.current = paginatedData.counts;
+    }
+    const counts = lastCountsRef.current;
+
     const cancelMutation = useMutation({
         mutationFn: (id) => axiosInstance.patch(`/admin/mobile-notifications/${id}/cancel`),
         onSuccess: (response) => {
@@ -125,233 +132,229 @@ export default function MobileNotifications() {
 
     if (isError) return <div className="p-8 text-red-500 font-bold">{error.message}</div>;
 
+    const cardTabs = [
+        { key: '', label: isArabic ? 'جميع الإشعارات' : 'All Notifications', count: counts.all, icon: '📲', color: 'bg-[#FDF0F3] border-[#fbdbe3]' },
+        { key: 'scheduled', label: isArabic ? 'المجدولة' : 'Scheduled', count: counts.scheduled, icon: '⏳', color: 'bg-amber-50 border-amber-200' },
+        { key: 'sent', label: isArabic ? 'تم إرسالها' : 'Sent', count: counts.sent, icon: '✅', color: 'bg-emerald-50 border-emerald-200' },
+        { key: 'failed', label: isArabic ? 'فشلت / ملغاة' : 'Failed / Cancelled', count: counts.failed, icon: '❌', color: 'bg-rose-50 border-rose-200' },
+    ];
+
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col min-h-[70vh]">
-            
-            {/* Header Toolbar */}
-            <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-800">
-                        {t('title', { defaultValue: isArabic ? 'إشعارات الهاتف' : 'Mobile Notifications' })}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                        {t('subtitle', { defaultValue: isArabic ? 'جدولة وإرسال إشعارات فورية لتطبيق العملاء.' : 'Schedule and send push notifications to the customer app.' })}
+                    <h1 className="text-xl font-black text-gray-900 tracking-tight">
+                        {isArabic ? 'إشعارات الهاتف المحمول' : 'Mobile Push Notifications'}
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-1">
+                        {isArabic ? 'جدولة وإرسال التنبيهات المباشرة لتطبيقات العملاء.' : 'Schedule and broadcast push notifications directly to user devices.'}
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* Search */}
-                    <div className="relative flex-1 min-w-[180px]">
-                        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </span>
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder={t('filters.search_placeholder', { defaultValue: isArabic ? 'البحث في الإشعارات...' : 'Search notifications...' })}
-                            className={`${selectClass} w-full ps-9`}
-                        />
-                    </div>
+                <button
+                    onClick={() => setActionModal({ isOpen: true, notificationToEdit: null })}
+                    className="bg-[#E91E63] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#D81B60] transition shadow-sm flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+                >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>{t('add_new', { defaultValue: isArabic ? 'إنشاء إشعار' : 'Create Notification' })}</span>
+                </button>
+            </div>
 
-                    {/* Filters Toggle */}
+            {/* Metric Tabs Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {cardTabs.map((card) => {
+                    const isActive = filters.status === card.key;
+                    return (
+                        <button
+                            key={card.key}
+                            onClick={() => {
+                                setFilters((f) => ({ ...f, status: card.key }));
+                                setPage(1);
+                            }}
+                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between ${
+                                isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
+                            <div>
+                                <p className="text-xs font-bold text-gray-500">{card.label}</p>
+                                <p className="text-2xl font-black text-gray-900 mt-1">{card.count ?? 0}</p>
+                            </div>
+                            <div className="text-2xl">{card.icon}</div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Filter & Toolbar */}
+            <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="relative w-full md:w-80">
+                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder={t('filters.search_placeholder', { defaultValue: isArabic ? 'البحث في الإشعارات...' : 'Search notifications...' })}
+                        className="w-full border border-gray-200 rounded-lg ps-9 pe-3 py-2 text-xs focus:ring-1 focus:ring-[#E91E63] outline-none"
+                    />
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                     <button
                         onClick={openFilters}
-                        className="relative inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        className="relative inline-flex items-center gap-1.5 border border-gray-200 rounded-lg px-3.5 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition"
                     >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
                         </svg>
                         <span>{t('filters.button', { defaultValue: isArabic ? 'الفلاتر' : 'Filters' })}</span>
                         {activeFilterCount > 0 && (
-                            <span className="absolute -top-2 -end-2 bg-[#E91E63] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="bg-[#E91E63] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                 {activeFilterCount}
                             </span>
                         )}
-                    </button>
-
-                    {/* Create Notification button */}
-                    <button
-                        onClick={() => setActionModal({ isOpen: true, notificationToEdit: null })}
-                        className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        {t('add_new', { defaultValue: isArabic ? 'إنشاء إشعار' : 'Create Notification' })}
                     </button>
                 </div>
             </div>
 
             {/* Notifications Table */}
-            <div className="flex-1 overflow-x-auto">
-                <table className="w-full text-start border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">
-                            <th className="px-6 py-4 text-start">{t('table.title', { defaultValue: isArabic ? 'العنوان الداخلي' : 'Internal Title' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.audience', { defaultValue: isArabic ? 'الجمهور المستهدف' : 'Target Audience' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.schedule', { defaultValue: isArabic ? 'موعد الإرسال' : 'Send Time' })}</th>
-                            <th className="px-4 py-4 text-start w-32">{t('table.status', { defaultValue: isArabic ? 'الحالة' : 'Status' })}</th>
-                            <th className="px-4 py-4 text-start">{t('table.creator', { defaultValue: isArabic ? 'بواسطة' : 'Created By' })}</th>
-                            <th className="px-4 py-4 text-center w-24">{t('table.actions', { defaultValue: isArabic ? 'الإجراءات' : 'Actions' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan="6" className="py-16 text-center text-gray-500 font-medium">
-                                    <div className="flex justify-center items-center gap-3">
-                                        <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                                        <span>{t('loading', { defaultValue: isArabic ? 'جاري تحميل الإشعارات...' : 'Loading notifications...' })}</span>
-                                    </div>
-                                </td>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-center border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                <th className="py-3.5 px-4 text-center">{t('table.title', { defaultValue: isArabic ? 'العنوان الداخلي' : 'Internal Title' })}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.audience', { defaultValue: isArabic ? 'الجمهور المستهدف' : 'Target Audience' })}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.schedule', { defaultValue: isArabic ? 'موعد الإرسال' : 'Send Time' })}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.status', { defaultValue: isArabic ? 'الحالة' : 'Status' })}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.creator', { defaultValue: isArabic ? 'بواسطة' : 'Created By' })}</th>
+                                <th className="py-3.5 px-4 text-center w-28">{t('table.actions', { defaultValue: isArabic ? 'الإجراءات' : 'Actions' })}</th>
                             </tr>
-                        ) : notifications.length === 0 ? (
-                            <tr>
-                                <td colSpan="6" className="py-16 text-center text-gray-400 font-medium">
-                                    {t('no_data', { defaultValue: isArabic ? 'لا توجد إشعارات مجدولة بعد.' : 'No notifications scheduled yet.' })}
-                                </td>
-                            </tr>
-                        ) : (
-                            notifications.map((notification) => (
-                                <tr key={notification.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-semibold text-gray-800">
-                                        {notification.title}
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                                            notification.audience === 'all'
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-100'
-                                                : notification.audience === 'active_customers'
-                                                ? 'bg-green-50 text-green-700 border border-green-100'
-                                                : 'bg-orange-50 text-orange-700 border border-orange-100'
-                                        }`}>
-                                            {notification.audience === 'all'
-                                                ? (isArabic ? 'كل المستخدمين' : 'All Users')
-                                                : notification.audience === 'active_customers'
-                                                ? (isArabic ? 'العملاء النشطين' : 'Active Customers')
-                                                : (isArabic ? 'العملاء غير النشطين' : 'Inactive Customers')}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 font-mono text-xs">
-                                        {notification.send_date} {notification.send_time}
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            notification.status === 'scheduled'
-                                                ? 'bg-yellow-50 text-yellow-700'
-                                                : notification.status === 'sent'
-                                                ? 'bg-green-50 text-green-700'
-                                                : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${
-                                                notification.status === 'scheduled'
-                                                    ? 'bg-yellow-500'
-                                                    : notification.status === 'sent'
-                                                    ? 'bg-green-600'
-                                                    : 'bg-gray-400'
-                                            }`} />
-                                            {notification.status === 'scheduled'
-                                                ? (isArabic ? 'مجدول' : 'Scheduled')
-                                                : notification.status === 'sent'
-                                                ? (isArabic ? 'تم الإرسال' : 'Sent')
-                                                : (isArabic ? 'ملغى' : 'Cancelled')}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-xs text-gray-500">
-                                        {notification.creator_name || '--'}
-                                    </td>
-                                    <td className="px-4 py-4 text-center">
-                                        <RowActionsMenu
-                                            label={t('actions.title', { defaultValue: isArabic ? 'الإجراءات' : 'Actions' })}
-                                            items={[
-                                                {
-                                                    key: 'send_now',
-                                                    label: isArabic ? 'إرسال الآن' : 'Send Now',
-                                                    icon: (
-                                                        <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                                                        </svg>
-                                                    ),
-                                                    onClick: () => {
-                                                        if (window.confirm(isArabic ? "هل أنت متأكد من إرسال هذا الإشعار الآن؟" : "Are you sure you want to send this notification now?")) {
-                                                            sendNowMutation.mutate(notification.id);
-                                                        }
-                                                    },
-                                                    disabled: sendNowMutation.isPending,
-                                                    hidden: notification.status === 'sent',
-                                                },
-                                                {
-                                                    key: 'edit',
-                                                    label: t('actions.edit', { defaultValue: isArabic ? 'تعديل' : 'Edit' }),
-                                                    icon: <EditIcon />,
-                                                    onClick: () => setActionModal({ isOpen: true, notificationToEdit: notification }),
-                                                    hidden: notification.status !== 'scheduled',
-                                                },
-                                                {
-                                                    key: 'cancel',
-                                                    label: t('actions.cancel', { defaultValue: isArabic ? 'إلغاء الإرسال' : 'Cancel Scheduling' }),
-                                                    icon: (
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                                        </svg>
-                                                    ),
-                                                    onClick: () => {
-                                                        if (window.confirm(isArabic ? "هل أنت متأكد من إلغاء جدولة هذا الإشعار؟" : "Are you sure you want to cancel this scheduled notification?")) {
-                                                            cancelMutation.mutate(notification.id);
-                                                        }
-                                                    },
-                                                    disabled: cancelMutation.isPending,
-                                                    hidden: notification.status !== 'scheduled',
-                                                },
-                                                {
-                                                    key: 'delete',
-                                                    label: t('actions.delete', { defaultValue: isArabic ? 'حذف' : 'Delete' }),
-                                                    danger: true,
-                                                    icon: (
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    ),
-                                                    onClick: () => {
-                                                        if (window.confirm(isArabic ? "هل أنت متأكد من حذف هذا الإشعار؟" : "Are you sure you want to delete this notification?")) {
-                                                            deleteMutation.mutate(notification.id);
-                                                        }
-                                                    },
-                                                    disabled: deleteMutation.isPending,
-                                                    hidden: notification.status === 'sent',
-                                                },
-                                            ]}
-                                        />
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                        <div className="flex justify-center items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                                            <span>{t('loading', { defaultValue: isArabic ? 'جاري تحميل الإشعارات...' : 'Loading notifications...' })}</span>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                            ) : notifications.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                        {t('no_data', { defaultValue: isArabic ? 'لا توجد إشعارات مجدولة بعد.' : 'No notifications scheduled yet.' })}
+                                    </td>
+                                </tr>
+                            ) : (
+                                notifications.map((notification) => (
+                                    <tr key={notification.id} className="hover:bg-gray-50/80 transition-colors text-center">
+                                        <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                            {notification.title}
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
+                                                notification.audience === 'all'
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                    : notification.audience === 'active_customers'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-orange-50 text-orange-700 border-orange-200'
+                                            }`}>
+                                                {notification.audience === 'all'
+                                                    ? (isArabic ? 'كل المستخدمين' : 'All Users')
+                                                    : notification.audience === 'active_customers'
+                                                    ? (isArabic ? 'العملاء النشطين' : 'Active Customers')
+                                                    : (isArabic ? 'العملاء غير النشطين' : 'Inactive Customers')}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-center font-mono text-xs font-bold text-gray-700" dir="ltr">
+                                            {notification.send_date} {notification.send_time}
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
+                                                notification.status === 'scheduled'
+                                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                    : notification.status === 'sent'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                                            }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                                    notification.status === 'scheduled'
+                                                        ? 'bg-amber-500 animate-pulse'
+                                                        : notification.status === 'sent'
+                                                        ? 'bg-emerald-500'
+                                                        : 'bg-gray-400'
+                                                }`} />
+                                                {notification.status === 'scheduled'
+                                                    ? (isArabic ? 'مجدول' : 'Scheduled')
+                                                    : notification.status === 'sent'
+                                                    ? (isArabic ? 'تم الإرسال' : 'Sent')
+                                                    : (isArabic ? 'ملغى' : 'Cancelled')}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-center font-medium text-gray-600">
+                                            {notification.creator?.full_name || notification.creator?.first_name || '-'}
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                            <div className="flex justify-center">
+                                                <RowActionsMenu
+                                                    label={t('actions.title', { defaultValue: isArabic ? 'إجراءات' : 'Actions' })}
+                                                    items={[
+                                                        notification.status === 'scheduled' && {
+                                                            key: 'send_now',
+                                                            label: isArabic ? 'إرسال الآن' : 'Send Now',
+                                                            onClick: () => {
+                                                                if (window.confirm(isArabic ? 'هل تريد إرسال هذا الإشعار الآن؟' : 'Are you sure you want to send this notification now?')) {
+                                                                    sendNowMutation.mutate(notification.id);
+                                                                }
+                                                            },
+                                                        },
+                                                        notification.status === 'scheduled' && {
+                                                            key: 'edit',
+                                                            label: t('actions.edit', { defaultValue: isArabic ? 'تعديل' : 'Edit' }),
+                                                            icon: <EditIcon />,
+                                                            onClick: () => setActionModal({ isOpen: true, notificationToEdit: notification }),
+                                                        },
+                                                        notification.status === 'scheduled' && {
+                                                            key: 'cancel',
+                                                            label: isArabic ? 'إلغاء الإشعار' : 'Cancel',
+                                                            danger: true,
+                                                            onClick: () => {
+                                                                if (window.confirm(isArabic ? 'هل أنت متأكد من إلغاء هذا الإشعار؟' : 'Are you sure you want to cancel this notification?')) {
+                                                                    cancelMutation.mutate(notification.id);
+                                                                }
+                                                            },
+                                                        },
+                                                        {
+                                                            key: 'delete',
+                                                            label: isArabic ? 'حذف' : 'Delete',
+                                                            danger: true,
+                                                            onClick: () => {
+                                                                if (window.confirm(isArabic ? 'هل أنت متأكد من حذف هذا الإشعار؟' : 'Are you sure you want to delete this notification?')) {
+                                                                    deleteMutation.mutate(notification.id);
+                                                                }
+                                                            },
+                                                        },
+                                                    ].filter(Boolean)}
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-            {/* Pagination Controls */}
-            <div className="p-4 md:p-6 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <Pagination meta={meta} onPageChange={setPage} />
-                <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{t('pagination.rows_per_page', { defaultValue: isArabic ? 'عدد الأسطر:' : 'Rows per page:' })}</span>
-                    <select
-                        value={filters.per_page}
-                        onChange={(e) => {
-                            setFilters(f => ({ ...f, per_page: Number(e.target.value) }));
-                            setPage(1);
-                        }}
-                        className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
-                    >
-                        <option value={10}>10</option>
-                        <option value={15}>15</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                    </select>
+                <div className="p-3.5 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <Pagination meta={meta} onPageChange={setPage} />
                 </div>
             </div>
 
@@ -372,58 +375,34 @@ export default function MobileNotifications() {
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {/* Status */}
+                    <div className="flex-1 p-4 space-y-4 overflow-y-auto">
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.status_label', { defaultValue: isArabic ? 'حالة الإرسال' : 'Send Status' })}</label>
-                            <select value={draftFilters.status} onChange={(e) => updateDraft('status', e.target.value)} className={`${selectClass} w-full`}>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">{t('filters.status', { defaultValue: isArabic ? 'الحالة' : 'Status' })}</label>
+                            <select
+                                value={draftFilters.status}
+                                onChange={(e) => updateDraft('status', e.target.value)}
+                                className={`${selectClass} w-full`}
+                            >
                                 <option value="">{t('filters.all_statuses', { defaultValue: isArabic ? 'كل الحالات' : 'All Statuses' })}</option>
                                 <option value="scheduled">{isArabic ? 'مجدول' : 'Scheduled'}</option>
                                 <option value="sent">{isArabic ? 'تم الإرسال' : 'Sent'}</option>
-                                <option value="cancelled">{isArabic ? 'ملغى' : 'Cancelled'}</option>
-                            </select>
-                        </div>
-
-                        {/* Audience */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.audience_label', { defaultValue: isArabic ? 'الجمهور المستهدف' : 'Target Audience' })}</label>
-                            <select value={draftFilters.audience} onChange={(e) => updateDraft('audience', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.all_audiences', { defaultValue: isArabic ? 'كل الجماهير' : 'All Audiences' })}</option>
-                                <option value="all">{isArabic ? 'كل المستخدمين' : 'All Users'}</option>
-                                <option value="active_customers">{isArabic ? 'العملاء النشطين' : 'Active Customers'}</option>
-                                <option value="inactive_customers">{isArabic ? 'العملاء غير النشطين' : 'Inactive Customers'}</option>
-                            </select>
-                        </div>
-
-                        {/* Sorting */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.sort_label', { defaultValue: isArabic ? 'ترتيب حسب' : 'Sort By' })}</label>
-                            <select value={`${draftFilters.sort_by}:${draftFilters.sort_dir}`} onChange={(e) => handleSortChange(e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="created_at:desc">{isArabic ? 'الأحدث إضافة' : 'Newest'}</option>
-                                <option value="send_date:asc">{isArabic ? 'الأقرب موعد إرسال' : 'Soonest Schedule'}</option>
-                                <option value="send_date:desc">{isArabic ? 'الأبعد موعد إرسال' : 'Furthest Schedule'}</option>
+                                <option value="failed">{isArabic ? 'ملغى / فشل' : 'Cancelled / Failed'}</option>
                             </select>
                         </div>
                     </div>
 
-                    {/* Footer Actions */}
-                    <div className="p-4 border-t border-gray-100 flex items-center gap-3">
-                        <button
-                            onClick={resetFilters}
-                            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors"
-                        >
-                            {t('filters.reset', { defaultValue: isArabic ? 'إعادة تعيين' : 'Reset' })}
+                    <div className="p-4 border-t border-gray-100 flex gap-2">
+                        <button onClick={resetFilters} className="flex-1 py-2 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                            {t('filters.reset', { defaultValue: isArabic ? 'إعادة ضبط' : 'Reset' })}
                         </button>
-                        <button
-                            onClick={applyFilters}
-                            className="flex-1 px-4 py-2 bg-[#E91E63] text-white rounded-lg hover:bg-[#D81B60] font-medium transition-colors"
-                        >
-                            {t('filters.done', { defaultValue: isArabic ? 'تطبيق' : 'Apply' })}
+                        <button onClick={applyFilters} className="flex-1 py-2 text-xs font-bold text-white bg-[#E91E63] rounded-lg hover:bg-[#D81B60] transition">
+                            {t('filters.apply', { defaultValue: isArabic ? 'تطبيق' : 'Apply' })}
                         </button>
                     </div>
                 </aside>
             </div>
 
+            {/* Notification Modal */}
             {actionModal.isOpen && (
                 <MobileNotificationActionModal
                     notificationToEdit={actionModal.notificationToEdit}

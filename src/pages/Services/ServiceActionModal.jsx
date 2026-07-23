@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+    import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -402,8 +402,9 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
     const selectedCategory = useMemo(() => categories?.find(c => String(c.id) === String(watchCategoryId)), [categories, watchCategoryId]);
     const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
     const isBabysitting = (watchServiceCode === 'BABYSITTER_HOURLY') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('babysitting') || selectedCategory.name_en?.toLowerCase().includes('nanny') || selectedCategory.name_ar?.includes('أطفال') || selectedCategory.name_en?.toLowerCase().includes('babysitter')));
-    const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام'))) || (watchType === 'other');
-    const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure;
+    const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام')));
+    const isOtherService = (watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
+    const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
 
     useEffect(() => {
         if (isHospitality || isBabysitting) {
@@ -417,8 +418,24 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             setValue('duration_unit', 'Hours');
             setValue('has_duration_range', false);
             setValue('default_duration', 2);
+        } else if (isOtherService) {
+            setValue('single_visit_checked', true);
+            setValue('three_days_checked', false);
+            setValue('duration_unit', 'Hours');
+            setValue('has_duration_range', false);
+            setValue('pricing_type', 'per_service');
+            if (!watch('worker_gender_options')?.length) {
+                setValue('worker_gender_options', ['Male']);
+            }
         }
-    }, [isHospitality, isBabysitting, isPedicureManicure, setValue]);
+    }, [isHospitality, isBabysitting, isPedicureManicure, isOtherService, setValue]);
+
+    const watchMinWorkers = watch('min_workers');
+    useEffect(() => {
+        if (isOtherService && watchMinWorkers) {
+            setValue('max_workers', watchMinWorkers);
+        }
+    }, [isOtherService, watchMinWorkers, setValue]);
 
     // Handle Image Preview
     const imageList = watch('image');
@@ -627,7 +644,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
             });
 
             // Shifts
-            if (!isSecondOrThirdService) {
+            if (!isHospitality && !isBabysitting) {
                 (data.shifts || []).forEach((shift, i) => {
                     if (shift.start_time) {
                         payload.append(`shifts[${i}][start_time]`, shift.start_time);
@@ -958,7 +975,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                             </div>
 
                             <div>
-                                <label className={LABEL_CLASS}>{t('form.status')}</label>
+                                <label className={LABEL_CLASS}>{t('status.active')}</label>
                                 <OptionCards
                                     value={statusValue}
                                     onChange={(v) => setValue('status', v, { shouldValidate: true })}
@@ -1028,9 +1045,9 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                 </div>
                                 <div className="mb-4">
                                     <label className={LABEL_CLASS}>{isArabic ? 'نوع التسعير' : 'Pricing Type'}</label>
-                                    <SelectField registration={register('pricing_type')}>
+                                    <SelectField registration={register('pricing_type')} disabled={isPedicureManicure || isOtherService}>
                                         <option value="per_service">{isArabic ? 'سعر بالخدمة / الزيارة (Per Service)' : 'Per Service / Visit'}</option>
-                                        <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>
+                                        {(!isPedicureManicure && !isOtherService) && <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>}
                                     </SelectField>
                                     <ErrorMsg name="pricing_type" />
                                 </div>
@@ -1089,7 +1106,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                             )}
                                         </div>
 
-                                        {!isHospitality && !isBabysitting && !isPedicureManicure && (
+                                        {!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService && (
                                             <div 
                                                 onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
                                                 className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
@@ -1174,7 +1191,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                                 </div>
                             </div>
 
-                            {!isPedicureManicure && (
+                            {!isPedicureManicure && !isOtherService && (
                                 <div className="space-y-4 pt-3 border-t border-gray-100">
                                     <label className={`flex items-center gap-2 cursor-pointer ${(watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || serviceToEdit?.id === 2 || serviceToEdit?.id === 3) ? 'opacity-60 cursor-not-allowed' : ''}`}>
                                         <input 
@@ -1388,7 +1405,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
 
                     {/* TAB 4: WORKING DAYS & SHIFTS */}
                     {activeTab === 'shifts' && (
-                        <div className={isSecondOrThirdService ? "max-w-xl mx-auto" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
+                        <div className={(isHospitality || isBabysitting) ? "max-w-xl mx-auto" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
                             
                             {/* Working Days Select */}
                             <FormSection icon="calendar" title={t('form.working_days')} description={isArabic ? 'اختر الأيام المتاحة لتقديم الخدمة.' : 'Select days of the week when this service is active.'}>
@@ -1403,7 +1420,7 @@ export default function ServiceActionModal({ serviceToEdit, categories, onClose 
                             </FormSection>
 
                             {/* Shift Start/End Times List Builder */}
-                            {!isSecondOrThirdService && (
+                            {!isHospitality && !isBabysitting && (
                             <FormSection
                                                             icon="clock"
                                                             title={t('form.shifts')}

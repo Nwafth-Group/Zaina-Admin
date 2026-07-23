@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -26,14 +26,16 @@ const VERIFICATION_STYLES = {
 };
 
 export default function Clients() {
-    const { t } = useTranslation('users');
+    const { t, i18n } = useTranslation('users');
     const navigate = useNavigate();
+    const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [verification, setVerification] = useState('');
+    const [countsMap, setCountsMap] = useState({});
 
     const [resetPasswordUserId, setResetPasswordUserId] = useState(null);
 
@@ -64,14 +66,19 @@ export default function Clients() {
         keepPreviousData: true,
     });
 
+    const clients = data?.items || [];
+    const meta = data?.meta;
+    const lastCountsRef = useRef({ all: 0, pending: 0, approved: 0, rejected: 0, unverified: 0 });
+    if (data?.counts) {
+        lastCountsRef.current = data.counts;
+    }
+    const counts = data?.counts || lastCountsRef.current;
+
     const toggleStatusMutation = useMutation({
         mutationFn: (userId) => axiosInstance.patch(`/admin/users/${userId}/toggle-status`),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
         onError: (err) => toast.error(err.response?.data?.message || t('review_modal.error')),
     });
-
-    const clients = data?.items || [];
-    const meta = data?.meta;
 
     const selectClass =
         'border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none';
@@ -81,122 +88,164 @@ export default function Clients() {
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
-
-            {/* Header + search */}
-            <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{t('clients.title')}</h2>
-
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </span>
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder={t('filters.search_placeholder')}
-                            className={`${selectClass} w-full ps-9`}
-                        />
-                    </div>
-                </div>
+        <div className="p-6 space-y-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-xl font-black text-gray-900">
+                    {isArabic ? 'إدارة العملاء' : 'Clients Management'}
+                </h1>
+                <p className="text-xs text-gray-500 mt-1">
+                    {isArabic ? 'عرض ومتابعة حسابات العملاء وتوثيق الهوية وتجميد الحسابات' : 'View customer accounts, verify identity documents, and manage account statuses.'}
+                </p>
             </div>
 
-            {/* Verification status tab bar */}
-            <div className="px-4 md:px-6 py-2.5 border-b border-gray-50 flex items-center justify-center gap-1 overflow-x-auto">
+            {/* Summary Metric Tab Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {VERIFICATION_TABS.map((tab) => {
                     const active = verification === tab.value;
+                    let activeStyle = 'bg-[#E91E63] text-white border-[#E91E63] shadow-md';
+                    let iconBg = 'bg-pink-50 text-[#E91E63]';
+                    let icon = '👥';
+
+                    if (tab.value === 'pending') {
+                        activeStyle = 'bg-amber-500 text-white border-amber-500 shadow-md';
+                        iconBg = 'bg-amber-50 text-amber-600';
+                        icon = '⏳';
+                    } else if (tab.value === 'approved') {
+                        activeStyle = 'bg-emerald-600 text-white border-emerald-600 shadow-md';
+                        iconBg = 'bg-emerald-50 text-emerald-600';
+                        icon = '✅';
+                    } else if (tab.value === 'rejected') {
+                        activeStyle = 'bg-rose-600 text-white border-rose-600 shadow-md';
+                        iconBg = 'bg-rose-50 text-rose-600';
+                        icon = '❌';
+                    } else if (tab.value === 'unverified') {
+                        activeStyle = 'bg-gray-800 text-white border-gray-800 shadow-md';
+                        iconBg = 'bg-gray-100 text-gray-600';
+                        icon = '🔒';
+                    }
+
                     return (
                         <button
                             key={tab.value || 'all'}
+                            type="button"
                             onClick={() => selectVerification(tab.value)}
-                            className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active ? 'bg-[#E91E63] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
+                            className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${active ? activeStyle : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
                         >
-                            {t(tab.label)}
+                            <div>
+                                <p className={`text-xs font-bold ${active ? 'text-white/80' : 'text-gray-400'}`}>
+                                    {t(tab.label)}
+                                </p>
+                                <p className="text-2xl font-black mt-1">
+                                    {counts[tab.value || 'all'] ?? 0}
+                                </p>
+                            </div>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${active ? 'bg-white/20 text-white' : iconBg}`}>
+                                {icon}
+                            </div>
                         </button>
                     );
                 })}
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left rtl:text-right text-gray-500">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-6 py-4">{t('table.name')}</th>
-                            <th className="px-6 py-4">{t('table.email')}</th>
-                            <th className="px-6 py-4">{t('table.phone')}</th>
-                            <th className="px-6 py-4 text-center">{t('table.verification')}</th>
-                            <th className="px-6 py-4 text-center">{t('table.status')}</th>
-                            <th className="px-6 py-4 text-center">{t('table.actions')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">{t('loading')}</td>
+            {/* Filter controls bar */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-1 gap-3 w-full md:w-auto">
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            placeholder={t('filters.search_placeholder')}
+                            className="w-full pr-9 pl-4 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E91E63]"
+                        />
+                        <svg className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            {/* Data Table */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-right border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                <th className="py-3.5 px-6 text-center">{t('table.name')}</th>
+                                <th className="py-3.5 px-6 text-center">{t('table.email')}</th>
+                                <th className="py-3.5 px-6 text-center">{t('table.phone')}</th>
+                                <th className="py-3.5 px-6 text-center">{t('table.verification')}</th>
+                                <th className="py-3.5 px-6 text-center">{t('table.status')}</th>
+                                <th className="py-3.5 px-6 text-center">{t('table.actions')}</th>
                             </tr>
-                        ) : clients.length === 0 ? (
-                            <tr>
-                                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">{t('no_data')}</td>
-                            </tr>
-                        ) : (
-                            clients.map((client) => {
-                                const vStatus = client.verification_status || 'unverified';
-                                return (
-                                    <tr 
-                                        key={client.id} 
-                                        onClick={() => navigate(`/clients/${client.id}`)}
-                                        className="bg-white border-b hover:bg-gray-50 transition-colors cursor-pointer"
-                                    >
-                                        <td className="px-6 py-4 font-medium text-gray-900">{client.full_name || '-'}</td>
-                                        <td className="px-6 py-4">{client.email || '-'}</td>
-                                        <td className="px-6 py-4" dir="ltr">{client.mobile_number || '-'}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${VERIFICATION_STYLES[vStatus] || VERIFICATION_STYLES.unverified}`}>
-                                                {t(`verification.${vStatus}`, { defaultValue: vStatus })}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${client.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                {client.status === 'active' ? t('status.active') : t('status.inactive')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <RowActionsMenu
-                                                label={t('table.actions')}
-                                                items={[
-                                                    {
-                                                        key: 'review',
-                                                        label: t('actions.review'),
-                                                        icon: <ReviewIcon />,
-                                                        onClick: () => navigate(`/clients/${client.id}`),
-                                                    },
-                                                    hasPermission('users.edit') && {
-                                                        key: 'reset',
-                                                        label: t('actions.reset_password'),
-                                                        icon: <KeyIcon />,
-                                                        onClick: () => setResetPasswordUserId(client.id),
-                                                    },
-                                                    hasPermission('users.edit') && {
-                                                        key: 'toggle',
-                                                        label: t('actions.toggle_status'),
-                                                        icon: <ToggleIcon />,
-                                                        onClick: () => toggleStatusMutation.mutate(client.id),
-                                                        disabled: toggleStatusMutation.isPending,
-                                                    },
-                                                ].filter(Boolean)}
-                                            />
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">{t('loading')}</td>
+                                </tr>
+                            ) : clients.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">{t('no_data')}</td>
+                                </tr>
+                            ) : (
+                                clients.map((client) => {
+                                    const vStatus = client.verification_status || 'unverified';
+                                    return (
+                                        <tr 
+                                            key={client.id} 
+                                            onClick={() => navigate(`/clients/${client.id}`)}
+                                            className="hover:bg-gray-50/80 transition cursor-pointer text-xs text-center"
+                                        >
+                                            <td className="py-3.5 px-6 text-center font-bold text-gray-900">{client.full_name || '-'}</td>
+                                            <td className="py-3.5 px-6 text-center text-gray-600">{client.email || '-'}</td>
+                                            <td className="py-3.5 px-6 text-center font-medium text-gray-700" dir="ltr">{client.mobile_number || '-'}</td>
+                                            <td className="py-3.5 px-6 text-center">
+                                                <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${VERIFICATION_STYLES[vStatus] || VERIFICATION_STYLES.unverified}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${vStatus === 'approved' ? 'bg-emerald-500' : vStatus === 'pending' ? 'bg-amber-500 animate-pulse' : vStatus === 'rejected' ? 'bg-rose-500' : 'bg-gray-400'}`}></span>
+                                                    {t(`verification.${vStatus}`, { defaultValue: vStatus })}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-6 text-center">
+                                                <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${client.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${client.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                                                    {client.status === 'active' ? t('status.active') : t('status.inactive')}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <RowActionsMenu
+                                                    label={t('table.actions')}
+                                                    items={[
+                                                        {
+                                                            key: 'review',
+                                                            label: t('actions.review'),
+                                                            icon: <ReviewIcon />,
+                                                            onClick: () => navigate(`/clients/${client.id}`),
+                                                        },
+                                                        hasPermission('users.edit') && {
+                                                            key: 'reset',
+                                                            label: t('actions.reset_password'),
+                                                            icon: <KeyIcon />,
+                                                            onClick: () => setResetPasswordUserId(client.id),
+                                                        },
+                                                        hasPermission('users.edit') && {
+                                                            key: 'toggle',
+                                                            label: t('actions.toggle_status'),
+                                                            icon: <ToggleIcon />,
+                                                            onClick: () => toggleStatusMutation.mutate(client.id),
+                                                            disabled: toggleStatusMutation.isPending,
+                                                        },
+                                                    ].filter(Boolean)}
+                                                />
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Pagination */}

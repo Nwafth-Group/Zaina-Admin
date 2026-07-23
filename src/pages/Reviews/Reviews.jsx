@@ -238,12 +238,12 @@ export default function Reviews() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-right border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                                <th className="py-3.5 px-4">{isArabic ? 'العميل' : 'Customer'}</th>
-                                <th className="py-3.5 px-4">{isArabic ? 'الجهة المقيّمة' : 'Evaluated Target'}</th>
-                                <th className="py-3.5 px-4">{isArabic ? 'التقييم' : 'Rating'}</th>
-                                <th className="py-3.5 px-4">{isArabic ? 'الملاحظات / التعليق' : 'Comment / Review'}</th>
-                                <th className="py-3.5 px-4">{isArabic ? 'الحالة' : 'Status'}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'العميل' : 'Customer'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الجهة المقيّمة' : 'Evaluated Target'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'التقييم' : 'Rating'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الملاحظات / التعليق' : 'Comment / Review'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
                                 <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
@@ -262,14 +262,14 @@ export default function Reviews() {
                                 </tr>
                             ) : (
                                 reviewsList.map((row) => (
-                                    <tr key={row.id} className="hover:bg-gray-50/50 transition">
+                                    <tr key={row.id} className="hover:bg-gray-50/50 transition text-center">
                                         {/* Customer */}
-                                        <td className="py-3.5 px-4">
-                                            <div className="flex items-center gap-2.5">
+                                        <td className="py-3.5 px-4 text-center">
+                                            <div className="flex items-center justify-center gap-2.5">
                                                 <div className="w-8 h-8 rounded-full bg-[#E91E63]/10 text-[#E91E63] font-bold flex items-center justify-center text-xs">
                                                     {row.customer?.first_name?.charAt(0) || 'C'}
                                                 </div>
-                                                <div>
+                                                <div className="text-right rtl:text-right ltr:text-left">
                                                     <p className="text-xs font-bold text-gray-800">
                                                         {row.customer ? `${row.customer.first_name} ${row.customer.last_name || ''}` : '-'}
                                                     </p>
@@ -279,8 +279,8 @@ export default function Reviews() {
                                         </td>
 
                                         {/* Target */}
-                                        <td className="py-3.5 px-4">
-                                            <div className="flex items-center gap-1.5">
+                                        <td className="py-3.5 px-4 text-center">
+                                            <div className="flex items-center justify-center gap-1.5">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${row.target_type === 'service' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
                                                     {row.target_type === 'service' ? (isArabic ? 'خدمة' : 'Service') : (isArabic ? 'عاملة' : 'Worker')}
                                                 </span>
@@ -296,13 +296,15 @@ export default function Reviews() {
                                         </td>
 
                                         {/* Rating */}
-                                        <td className="py-3.5 px-4">
-                                            {renderStars(row.rating)}
+                                        <td className="py-3.5 px-4 text-center">
+                                            <div className="flex items-center justify-center">
+                                                {renderStars(row.rating)}
+                                            </div>
                                         </td>
 
                                         {/* Comment */}
-                                        <td className="py-3.5 px-4">
-                                            <div className="max-w-[280px]">
+                                        <td className="py-3.5 px-4 text-center">
+                                            <div className="max-w-[280px] mx-auto text-center">
                                                 <p className="text-xs text-gray-700 truncate cursor-pointer hover:text-gray-900" onClick={() => setSelectedReview(row)}>
                                                     {row.comment ? `"${row.comment}"` : <span className="text-gray-400 italic">{isArabic ? 'بدون تعليق مكتوب' : 'No written comment'}</span>}
                                                 </p>
@@ -311,12 +313,12 @@ export default function Reviews() {
                                         </td>
 
                                         {/* Status */}
-                                        <td className="py-3.5 px-4">
+                                        <td className="py-3.5 px-4 text-center">
                                             {renderStatusBadge(row.status)}
                                         </td>
 
                                         {/* Actions */}
-                                        <td className="py-3.5 px-4">
+                                        <td className="py-3.5 px-4 text-center">
                                             {hasPermission('reviews.edit') ? (
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     {row.status !== 'approved' && (

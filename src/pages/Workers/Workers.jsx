@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -143,6 +143,11 @@ export default function Workers() {
 
     const workers = paginatedData?.items || [];
     const meta = paginatedData?.meta;
+    const lastCountsRef = useRef({ all: 0, active: 0, inactive: 0, female: 0 });
+    if (paginatedData?.counts) {
+        lastCountsRef.current = paginatedData.counts;
+    }
+    const counts = paginatedData?.counts || lastCountsRef.current;
 
     const selectClass =
         'border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none';
@@ -154,170 +159,226 @@ export default function Workers() {
 
     if (isError) return <div className="p-8 text-red-500 font-bold">حدث خطأ: {error.message}</div>;
 
+    const WORKER_TABS = [
+        { key: 'all', statusValue: '', genderValue: '', label: isArabic ? 'جميع العاملات' : 'All Workers', icon: '👥', activeClass: 'bg-[#E91E63] text-white border-[#E91E63] shadow-md', iconBg: 'bg-pink-50 text-[#E91E63]' },
+        { key: 'active', statusValue: 'active', genderValue: '', label: isArabic ? 'العاملات النشطات' : 'Active Workers', icon: '✅', activeClass: 'bg-emerald-600 text-white border-emerald-600 shadow-md', iconBg: 'bg-emerald-50 text-emerald-600' },
+        { key: 'inactive', statusValue: 'inactive', genderValue: '', label: isArabic ? 'غير النشطات' : 'Inactive Workers', icon: '🔒', activeClass: 'bg-rose-600 text-white border-rose-600 shadow-md', iconBg: 'bg-rose-50 text-rose-600' },
+        { key: 'female', statusValue: '', genderValue: 'female', label: isArabic ? 'عاملات إناث' : 'Female Workers', icon: '👩', activeClass: 'bg-purple-600 text-white border-purple-600 shadow-md', iconBg: 'bg-purple-50 text-purple-600' },
+    ];
+
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col min-h-[70vh]">
+        <div className="p-6 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-xl font-black text-gray-900">
+                        {isArabic ? 'إدارة العاملات' : 'Workers Management'}
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-1">
+                        {isArabic ? 'متابعة وإدارة ملفات العاملات والجنسيات وحالات الحساب والتخصيص والتقييمات' : 'Manage worker profiles, nationalities, account statuses, and service assignments.'}
+                    </p>
+                </div>
+            </div>
 
-            <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{t('title')}</h2>
+            {/* Summary Metric Tab Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {WORKER_TABS.map((tab) => {
+                    const isSelected = filters.status === tab.statusValue && (tab.key !== 'female' || filters.gender === 'female');
+                    return (
+                        <button
+                            key={tab.key}
+                            type="button"
+                            onClick={() => {
+                                setFilters((f) => ({
+                                    ...f,
+                                    status: tab.statusValue,
+                                    gender: tab.genderValue || '',
+                                }));
+                                setPage(1);
+                            }}
+                            className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${isSelected ? tab.activeClass : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                        >
+                            <div>
+                                <p className={`text-xs font-bold ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                                    {tab.label}
+                                </p>
+                                <p className="text-2xl font-black mt-1">
+                                    {counts[tab.key] ?? 0}
+                                </p>
+                            </div>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${isSelected ? 'bg-white/20 text-white' : tab.iconBg}`}>
+                                {tab.icon}
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+            {/* Filter controls bar */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-1 gap-3 w-full md:w-auto">
                     {/* Search */}
-                    <div className="relative flex-1 min-w-[180px]">
-                        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </span>
+                    <div className="relative flex-1">
                         <input
                             type="text"
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
                             placeholder={t('filters.search_placeholder')}
-                            className={`${selectClass} w-full ps-9`}
+                            className="w-full pr-9 pl-4 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E91E63]"
                         />
+                        <svg className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
                     </div>
 
-                    {/* Filter button (opens the left drawer) */}
+                    {/* Filter drawer button */}
                     <button
+                        type="button"
                         onClick={openFilters}
-                        className="relative inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        className="relative inline-flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm shrink-0"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
                         </svg>
                         <span>{t('filters.button')}</span>
                         {activeFilterCount > 0 && (
-                            <span className="absolute -top-2 -end-2 bg-[#E91E63] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="bg-[#E91E63] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                 {activeFilterCount}
                             </span>
                         )}
                     </button>
-
-                    {/* Add new */}
-                    {hasPermission('workers.create') && (
-                        <button
-                            onClick={() => setActionModal({ isOpen: true, workerToEdit: null })}
-                            className="bg-[#E91E63] text-white px-5 py-2 rounded-full font-medium hover:bg-[#D81B60] transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            {t('add_new')}
-                        </button>
-                    )}
                 </div>
+
+                {hasPermission('workers.create') && (
+                    <button
+                        type="button"
+                        onClick={() => setActionModal({ isOpen: true, workerToEdit: null })}
+                        className="bg-[#E91E63] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#D81B60] transition shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>{t('add_new')}</span>
+                    </button>
+                )}
             </div>
 
-            <div className="overflow-x-auto w-full flex-1">
-                <table className="w-full text-sm text-left rtl:text-right text-gray-500 min-w-[860px]">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-4 py-4 w-16 text-center">{t('table.image')}</th>
-                            <th className="px-4 py-4">{t('table.name')}</th>
-                            <th className="px-4 py-4">{t('table.nationality')}</th>
-                            <th className="px-4 py-4">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</th>
-                            <th className="px-4 py-4 text-center">{t('table.rating')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.status')}</th>
-                            <th className="px-4 py-4 text-center">{t('table.actions')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
-                                    <div className="flex justify-center items-center gap-3">
-                                        <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                                        <span className="text-lg font-medium">{t('loading')}</span>
-                                    </div>
-                                </td>
+            {/* Data Table */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-right border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                                <th className="py-3.5 px-4 text-center">{t('table.image')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.name')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.nationality')}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.rating')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
                             </tr>
-                        ) : workers.length === 0 ? (
-                            <tr>
-                                <td colSpan="7" className="px-6 py-10 text-center text-gray-500">{t('no_data')}</td>
-                            </tr>
-                        ) : (
-                            workers.map((worker) => (
-                                <tr key={worker.id} onClick={() => navigate(`/workers/${worker.id}`)} className="border-b transition-colors hover:bg-gray-50 bg-white cursor-pointer">
-                                    <td className="px-4 py-3 text-center">
-                                        <div className="w-10 h-10 mx-auto rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
-                                            {worker.image ? (
-                                                <img src={worker.image} alt={worker.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-gray-400 font-bold text-lg">
-                                                    {worker.name ? worker.name.charAt(0) : '?'}
-                                                </span>
-                                            )}
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 text-xs">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="7" className="py-12 text-center text-gray-400">
+                                        <div className="flex justify-center items-center gap-2">
+                                            <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                                            <span className="font-bold text-gray-500">{t('loading')}</span>
                                         </div>
-                                    </td>
-                                    <td className="px-4 py-3 font-bold text-gray-800">{worker.name}</td>
-                                    <td className="px-4 py-3 text-gray-600">{worker.nationality}</td>
-                                    <td className="px-4 py-3">
-                                        {worker.assigned_service ? (
-                                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FDF0F3] text-[#E91E63] whitespace-nowrap">
-                                                {serviceLabel(worker.assigned_service)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-400 font-medium">—</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <div className="flex items-center justify-center gap-1 bg-yellow-50/50 border border-yellow-100/50 rounded-lg py-1 px-2 w-max mx-auto">
-                                            <span className="text-xs font-mono font-bold text-yellow-600 mt-0.5">{Number(worker.rating || 0).toFixed(2)}</span>
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                                            worker.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                            {worker.status === 'active' ? t('status.active') : t('status.inactive')}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                                        {hasPermission('workers.edit') ? (
-                                            <RowActionsMenu
-                                                label={t('actions.edit')}
-                                                items={[
-                                                    {
-                                                        key: 'edit',
-                                                        label: t('actions.edit'),
-                                                        icon: <EditIcon />,
-                                                        onClick: () => setActionModal({ isOpen: true, workerToEdit: worker }),
-                                                    },
-                                                    {
-                                                        key: 'toggle',
-                                                        label: t('actions.toggle_status'),
-                                                        icon: <ToggleIcon />,
-                                                        onClick: () => toggleStatusMutation.mutate(worker.id),
-                                                        disabled: toggleStatusMutation.isPending,
-                                                    },
-                                                    hasPermission('workers.delete') && {
-                                                        key: 'delete',
-                                                        label: isArabic ? 'حذف' : 'Delete',
-                                                        icon: <TrashIcon />,
-                                                        danger: true,
-                                                        onClick: () => {
-                                                            setDeleteConfirm({
-                                                                isOpen: true,
-                                                                workerId: worker.id,
-                                                                workerName: worker.name,
-                                                                hasBookings: (worker.bookings_count ?? 0) > 0,
-                                                                bookingsCount: worker.bookings_count ?? 0
-                                                            });
-                                                        },
-                                                        disabled: deleteWorkerMutation.isPending,
-                                                    },
-                                                ].filter(Boolean)}
-                                            />
-                                        ) : (
-                                            <span className="text-gray-300 text-xs font-medium">—</span>
-                                        )}
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : workers.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="py-12 text-center text-gray-400 font-bold">{t('no_data')}</td>
+                                </tr>
+                            ) : (
+                                workers.map((worker) => (
+                                    <tr key={worker.id} onClick={() => navigate(`/workers/${worker.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer text-center">
+                                        <td className="py-3 px-4 text-center">
+                                            <div className="w-10 h-10 mx-auto rounded-full bg-pink-50 border border-pink-100 flex items-center justify-center overflow-hidden shadow-sm">
+                                                {worker.image ? (
+                                                    <img src={worker.image} alt={worker.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-[#E91E63] font-black text-sm">
+                                                        {worker.name ? worker.name.charAt(0) : '?'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-4 text-center font-bold text-gray-900">{worker.name}</td>
+                                        <td className="py-3 px-4 text-center text-gray-600 font-medium">{worker.nationality || '—'}</td>
+                                        <td className="py-3 px-4 text-center">
+                                            {worker.assigned_service ? (
+                                                <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-pink-50 text-[#E91E63] border border-pink-100 whitespace-nowrap">
+                                                    {serviceLabel(worker.assigned_service)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400 font-medium">—</span>
+                                            )}
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                            <div className="inline-flex items-center justify-center gap-1 bg-amber-50 border border-amber-200/60 rounded-lg py-0.5 px-2">
+                                                <span className="text-xs font-mono font-black text-amber-700">{Number(worker.rating || 0).toFixed(1)}</span>
+                                                <svg className="w-3.5 h-3.5 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
+                                                worker.status === 'active'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                                            }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${worker.status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                                                {worker.status === 'active' ? t('status.active') : t('status.inactive')}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                            {hasPermission('workers.edit') ? (
+                                                <RowActionsMenu
+                                                    label={t('actions.edit')}
+                                                    items={[
+                                                        {
+                                                            key: 'edit',
+                                                            label: t('actions.edit'),
+                                                            icon: <EditIcon />,
+                                                            onClick: () => setActionModal({ isOpen: true, workerToEdit: worker }),
+                                                        },
+                                                        {
+                                                            key: 'toggle',
+                                                            label: t('actions.toggle_status'),
+                                                            icon: <ToggleIcon />,
+                                                            onClick: () => toggleStatusMutation.mutate(worker.id),
+                                                            disabled: toggleStatusMutation.isPending,
+                                                        },
+                                                        hasPermission('workers.delete') && {
+                                                            key: 'delete',
+                                                            label: isArabic ? 'حذف' : 'Delete',
+                                                            icon: <TrashIcon />,
+                                                            danger: true,
+                                                            onClick: () => {
+                                                                setDeleteConfirm({
+                                                                    isOpen: true,
+                                                                    workerId: worker.id,
+                                                                    workerName: worker.name,
+                                                                    hasBookings: (worker.bookings_count ?? 0) > 0,
+                                                                    bookingsCount: worker.bookings_count ?? 0
+                                                                });
+                                                            },
+                                                            disabled: deleteWorkerMutation.isPending,
+                                                        },
+                                                    ].filter(Boolean)}
+                                                />
+                                            ) : (
+                                                <span className="text-gray-300 text-xs font-medium">—</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Pagination Controls */}
