@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
-import BannerActionModal from './BannerActionModal';
-import RowActionsMenu, { EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EyeIcon, EditIcon, ToggleIcon, TrashIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 import { hasPermission } from '../../utils/permissions.js';
 
@@ -18,6 +18,7 @@ const DEFAULT_FILTERS = {
 
 export default function Banners() {
     const { t, i18n } = useTranslation('banners');
+    const navigate = useNavigate();
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
@@ -27,7 +28,6 @@ export default function Banners() {
     const [filters, setFilters] = useState(DEFAULT_FILTERS);
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [actionModal, setActionModal] = useState({ isOpen: false, bannerToEdit: null });
 
     const lastCountsRef = useRef({ all: 0, active: 0, inactive: 0 });
 
@@ -129,7 +129,7 @@ export default function Banners() {
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -142,8 +142,8 @@ export default function Banners() {
                 </div>
 
                 <button
-                    onClick={() => setActionModal({ isOpen: true, bannerToEdit: null })}
-                    className="bg-[#E91E63] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#D81B60] transition shadow-sm flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+                    onClick={() => navigate('/banners/create')}
+                    className="bg-[#E91E63] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#D81B60] transition shadow-2xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto outline-none"
                 >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -199,12 +199,12 @@ export default function Banners() {
                         onClick={openFilters}
                         className="relative inline-flex items-center gap-1.5 border border-gray-200 rounded-lg px-3.5 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition"
                     >
-                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
                         <span>{t('filters.button')}</span>
                         {activeFilterCount > 0 && (
-                            <span className="bg-[#E91E63] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                            <span className="bg-[#E91E63] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                                 {activeFilterCount}
                             </span>
                         )}
@@ -213,30 +213,30 @@ export default function Banners() {
             </div>
 
             {/* Data Table */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-center border-collapse">
+                    <table className="w-full text-right border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center w-24">{t('table.image')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.image')}</th>
                                 <th className="py-3.5 px-4 text-center">{t('table.title')}</th>
-                                <th className="py-3.5 px-4 text-center w-36">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center w-28">{t('table.actions')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
+                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
+                        <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="4" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="4" className="py-12 text-center text-gray-400">
                                         <div className="flex justify-center items-center gap-2">
-                                            <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                                            <span>{t('loading')}</span>
+                                            <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                                            <span className="font-bold text-gray-500">{t('loading')}</span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : banners.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="4" className="py-12 text-center text-gray-400 font-bold">
                                         {t('no_data')}
                                     </td>
                                 </tr>
@@ -244,7 +244,7 @@ export default function Banners() {
                                 banners.map((banner) => {
                                     const title = isAr ? banner.title_ar : banner.title_en;
                                     return (
-                                        <tr key={banner.id} className="hover:bg-gray-50/80 transition-colors text-center">
+                                        <tr key={banner.id} onClick={() => navigate(`/banners/${banner.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer">
                                             <td className="py-3 px-4 text-center">
                                                 <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center mx-auto shrink-0">
                                                     {banner.image ? (
@@ -256,7 +256,7 @@ export default function Banners() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                            <td className="py-3 px-4 text-start font-bold text-gray-900">
                                                 {title || <span className="text-gray-400 font-normal">--</span>}
                                             </td>
                                             <td className="py-3 px-4 text-center">
@@ -269,16 +269,22 @@ export default function Banners() {
                                                     {banner.status === 'active' ? t('status.active') : t('status.inactive')}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-center">
                                                     <RowActionsMenu
                                                         label={t('actions.title')}
                                                         items={[
+                                                            {
+                                                                key: 'details',
+                                                                label: isArabic ? 'التفاصيل' : 'View Details',
+                                                                icon: <EyeIcon />,
+                                                                onClick: () => navigate(`/banners/${banner.id}`),
+                                                            },
                                                             hasPermission('banners.edit') && {
                                                                 key: 'edit',
                                                                 label: t('actions.edit'),
                                                                 icon: <EditIcon />,
-                                                                onClick: () => setActionModal({ isOpen: true, bannerToEdit: banner }),
+                                                                onClick: () => navigate(`/banners/${banner.id}/edit`),
                                                             },
                                                             hasPermission('banners.edit') && {
                                                                 key: 'toggle',
@@ -388,14 +394,6 @@ export default function Banners() {
                     </div>
                 </aside>
             </div>
-
-            {/* Banner Action Modal */}
-            {actionModal.isOpen && (
-                <BannerActionModal
-                    bannerToEdit={actionModal.bannerToEdit}
-                    onClose={() => setActionModal({ isOpen: false, bannerToEdit: null })}
-                />
-            )}
         </div>
     );
 }

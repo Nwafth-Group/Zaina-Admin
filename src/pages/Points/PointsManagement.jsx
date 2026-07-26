@@ -338,9 +338,9 @@ export default function PointsManagement() {
     };
 
     return (
-        <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
+        <div className="space-y-6 font-main w-full">
             {/* Header section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-xl font-black text-gray-900">
                         {isArabic ? 'إدارة نقاط الولاء' : 'Loyalty Points Management'}
@@ -363,7 +363,7 @@ export default function PointsManagement() {
             </div>
 
             {/* Summary Metric Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
                     <div>
                         <p className="text-xs font-bold text-gray-400">{isArabic ? 'قواعد كسب النقاط' : 'Earning Rules'}</p>
@@ -449,14 +449,14 @@ export default function PointsManagement() {
                                     </tr>
                                 ) : (
                                     rulesData.map(rule => (
-                                        <tr key={rule.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                            <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                        <tr key={rule.id} className="hover:bg-gray-50/80 transition-colors">
+                                            <td className="py-3 px-4 text-start font-bold text-gray-900">
                                                 <div>{isArabic ? rule.title_ar : rule.title_en}</div>
                                                 <div className="text-[11px] text-gray-400 font-normal mt-0.5">
                                                     {isArabic ? rule.subtitle_ar : rule.subtitle_en}
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 text-start">
                                                 <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-bold">
                                                     {rule.rule_category === 'referral'
                                                         ? (isArabic ? 'دعوة صديق' : 'Referral')
@@ -555,14 +555,14 @@ export default function PointsManagement() {
                                     </tr>
                                 ) : (
                                     servicesData.map(svc => (
-                                        <tr key={svc.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                            <td className="py-3 px-4 text-center font-mono text-xs font-bold text-gray-600">
+                                        <tr key={svc.id} className="hover:bg-gray-50/80 transition-colors">
+                                            <td className="py-3 px-4 text-start font-mono text-xs font-bold text-gray-600">
                                                 {svc.service_code}
                                             </td>
-                                            <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                            <td className="py-3 px-4 text-start font-bold text-gray-900">
                                                 {isArabic ? svc.name_ar : svc.name_en}
                                             </td>
-                                            <td className="py-3 px-4 text-center font-black text-gray-900">
+                                            <td className="py-3 px-4 text-start font-black text-gray-900">
                                                 {svc.base_price} EGP
                                             </td>
                                             <td className="py-3 px-4 text-center">
@@ -829,15 +829,15 @@ export default function PointsManagement() {
                                             const isCredit = tx.type === 'earn' || tx.type === 'refund' || isAdjustmentCredit;
 
                                             return (
-                                                <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                                    <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                                <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors">
+                                                    <td className="py-3 px-4 text-start font-bold text-gray-900">
                                                         {tx.user ? (
-                                                            <div className="flex flex-col items-center justify-center text-center">
+                                                            <div className="flex flex-col text-start">
                                                                 <div>{tx.user.full_name}</div>
                                                                 <div className="text-[11px] text-gray-400 font-normal mt-0.5" dir="ltr">{tx.user.phone_number}</div>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-400 text-center">{isArabic ? 'مستخدم غير معروف' : 'Unknown User'}</span>
+                                                            <span className="text-gray-400">{isArabic ? 'مستخدم غير معروف' : 'Unknown User'}</span>
                                                         )}
                                                     </td>
                                                     <td className="py-3 px-4 text-center">
@@ -859,7 +859,7 @@ export default function PointsManagement() {
                                                     <td className="py-3 px-4 text-center text-gray-500 text-xs font-mono font-bold">
                                                         {tx.points_before} &rarr; {tx.points_after}
                                                     </td>
-                                                    <td className="py-3 px-4 text-center">
+                                                    <td className="py-3 px-4 text-start">
                                                         <div className="font-bold text-gray-900">{isArabic ? tx.title_ar : tx.title_en}</div>
                                                         {(tx.reason || tx.created_by) && (
                                                             <div className="text-[11px] text-gray-400 mt-0.5">

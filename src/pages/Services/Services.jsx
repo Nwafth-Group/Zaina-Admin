@@ -277,8 +277,8 @@ export default function Services() {
                             return (
                                 <div
                                     key={service.id}
-                                    onClick={() => setDetailsId(service.id)}
-                                    className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
+                                    onClick={() => navigate(`/services/${service.id}`)}
+                                    className="bg-white rounded-3xl border border-gray-100 shadow-2xs overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
                                 >
                                     {/* Image & Status Badge */}
                                     <div className="relative h-48 w-full bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100">
@@ -298,7 +298,7 @@ export default function Services() {
 
                                         {/* Status Badge */}
                                         <div className="absolute top-3 ltr:left-3 rtl:right-3 z-10">
-                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
+                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
                                                 service.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                     : 'bg-rose-50 text-rose-700 border-rose-200'
@@ -310,10 +310,16 @@ export default function Services() {
 
                                         {/* Actions Menu */}
                                         <div className="absolute top-3 ltr:right-3 rtl:left-3 z-10" onClick={(e) => e.stopPropagation()}>
-                                            <div className="bg-white/90 backdrop-blur p-1 rounded-full shadow-sm hover:bg-white transition-all">
+                                            <div className="bg-white/90 backdrop-blur p-1 rounded-full shadow-2xs hover:bg-white transition-all">
                                                 <RowActionsMenu
                                                     label=""
                                                     items={[
+                                                        {
+                                                            key: 'view',
+                                                            label: isArabic ? 'عرض التفاصيل' : 'View Details',
+                                                            icon: <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 123c.86-3.897 4.37-6.8 8.464-6.8 4.093 0 7.604 2.903 8.464 6.8-.86 3.897-4.37 6.8-8.464 6.8-4.093 0-7.604-2.903-8.464-6.8zM12 15a3 3 0 100-6 3 3 0 000 6z" /></svg>,
+                                                            onClick: () => navigate(`/services/${service.id}`),
+                                                        },
                                                         {
                                                             key: 'edit',
                                                             label: t('actions.edit'),

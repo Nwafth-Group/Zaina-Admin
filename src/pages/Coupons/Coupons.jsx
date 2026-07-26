@@ -1,11 +1,11 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import RowActionsMenu, { EyeIcon, EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
-import CouponDetailsModal from './CouponDetailsModal';
 import CouponActionModal from './CouponActionModal';
 
 const TrashIcon = () => (
@@ -24,6 +24,7 @@ const STATUS_TABS = [
 
 export default function Coupons() {
     const { t, i18n } = useTranslation('coupons');
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const isArabic = i18n.language?.startsWith('ar');
 
@@ -142,7 +143,7 @@ export default function Coupons() {
     ];
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -199,8 +200,8 @@ export default function Coupons() {
 
                 <button
                     type="button"
-                    onClick={() => setActionModal({ isOpen: true, couponToEdit: null })}
-                    className="bg-[#E91E63] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#D81B60] transition shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+                    onClick={() => navigate('/coupons/create')}
+                    className="bg-[#E91E63] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#D81B60] transition shadow-2xs flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 outline-none"
                 >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -241,18 +242,18 @@ export default function Coupons() {
                                 </tr>
                             ) : (
                                 coupons.map((c) => (
-                                    <tr key={c.id} onClick={() => setDetailsId(c.id)} className="hover:bg-gray-50/80 transition-colors cursor-pointer text-center">
-                                        <td className="py-3 px-4 text-center font-bold text-gray-900">{c.name}</td>
-                                        <td className="py-3 px-4 text-center">
+                                    <tr key={c.id} onClick={() => navigate(`/coupons/${c.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer">
+                                        <td className="py-3 px-4 text-start font-bold text-gray-900">{c.name}</td>
+                                        <td className="py-3 px-4 text-start">
                                             <span className="font-mono text-xs font-black text-[#E91E63] bg-pink-50 px-2.5 py-1 rounded border border-pink-100 whitespace-nowrap">{c.code}</span>
                                         </td>
-                                        <td className="py-3 px-4 text-center font-bold text-gray-600">
+                                        <td className="py-3 px-4 text-start font-bold text-gray-600">
                                             {t(`types.${c.type}`)}
                                         </td>
-                                        <td className="py-3 px-4 text-center font-black text-gray-900">
+                                        <td className="py-3 px-4 text-start font-black text-gray-900">
                                             {c.type === 'percentage' ? `${c.value}%` : `${c.value} EGP`}
                                         </td>
-                                        <td className="py-3 px-4 text-center text-[11px] text-gray-500">
+                                        <td className="py-3 px-4 text-start text-[11px] text-gray-500">
                                             <p className="font-bold text-gray-700">{c.start_date.substring(0, 10)}</p>
                                             <p className="text-gray-400 mt-0.5">{t('details.end_date')}: {c.end_date.substring(0, 10)}</p>
                                         </td>
@@ -278,14 +279,14 @@ export default function Coupons() {
                                                         key: 'details',
                                                         label: t('details.title'),
                                                         icon: <EyeIcon />,
-                                                        onClick: () => setDetailsId(c.id),
+                                                        onClick: () => navigate(`/coupons/${c.id}`),
                                                     },
                                                     {
                                                         key: 'edit',
                                                         label: t('form.title_edit'),
                                                         icon: <EditIcon />,
                                                         disabled: !!(c.end_date && new Date(c.end_date) < new Date()) || !!(c.usage_limit !== null && c.used_count >= c.usage_limit),
-                                                        onClick: () => setActionModal({ isOpen: true, couponToEdit: c }),
+                                                        onClick: () => navigate(`/coupons/${c.id}/edit`),
                                                     },
                                                     {
                                                         key: 'toggle',

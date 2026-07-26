@@ -266,7 +266,7 @@ export default function Workers() {
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full text-center border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
                                 <th className="py-3.5 px-4 text-center">{t('table.image')}</th>
@@ -294,9 +294,13 @@ export default function Workers() {
                                 </tr>
                             ) : (
                                 workers.map((worker) => (
-                                    <tr key={worker.id} onClick={() => navigate(`/workers/${worker.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer text-center">
+                                    <tr
+                                        key={worker.id}
+                                        onClick={() => navigate(`/workers/${worker.id}`)}
+                                        className="hover:bg-gray-50/70 transition-colors cursor-pointer"
+                                    >
                                         <td className="py-3 px-4 text-center">
-                                            <div className="w-10 h-10 mx-auto rounded-full bg-pink-50 border border-pink-100 flex items-center justify-center overflow-hidden shadow-sm">
+                                            <div className="w-10 h-10 rounded-full bg-pink-50 border border-pink-100 mx-auto flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
                                                 {worker.image ? (
                                                     <img src={worker.image} alt={worker.name} className="w-full h-full object-cover" />
                                                 ) : (
@@ -306,9 +310,9 @@ export default function Workers() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-3 px-4 text-center font-bold text-gray-900">{worker.name}</td>
-                                        <td className="py-3 px-4 text-center text-gray-600 font-medium">{worker.nationality || '—'}</td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 text-start font-bold text-gray-900">{worker.name}</td>
+                                        <td className="py-3 px-4 text-start text-gray-600 font-medium">{worker.nationality || '—'}</td>
+                                        <td className="py-3 px-4 text-start">
                                             {worker.assigned_service ? (
                                                 <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-pink-50 text-[#E91E63] border border-pink-100 whitespace-nowrap">
                                                     {serviceLabel(worker.assigned_service)}
@@ -324,7 +328,7 @@ export default function Workers() {
                                             </div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
+                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
                                                 worker.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                     : 'bg-rose-50 text-rose-700 border-rose-200'
@@ -338,6 +342,12 @@ export default function Workers() {
                                                 <RowActionsMenu
                                                     label={t('actions.edit')}
                                                     items={[
+                                                        {
+                                                            key: 'view',
+                                                            label: isArabic ? 'عرض الملف' : 'View Profile',
+                                                            icon: <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>,
+                                                            onClick: () => navigate(`/workers/${worker.id}`),
+                                                        },
                                                         {
                                                             key: 'edit',
                                                             label: t('actions.edit'),

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import Pagination from '../../component/Pagination.jsx';
@@ -8,6 +9,7 @@ import { hasPermission } from '../../utils/permissions.js';
 
 export default function Reviews() {
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
     const isArabic = i18n.language === 'ar';
     const queryClient = useQueryClient();
 
@@ -81,17 +83,17 @@ export default function Reviews() {
     // Helper star renderer
     const renderStars = (rating) => {
         return (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                     <svg
                         key={star}
-                        className={`w-4 h-4 ${star <= rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`}
+                        className={`w-3.5 h-3.5 ${star <= rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`}
                         viewBox="0 0 20 20"
                     >
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                 ))}
-                <span className="text-xs font-bold text-gray-700 ml-1">({rating}/5)</span>
+                <span className="text-xs font-black text-amber-700 font-mono ms-1">({rating})</span>
             </div>
         );
     };
@@ -101,14 +103,14 @@ export default function Reviews() {
         switch (status) {
             case 'approved':
                 return (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         {isArabic ? 'معتمد' : 'Approved'}
                     </span>
                 );
             case 'rejected':
                 return (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                         {isArabic ? 'مرفوض' : 'Rejected'}
                     </span>
@@ -116,7 +118,7 @@ export default function Reviews() {
             case 'pending':
             default:
                 return (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                         {isArabic ? 'قيد المراجعة' : 'Pending Approval'}
                     </span>
@@ -125,31 +127,35 @@ export default function Reviews() {
     };
 
     return (
-        <div className="p-6 space-y-6">
-            {/* Header */}
+        <div className="space-y-6 font-main w-full">
+            {/* Header Title */}
             <div>
                 <h1 className="text-xl font-black text-gray-900">
                     {isArabic ? 'إدارة التقييمات' : 'Reviews Management'}
                 </h1>
                 <p className="text-xs text-gray-500 mt-1">
-                    {isArabic ? 'مراجعة واعتماد تقييمات العملاء للخدمات والعاملات قبل ظهورها للعموم' : 'Review and approve customer ratings and comments before public display.'}
+                    {isArabic ? 'مراجعة واعتماد تقييمات العملاء للخدمات والعاملات قبل ظهورها للعموم' : 'Review and moderate customer feedback for services and workers.'}
                 </p>
             </div>
 
-            {/* Summary Tabs */}
+            {/* Summary Metrics & Filter Tabs Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <button
                     type="button"
                     onClick={() => { setActiveTab('pending'); setCurrentPage(1); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${activeTab === 'pending' ? 'bg-amber-500 text-white border-amber-500 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                    className={`p-4 rounded-2xl border text-start transition-all flex items-center justify-between outline-none ${
+                        activeTab === 'pending'
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-100 hover:bg-gray-50 shadow-2xs'
+                    }`}
                 >
                     <div>
-                        <p className={`text-xs font-bold ${activeTab === 'pending' ? 'text-amber-100' : 'text-gray-400'}`}>
-                            {isArabic ? 'في انتظار الاعتماد' : 'Pending Approval'}
+                        <p className={`text-[11px] font-bold uppercase tracking-wider ${activeTab === 'pending' ? 'text-amber-100' : 'text-gray-400'}`}>
+                            {isArabic ? 'قيد المراجعة' : 'Pending'}
                         </p>
                         <p className="text-2xl font-black mt-1">{counts.pending}</p>
                     </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600'}`}>
                         ⏳
                     </div>
                 </button>
@@ -157,15 +163,19 @@ export default function Reviews() {
                 <button
                     type="button"
                     onClick={() => { setActiveTab('approved'); setCurrentPage(1); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${activeTab === 'approved' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                    className={`p-4 rounded-2xl border text-start transition-all flex items-center justify-between outline-none ${
+                        activeTab === 'approved'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-100 hover:bg-gray-50 shadow-2xs'
+                    }`}
                 >
                     <div>
-                        <p className={`text-xs font-bold ${activeTab === 'approved' ? 'text-emerald-100' : 'text-gray-400'}`}>
+                        <p className={`text-[11px] font-bold uppercase tracking-wider ${activeTab === 'approved' ? 'text-emerald-100' : 'text-gray-400'}`}>
                             {isArabic ? 'المعتمدة' : 'Approved'}
                         </p>
                         <p className="text-2xl font-black mt-1">{counts.approved}</p>
                     </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${activeTab === 'approved' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${activeTab === 'approved' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
                         ✅
                     </div>
                 </button>
@@ -173,15 +183,19 @@ export default function Reviews() {
                 <button
                     type="button"
                     onClick={() => { setActiveTab('rejected'); setCurrentPage(1); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${activeTab === 'rejected' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                    className={`p-4 rounded-2xl border text-start transition-all flex items-center justify-between outline-none ${
+                        activeTab === 'rejected'
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-100 hover:bg-gray-50 shadow-2xs'
+                    }`}
                 >
                     <div>
-                        <p className={`text-xs font-bold ${activeTab === 'rejected' ? 'text-rose-100' : 'text-gray-400'}`}>
+                        <p className={`text-[11px] font-bold uppercase tracking-wider ${activeTab === 'rejected' ? 'text-rose-100' : 'text-gray-400'}`}>
                             {isArabic ? 'المرفوضة' : 'Rejected'}
                         </p>
                         <p className="text-2xl font-black mt-1">{counts.rejected}</p>
                     </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${activeTab === 'rejected' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${activeTab === 'rejected' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600'}`}>
                         ❌
                     </div>
                 </button>
@@ -189,22 +203,26 @@ export default function Reviews() {
                 <button
                     type="button"
                     onClick={() => { setActiveTab('all'); setCurrentPage(1); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${activeTab === 'all' ? 'bg-gray-800 text-white border-gray-800 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                    className={`p-4 rounded-2xl border text-start transition-all flex items-center justify-between outline-none ${
+                        activeTab === 'all'
+                            ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-100 hover:bg-gray-50 shadow-2xs'
+                    }`}
                 >
                     <div>
-                        <p className={`text-xs font-bold ${activeTab === 'all' ? 'text-gray-300' : 'text-gray-400'}`}>
-                            {isArabic ? 'جميع التقييمات' : 'All Reviews'}
+                        <p className={`text-[11px] font-bold uppercase tracking-wider ${activeTab === 'all' ? 'text-gray-300' : 'text-gray-400'}`}>
+                            {isArabic ? 'الكل' : 'All Reviews'}
                         </p>
                         <p className="text-2xl font-black mt-1">{counts.total}</p>
                     </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}`}>
                         ⭐
                     </div>
                 </button>
             </div>
 
-            {/* Filter controls bar */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+            {/* Filter Search Bar */}
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-2xs flex flex-col md:flex-row gap-3 items-center justify-between">
                 <div className="flex flex-1 gap-3 w-full md:w-auto">
                     {/* Search */}
                     <div className="relative flex-1">
@@ -213,75 +231,85 @@ export default function Reviews() {
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                             placeholder={isArabic ? 'ابحث باسم العميل، التعليق، رقم الحجز...' : 'Search customer name, comment, booking ref...'}
-                            className="w-full pr-9 pl-4 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E91E63]"
+                            className="w-full pr-9 pl-4 h-10 text-xs border border-gray-200 rounded-xl focus:border-[#E91E63] focus:ring-2 focus:ring-[#E91E63]/10 transition-all outline-none bg-white font-medium text-gray-800"
                         />
-                        <svg className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-4 h-4 text-gray-400 absolute right-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                         </svg>
                     </div>
 
-                    {/* Target Type Filter */}
+                    {/* Target Filter Select */}
                     <select
                         value={targetType}
                         onChange={(e) => { setTargetType(e.target.value); setCurrentPage(1); }}
-                        className="px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E91E63] bg-white"
+                        className="px-3.5 h-10 text-xs border border-gray-200 rounded-xl focus:border-[#E91E63] focus:ring-2 focus:ring-[#E91E63]/10 outline-none bg-white font-bold text-gray-700"
                     >
-                        <option value="">{isArabic ? 'جميع الفئات (خدمات وعاملات)' : 'All Targets (Services & Workers)'}</option>
+                        <option value="">{isArabic ? 'جميع التقييمات (خدمات وعاملات)' : 'All Targets (Services & Workers)'}</option>
                         <option value="service">{isArabic ? 'تقييمات الخدمات فقط' : 'Service Reviews Only'}</option>
                         <option value="worker">{isArabic ? 'تقييمات العاملات فقط' : 'Worker Reviews Only'}</option>
                     </select>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            {/* Main Table Card */}
+            <div className="bg-white border border-gray-100 rounded-3xl shadow-2xs overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'العميل' : 'Customer'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الجهة المقيّمة' : 'Evaluated Target'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'التقييم' : 'Rating'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الملاحظات / التعليق' : 'Comment / Review'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
+                    <table className="w-full text-center text-xs border-collapse">
+                        <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
+                            <tr>
+                                <th className="p-4 text-center">{isArabic ? 'العميل' : 'Customer'}</th>
+                                <th className="p-4 text-center">{isArabic ? 'الجهة المقيّمة' : 'Evaluated Target'}</th>
+                                <th className="p-4 text-center">{isArabic ? 'التقييم' : 'Rating'}</th>
+                                <th className="p-4 text-center">{isArabic ? 'التعليق' : 'Comment'}</th>
+                                <th className="p-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
+                                <th className="p-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading || isFetching ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400">
+                                    <td colSpan="6" className="p-16 text-center text-xs text-gray-400 font-medium">
                                         {isArabic ? 'جاري تحميل التقييمات...' : 'Loading reviews...'}
                                     </td>
                                 </tr>
                             ) : reviewsList.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400">
+                                    <td colSpan="6" className="p-16 text-center text-xs text-gray-400 font-medium">
                                         {isArabic ? 'لا توجد تقييمات تنطبق على الفلاتر المحددة.' : 'No reviews match the selected filters.'}
                                     </td>
                                 </tr>
                             ) : (
                                 reviewsList.map((row) => (
-                                    <tr key={row.id} className="hover:bg-gray-50/50 transition text-center">
+                                    <tr key={row.id} className="hover:bg-gray-50/60 transition-colors bg-white">
                                         {/* Customer */}
-                                        <td className="py-3.5 px-4 text-center">
-                                            <div className="flex items-center justify-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-full bg-[#E91E63]/10 text-[#E91E63] font-bold flex items-center justify-center text-xs">
+                                        <td className="p-4 text-start">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-full bg-[#FDF0F3] border border-pink-100 text-[#E91E63] font-black flex items-center justify-center text-xs shrink-0 shadow-2xs">
                                                     {row.customer?.first_name?.charAt(0) || 'C'}
                                                 </div>
-                                                <div className="text-right rtl:text-right ltr:text-left">
-                                                    <p className="text-xs font-bold text-gray-800">
-                                                        {row.customer ? `${row.customer.first_name} ${row.customer.last_name || ''}` : '-'}
-                                                    </p>
-                                                    <p className="text-[10px] text-gray-400">{row.customer?.phone || row.customer?.email || ''}</p>
+                                                <div className="min-w-0 text-start">
+                                                    {row.customer?.id ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/clients/${row.customer.id}`)}
+                                                            className="text-xs font-extrabold text-gray-900 hover:text-[#E91E63] hover:underline truncate block outline-none"
+                                                        >
+                                                            {row.customer ? `${row.customer.first_name} ${row.customer.last_name || ''}` : '-'}
+                                                        </button>
+                                                    ) : (
+                                                        <p className="text-xs font-extrabold text-gray-900 truncate">
+                                                            {row.customer ? `${row.customer.first_name} ${row.customer.last_name || ''}` : '-'}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-[11px] text-gray-400 font-medium truncate" dir="ltr">{row.customer?.phone || row.customer?.email || ''}</p>
                                                 </div>
                                             </div>
                                         </td>
 
-                                        {/* Target */}
-                                        <td className="py-3.5 px-4 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${row.target_type === 'service' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
+                                        {/* Evaluated Target */}
+                                        <td className="p-4 text-start">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${row.target_type === 'service' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
                                                     {row.target_type === 'service' ? (isArabic ? 'خدمة' : 'Service') : (isArabic ? 'عاملة' : 'Worker')}
                                                 </span>
                                                 <span className="text-xs font-bold text-gray-800 truncate max-w-[180px]">
@@ -289,36 +317,44 @@ export default function Reviews() {
                                                 </span>
                                             </div>
                                             {row.booking_ref && (
-                                                <p className="text-[10px] text-gray-400 mt-0.5">
-                                                    {isArabic ? 'حجز: ' : 'Ref: '}{row.booking_ref}
-                                                </p>
+                                                <div className="mt-1 text-start">
+                                                    {row.booking_id ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/bookings/${row.booking_id}`)}
+                                                            className="text-[11px] font-bold text-[#E91E63] hover:underline outline-none"
+                                                        >
+                                                            #{row.booking_ref}
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-[11px] font-medium text-gray-400">#{row.booking_ref}</span>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
 
                                         {/* Rating */}
-                                        <td className="py-3.5 px-4 text-center">
-                                            <div className="flex items-center justify-center">
-                                                {renderStars(row.rating)}
-                                            </div>
+                                        <td className="p-4 text-center">
+                                            {renderStars(row.rating)}
                                         </td>
 
                                         {/* Comment */}
-                                        <td className="py-3.5 px-4 text-center">
-                                            <div className="max-w-[280px] mx-auto text-center">
-                                                <p className="text-xs text-gray-700 truncate cursor-pointer hover:text-gray-900" onClick={() => setSelectedReview(row)}>
+                                        <td className="p-4 text-start">
+                                            <div className="max-w-[280px]">
+                                                <p className="text-xs font-medium text-gray-700 truncate cursor-pointer hover:text-gray-900" onClick={() => setSelectedReview(row)}>
                                                     {row.comment ? `"${row.comment}"` : <span className="text-gray-400 italic">{isArabic ? 'بدون تعليق مكتوب' : 'No written comment'}</span>}
                                                 </p>
-                                                <p className="text-[10px] text-gray-400 mt-0.5">{row.created_since || row.created_at}</p>
+                                                <p className="text-[10px] font-medium text-gray-400 mt-0.5">{row.created_since || row.created_at}</p>
                                             </div>
                                         </td>
 
                                         {/* Status */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="p-4 text-center">
                                             {renderStatusBadge(row.status)}
                                         </td>
 
-                                        {/* Actions */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        {/* Action Buttons */}
+                                        <td className="p-4 text-center">
                                             {hasPermission('reviews.edit') ? (
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     {row.status !== 'approved' && (
@@ -326,12 +362,12 @@ export default function Reviews() {
                                                             type="button"
                                                             disabled={approveMutation.isPending}
                                                             onClick={() => approveMutation.mutate(row.id)}
-                                                            className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition disabled:opacity-50"
+                                                            className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition disabled:opacity-50 outline-none"
                                                         >
                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                                             </svg>
-                                                            {isArabic ? 'اعتماد' : 'Approve'}
+                                                            <span>{isArabic ? 'اعتماد' : 'Approve'}</span>
                                                         </button>
                                                     )}
                                                     {row.status !== 'rejected' && (
@@ -339,12 +375,12 @@ export default function Reviews() {
                                                             type="button"
                                                             disabled={rejectMutation.isPending}
                                                             onClick={() => rejectMutation.mutate(row.id)}
-                                                            className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition disabled:opacity-50"
+                                                            className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition disabled:opacity-50 outline-none"
                                                         >
                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                                             </svg>
-                                                            {isArabic ? 'رفض' : 'Reject'}
+                                                            <span>{isArabic ? 'رفض' : 'Reject'}</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -371,76 +407,54 @@ export default function Reviews() {
 
             {/* Comment Detail Modal */}
             {selectedReview && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-                            <h3 className="text-sm font-bold text-gray-800">
+                            <h3 className="text-sm font-extrabold text-gray-900">
                                 {isArabic ? 'تفاصيل التقييم' : 'Review Details'}
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setSelectedReview(null)}
-                                className="text-gray-400 hover:text-gray-600 text-sm font-bold"
+                                className="text-gray-400 hover:text-gray-600 text-sm font-bold outline-none"
                             >
                                 ✕
                             </button>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 text-xs">
                             <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase">{isArabic ? 'العميل' : 'Customer'}</p>
-                                <p className="text-sm font-bold text-gray-800">
+                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{isArabic ? 'العميل' : 'Customer'}</p>
+                                <p className="text-sm font-extrabold text-gray-900 mt-0.5">
                                     {selectedReview.customer ? `${selectedReview.customer.first_name} ${selectedReview.customer.last_name || ''}` : '-'}
                                 </p>
-                                <p className="text-xs text-gray-400">{selectedReview.customer?.phone || selectedReview.customer?.email || ''}</p>
+                                <p className="text-xs text-gray-400 font-medium" dir="ltr">{selectedReview.customer?.phone || selectedReview.customer?.email || ''}</p>
                             </div>
 
-                            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <div className="flex justify-between items-center bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100">
                                 <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{isArabic ? 'الهدف' : 'Target'}</p>
-                                    <p className="text-xs font-bold text-gray-800">{selectedReview.target?.name}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{isArabic ? 'الجهة المقيّمة' : 'Target'}</p>
+                                    <p className="text-xs font-extrabold text-gray-900 mt-0.5">{selectedReview.target?.name || '-'}</p>
                                 </div>
                                 {renderStars(selectedReview.rating)}
                             </div>
 
                             <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">{isArabic ? 'الملاحظات / التعليق' : 'Comment'}</p>
-                                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-700 leading-relaxed max-h-40 overflow-y-auto">
-                                    {selectedReview.comment || (isArabic ? 'بدون تعليق مكتوب.' : 'No written comment.')}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-100">
-                                <span>{isArabic ? 'تاريخ التقديم:' : 'Submitted:'} {selectedReview.created_since || selectedReview.created_at}</span>
-                                {renderStatusBadge(selectedReview.status)}
+                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">{isArabic ? 'محتوى التعليق' : 'Review Comment'}</p>
+                                <p className="text-xs font-medium text-gray-700 bg-pink-50/30 p-4 rounded-2xl border border-pink-100/50 italic leading-relaxed">
+                                    {selectedReview.comment ? `"${selectedReview.comment}"` : (isArabic ? 'بدون تعليق مكتوب' : 'No written comment')}
+                                </p>
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-2">
-                            {selectedReview.status !== 'approved' && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        approveMutation.mutate(selectedReview.id);
-                                        setSelectedReview(null);
-                                    }}
-                                    className="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition shadow-sm"
-                                >
-                                    {isArabic ? 'اعتماد التقييم' : 'Approve Review'}
-                                </button>
-                            )}
-                            {selectedReview.status !== 'rejected' && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        rejectMutation.mutate(selectedReview.id);
-                                        setSelectedReview(null);
-                                    }}
-                                    className="px-4 py-2 text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-100 transition"
-                                >
-                                    {isArabic ? 'رفض التقييم' : 'Reject Review'}
-                                </button>
-                            )}
+                        <div className="pt-3 border-t border-gray-100 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedReview(null)}
+                                className="px-4 py-2 text-xs rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                            >
+                                {isArabic ? 'إغلاق' : 'Close'}
+                            </button>
                         </div>
                     </div>
                 </div>

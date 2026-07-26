@@ -7,8 +7,8 @@ import React, { useEffect, useState } from 'react';
  */
 
 export const INPUT_CLASS =
-    'w-full px-4 h-[46px] text-sm border border-[#D94A78] rounded-[14px] outline-none focus:border-[#D94A78] transition-colors bg-[#F8F9FB]';
-export const LABEL_CLASS = 'block text-sm font-medium text-gray-700 mb-1.5';
+    'w-full px-3.5 h-10 text-sm border border-gray-200 rounded-xl outline-none focus:border-[#E91E63] focus:ring-2 focus:ring-[#E91E63]/10 transition-all bg-white font-medium text-gray-800 placeholder:text-gray-400';
+export const LABEL_CLASS = 'block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5';
 
 /**
  * Outline icons (Heroicons) keyed by a short name so a section can show a

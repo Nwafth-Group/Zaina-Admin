@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
-import MobileNotificationActionModal from './MobileNotificationActionModal';
-import RowActionsMenu, { EditIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { EyeIcon, EditIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 
 const DEFAULT_FILTERS = {
@@ -18,6 +18,7 @@ const DEFAULT_FILTERS = {
 
 export default function MobileNotifications() {
     const { t, i18n } = useTranslation('notifications');
+    const navigate = useNavigate();
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
 
@@ -27,7 +28,6 @@ export default function MobileNotifications() {
     const [filters, setFilters] = useState(DEFAULT_FILTERS);
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [actionModal, setActionModal] = useState({ isOpen: false, notificationToEdit: null });
 
     const lastCountsRef = useRef({ all: 0, scheduled: 0, sent: 0, failed: 0 });
 
@@ -47,11 +47,6 @@ export default function MobileNotifications() {
 
     const updateDraft = (key, value) => setDraftFilters((d) => ({ ...d, [key]: value }));
 
-    const handleSortChange = (value) => {
-        const [sort_by, sort_dir] = value.split(':');
-        setDraftFilters((d) => ({ ...d, sort_by, sort_dir }));
-    };
-
     const applyFilters = () => {
         setFilters(draftFilters);
         setPage(1);
@@ -67,10 +62,10 @@ export default function MobileNotifications() {
     };
 
     const queryString = useMemo(() => {
-        const params = new URLSearchParams({ page: String(page) });
+        const params = new URLSearchParams({ page: String(page), per_page: String(filters.per_page) });
         if (search) params.append('search', search);
         Object.entries(filters).forEach(([key, value]) => {
-            if (value !== '' && value != null) params.append(key, value);
+            if (value !== '' && value != null && key !== 'per_page') params.append(key, value);
         });
         return params.toString();
     }, [page, search, filters]);
@@ -116,17 +111,6 @@ export default function MobileNotifications() {
         },
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id) => axiosInstance.delete(`/admin/mobile-notifications/${id}`),
-        onSuccess: (response) => {
-            toast.success(response.data?.message || (isArabic ? "تم حذف الإشعار بنجاح" : "Notification deleted successfully"));
-            queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء حذف الإشعار." : "Error deleting notification."));
-        },
-    });
-
     const selectClass =
         'border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none';
 
@@ -134,13 +118,13 @@ export default function MobileNotifications() {
 
     const cardTabs = [
         { key: '', label: isArabic ? 'جميع الإشعارات' : 'All Notifications', count: counts.all, icon: '📲', color: 'bg-[#FDF0F3] border-[#fbdbe3]' },
-        { key: 'scheduled', label: isArabic ? 'المجدولة' : 'Scheduled', count: counts.scheduled, icon: '⏳', color: 'bg-amber-50 border-amber-200' },
+        { key: 'scheduled', label: isArabic ? 'المجدولة' : 'Scheduled', count: counts.scheduled, icon: '⏳', color: 'bg-[#E91E63]' },
         { key: 'sent', label: isArabic ? 'تم إرسالها' : 'Sent', count: counts.sent, icon: '✅', color: 'bg-emerald-50 border-emerald-200' },
         { key: 'failed', label: isArabic ? 'فشلت / ملغاة' : 'Failed / Cancelled', count: counts.failed, icon: '❌', color: 'bg-rose-50 border-rose-200' },
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -153,8 +137,8 @@ export default function MobileNotifications() {
                 </div>
 
                 <button
-                    onClick={() => setActionModal({ isOpen: true, notificationToEdit: null })}
-                    className="bg-[#E91E63] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#D81B60] transition shadow-sm flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+                    onClick={() => navigate('/mobile-notifications/create')}
+                    className="bg-[#E91E63] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#D81B60] transition shadow-2xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto outline-none"
                 >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -201,7 +185,7 @@ export default function MobileNotifications() {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder={t('filters.search_placeholder', { defaultValue: isArabic ? 'البحث في الإشعارات...' : 'Search notifications...' })}
-                        className="w-full border border-gray-200 rounded-lg ps-9 pe-3 py-2 text-xs focus:ring-1 focus:ring-[#E91E63] outline-none"
+                        className="w-full border border-gray-200 rounded-lg ps-9 pe-3 py-2 text-xs focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
                     />
                 </div>
 
@@ -211,9 +195,9 @@ export default function MobileNotifications() {
                         className="relative inline-flex items-center gap-1.5 border border-gray-200 rounded-lg px-3.5 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition"
                     >
                         <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
-                        <span>{t('filters.button', { defaultValue: isArabic ? 'الفلاتر' : 'Filters' })}</span>
+                        <span>{t('filters.button', { defaultValue: isArabic ? 'تصفية' : 'Filter' })}</span>
                         {activeFilterCount > 0 && (
                             <span className="bg-[#E91E63] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                 {activeFilterCount}
@@ -223,21 +207,21 @@ export default function MobileNotifications() {
                 </div>
             </div>
 
-            {/* Notifications Table */}
+            {/* Data Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-center border-collapse">
+                    <table className="w-full text-right border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('table.title', { defaultValue: isArabic ? 'العنوان الداخلي' : 'Internal Title' })}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.audience', { defaultValue: isArabic ? 'الجمهور المستهدف' : 'Target Audience' })}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.schedule', { defaultValue: isArabic ? 'موعد الإرسال' : 'Send Time' })}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status', { defaultValue: isArabic ? 'الحالة' : 'Status' })}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.creator', { defaultValue: isArabic ? 'بواسطة' : 'Created By' })}</th>
-                                <th className="py-3.5 px-4 text-center w-28">{t('table.actions', { defaultValue: isArabic ? 'الإجراءات' : 'Actions' })}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'عنوان الإشعار' : 'Notification Title'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الجمهور المستهدف' : 'Audience'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'وقت الإرسال' : 'Send Time'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'المُنشئ' : 'Created By'}</th>
+                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
+                        <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
                                     <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
@@ -255,8 +239,8 @@ export default function MobileNotifications() {
                                 </tr>
                             ) : (
                                 notifications.map((notification) => (
-                                    <tr key={notification.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                        <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                    <tr key={notification.id} onClick={() => navigate(`/mobile-notifications/${notification.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer">
+                                        <td className="py-3 px-4 text-start font-bold text-gray-900">
                                             {notification.title}
                                         </td>
                                         <td className="py-3 px-4 text-center">
@@ -302,11 +286,17 @@ export default function MobileNotifications() {
                                         <td className="py-3 px-4 text-center font-medium text-gray-600">
                                             {notification.creator?.full_name || notification.creator?.first_name || '-'}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-center">
                                                 <RowActionsMenu
                                                     label={t('actions.title', { defaultValue: isArabic ? 'إجراءات' : 'Actions' })}
                                                     items={[
+                                                        {
+                                                            key: 'details',
+                                                            label: isArabic ? 'التفاصيل' : 'View Details',
+                                                            icon: <EyeIcon />,
+                                                            onClick: () => navigate(`/mobile-notifications/${notification.id}`),
+                                                        },
                                                         notification.status === 'scheduled' && {
                                                             key: 'send_now',
                                                             label: isArabic ? 'إرسال الآن' : 'Send Now',
@@ -320,7 +310,7 @@ export default function MobileNotifications() {
                                                             key: 'edit',
                                                             label: t('actions.edit', { defaultValue: isArabic ? 'تعديل' : 'Edit' }),
                                                             icon: <EditIcon />,
-                                                            onClick: () => setActionModal({ isOpen: true, notificationToEdit: notification }),
+                                                            onClick: () => navigate(`/mobile-notifications/${notification.id}/edit`),
                                                         },
                                                         notification.status === 'scheduled' && {
                                                             key: 'cancel',
@@ -329,16 +319,6 @@ export default function MobileNotifications() {
                                                             onClick: () => {
                                                                 if (window.confirm(isArabic ? 'هل أنت متأكد من إلغاء هذا الإشعار؟' : 'Are you sure you want to cancel this notification?')) {
                                                                     cancelMutation.mutate(notification.id);
-                                                                }
-                                                            },
-                                                        },
-                                                        {
-                                                            key: 'delete',
-                                                            label: isArabic ? 'حذف' : 'Delete',
-                                                            danger: true,
-                                                            onClick: () => {
-                                                                if (window.confirm(isArabic ? 'هل أنت متأكد من حذف هذا الإشعار؟' : 'Are you sure you want to delete this notification?')) {
-                                                                    deleteMutation.mutate(notification.id);
                                                                 }
                                                             },
                                                         },
@@ -401,14 +381,6 @@ export default function MobileNotifications() {
                     </div>
                 </aside>
             </div>
-
-            {/* Notification Modal */}
-            {actionModal.isOpen && (
-                <MobileNotificationActionModal
-                    notificationToEdit={actionModal.notificationToEdit}
-                    onClose={() => setActionModal({ isOpen: false, notificationToEdit: null })}
-                />
-            )}
         </div>
     );
 }
