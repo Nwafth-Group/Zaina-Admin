@@ -772,8 +772,8 @@ export default function ServiceFormPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6 pb-20">
-            {/* Top Bar Header */}
+        <div className="space-y-6 font-main w-full pb-12">
+           {/* Top Bar Header */}
             <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4 bg-white/90">
                 <div className="flex items-center gap-4">
                     <button

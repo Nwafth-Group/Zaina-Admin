@@ -147,7 +147,7 @@ export default function ClientDetails() {
     const totalSpent = bookings.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
 
     return (
-        <div className="space-y-6 font-main max-w-7xl mx-auto pb-12">
+        <div className="space-y-6 font-main w-full pb-12">
             {/* Top Navigation Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-3xl border border-gray-100 shadow-2xs">
                 <div>
