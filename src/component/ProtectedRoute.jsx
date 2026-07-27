@@ -5,7 +5,7 @@ const ProtectedRoute = () => {
   const token = localStorage.getItem('zaina_admin_token');
 
   if (!token) {
-    return <Navigate to="/admin/auth/login" replace />;
+    return <Navigate to="/auth/login" replace />;
   }
 
   return <Outlet />;
