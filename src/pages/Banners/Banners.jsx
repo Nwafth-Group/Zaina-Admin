@@ -163,7 +163,7 @@ export default function Banners() {
                                 setFilters((f) => ({ ...f, status: card.key }));
                                 setPage(1);
                             }}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between ${
                                 isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
                             }`}
                         >
@@ -215,19 +215,19 @@ export default function Banners() {
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('table.image')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.title')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4 ">{t('table.image')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.title')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.status')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="4" className="py-12 text-center text-gray-400">
+                                    <td colSpan="4" className="py-12  text-gray-400">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span className="font-bold text-gray-500">{t('loading')}</span>
@@ -236,7 +236,7 @@ export default function Banners() {
                                 </tr>
                             ) : banners.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="py-12 text-center text-gray-400 font-bold">
+                                    <td colSpan="4" className="py-12  text-gray-400 font-bold">
                                         {t('no_data')}
                                     </td>
                                 </tr>
@@ -245,7 +245,7 @@ export default function Banners() {
                                     const title = isAr ? banner.title_ar : banner.title_en;
                                     return (
                                         <tr key={banner.id} onClick={() => navigate(`/banners/${banner.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer">
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center mx-auto shrink-0">
                                                     {banner.image ? (
                                                         <img src={banner.image} alt="" className="w-full h-full object-cover" />
@@ -256,10 +256,10 @@ export default function Banners() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4 text-start font-bold text-gray-900">
+                                            <td className="py-3 px-4  font-bold text-gray-900">
                                                 {title || <span className="text-gray-400 font-normal">--</span>}
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                     banner.status === 'active'
                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -269,7 +269,7 @@ export default function Banners() {
                                                     {banner.status === 'active' ? t('status.active') : t('status.inactive')}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <td className="py-3 px-4 " onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-center">
                                                     <RowActionsMenu
                                                         label={t('actions.title')}

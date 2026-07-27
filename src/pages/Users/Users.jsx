@@ -190,21 +190,21 @@ export default function Users() {
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+                <table className="w-full text-sm text-left rtl: text-gray-500">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100">
                         <tr>
                             <th className="px-6 py-4">{t('table.name')}</th>
                             <th className="px-6 py-4">{t('table.email')}</th>
                             <th className="px-6 py-4">{t('table.phone')}</th>
                             <th className="px-6 py-4">{t('table.role')}</th>
-                            <th className="px-6 py-4 text-center">{t('table.status')}</th>
-                            <th className="px-6 py-4 text-center">{t('table.actions')}</th>
+                            <th className="px-6 py-4 ">{t('table.status')}</th>
+                            <th className="px-6 py-4 ">{t('table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan="6" className="px-6 py-8  text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <svg className="animate-spin h-5 w-5 text-[#E91E63]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -216,7 +216,7 @@ export default function Users() {
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">{t('no_data')}</td>
+                                <td colSpan="6" className="px-6 py-8  text-gray-500">{t('no_data')}</td>
                             </tr>
                         ) : (
                             users.map((user) => (
@@ -230,12 +230,12 @@ export default function Users() {
                                             <span className="text-xs text-gray-400 ms-1">(+{user.additional_roles_count})</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-center">
+                                    <td className="px-6 py-4 ">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                             {user.status === 'active' ? t('status.active') : t('status.inactive')}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
+                                    <td className="px-6 py-4 ">
                                         <RowActionsMenu
                                             label={t('table.actions')}
                                             items={[

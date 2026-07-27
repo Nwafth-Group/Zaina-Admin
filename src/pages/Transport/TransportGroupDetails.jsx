@@ -97,8 +97,60 @@ export default function TransportGroupDetails() {
         window.open(url, '_blank');
     };
 
+    const handleExportBatchExcel = (group) => {
+        const headers = [
+            isArabic ? 'م' : '#',
+            isArabic ? 'اسم العاملة' : 'Worker Name',
+            isArabic ? 'هاتف العاملة' : 'Worker Mobile',
+            isArabic ? 'عنوان العاملة' : 'Worker Address',
+            isArabic ? 'رقم الحجز' : 'Booking Ref',
+            isArabic ? 'اسم العميل' : 'Customer Name',
+            isArabic ? 'هاتف العميل' : 'Customer Phone',
+            isArabic ? 'الخدمة' : 'Service',
+            isArabic ? 'توقيت الزيارة' : 'Visit Time Slot',
+            isArabic ? 'عنوان تقديم الخدمة' : 'Service Address',
+        ];
+
+        const rows = (group.workers_list || []).map((w, idx) => [
+            idx + 1,
+            `"${(w.name || w.worker_name || '').replace(/"/g, '""')}"`,
+            `"${(w.phone || w.mobile || w.worker_phone || '').replace(/"/g, '""')}"`,
+            `"${(w.address || '').replace(/"/g, '""')}"`,
+            `"${(w.booking_number || w.booking_ref || '').replace(/"/g, '""')}"`,
+            `"${(w.customer_name || w.customer || '').replace(/"/g, '""')}"`,
+            `"${(w.customer_phone || w.phone_number || '').replace(/"/g, '""')}"`,
+            `"${(isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)) || ''}"`,
+            `"${(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`).replace(/"/g, '""')}"`,
+            `"${(w.service_address || '').replace(/"/g, '""')}"`,
+        ]);
+
+        const infoSection = [
+            [isArabic ? 'تاريخ النقل:' : 'Transport Date:', date],
+            [isArabic ? 'المنطقة:' : 'Region:', `${governorate} - ${area}`],
+            [isArabic ? 'فترة الانطلاق:' : 'Shift Batch:', group.start_time],
+            [isArabic ? 'نقطة الانطلاق:' : 'Departure Point:', group.departure_point?.name || '—'],
+            [isArabic ? 'وقت الانطلاق:' : 'Departure Time:', group.departure_time || '—'],
+            [isArabic ? 'السائق المسؤول:' : 'Driver:', `${group.driver?.name || '—'} (${group.driver?.mobile || group.driver?.phone || '—'})`],
+            [''],
+        ];
+
+        const csvContent = '\uFEFF' + 
+            infoSection.map(e => e.join(',')).join('\n') +
+            headers.join(',') + '\n' +
+            rows.map(e => e.join(',')).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `dispatch_${governorate}_${area}_shift_${group.start_time}_${date}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     if (isLoading) {
-        return <div className="p-8 text-center text-gray-500 font-bold">{isArabic ? 'جاري التحميل...' : 'Loading...'}</div>;
+        return <div className="p-8  text-gray-500 font-bold">{isArabic ? 'جاري التحميل...' : 'Loading...'}</div>;
     }
 
     return (
@@ -161,17 +213,24 @@ export default function TransportGroupDetails() {
                                         ⏱️ {group.start_time}
                                     </span>
                                     <h3 className="text-sm font-bold text-gray-900">
-                                        {isArabic ? `مجموعة انطلاق وجبة الساعة ${group.start_time}` : `Shift Batch ${group.start_time}`}
+                                        {isArabic ? `مجموعة انطلاق فترة الساعة ${group.start_time}` : `Shift Batch ${group.start_time}`}
                                     </h3>
                                 </div>
                                 <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-4">
                                     <span>🚏 {isArabic ? 'نقطة الانطلاق' : 'Departure Point'}: <strong>{group.departure_point?.name || 'غير محددة'}</strong></span>
                                     <span>🚀 {isArabic ? 'وقت الانطلاق' : 'Departure Time'}: <strong className="font-mono">{group.departure_time || 'غير محدد'}</strong></span>
-                                    <span>👨‍✈️ {isArabic ? 'السائق' : 'Driver'}: <strong>{group.driver?.name || 'غير محدد'}</strong></span>
+                                    <span>👨‍✈️ {isArabic ? 'السائق' : 'Driver'}: <strong>{group.driver?.name || 'غير محدد'} {group.driver?.mobile || group.driver?.phone ? `(${group.driver?.mobile || group.driver?.phone})` : ''}</strong></span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2 self-end sm:self-auto">
+                                <button
+                                    onClick={() => handleExportBatchExcel(group)}
+                                    className="px-3.5 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
+                                >
+                                    <span>📥</span>
+                                    <span>{isArabic ? 'تصدير إكسل' : 'Export Excel'}</span>
+                                </button>
                                 <button
                                     onClick={() => openDispatchModal(group)}
                                     className="px-3.5 py-2 bg-[#E91E63] text-white hover:bg-[#D81B60] rounded-xl text-xs font-bold transition shadow-2xs"
@@ -194,21 +253,21 @@ export default function TransportGroupDetails() {
                                 {isArabic ? 'قائمة العاملات والتوزيع في هذه المجموعة' : 'Assigned Workers & Customer Drop-offs'}
                             </h4>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-right border-collapse text-xs">
+                                <table className="w-full border-collapse text-xs">
                                     <thead>
                                         <tr className="bg-gray-50 text-gray-500 font-bold uppercase text-[11px] border-b border-gray-100">
-                                            <th className="py-2.5 px-3 text-start">#</th>
-                                            <th className="py-2.5 px-3 text-start">{isArabic ? 'اسم العاملة' : 'Worker Name'}</th>
-                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'سكن العاملة' : 'Dorm Address'}</th>
-                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'رقم الحجز والعميل' : 'Booking & Customer'}</th>
-                                            <th className="py-2.5 px-3 text-start">{isArabic ? 'عنوان تقديم الخدمة' : 'Service Address'}</th>
-                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'الخدمة' : 'Service'}</th>
+                                            <th className="py-2.5 px-3 ">#</th>
+                                            <th className="py-2.5 px-3 ">{isArabic ? 'اسم العاملة' : 'Worker Name'}</th>
+                                            <th className="py-2.5 px-3 ">{isArabic ? 'عنوان العاملة' : 'Worker Address'}</th>
+                                            <th className="py-2.5 px-3 ">{isArabic ? 'رقم الحجز والعميل' : 'Booking & Customer'}</th>
+                                            <th className="py-2.5 px-3 ">{isArabic ? 'عنوان تقديم الخدمة' : 'Service Address'}</th>
+                                            <th className="py-2.5 px-3 ">{isArabic ? 'الخدمة وتوقيت الزيارة' : 'Service & Time'}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {group.workers_list.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="py-6 text-center text-gray-400 font-bold">
+                                                <td colSpan="6" className="py-6  text-gray-400 font-bold">
                                                     {isArabic ? 'لم يتم تعيين عاملات محددات لهذه المجموعات بعد.' : 'No workers assigned yet.'}
                                                 </td>
                                             </tr>
@@ -216,12 +275,39 @@ export default function TransportGroupDetails() {
                                             group.workers_list.map((w, wIdx) => (
                                                 <tr key={wIdx} className="hover:bg-gray-50/60">
                                                     <td className="py-2.5 px-3 font-mono font-bold text-gray-400">{wIdx + 1}</td>
-                                                    <td className="py-2.5 px-3 font-bold text-gray-900">{w.name}</td>
-                                                    <td className="py-2.5 px-3 text-center text-gray-600">{w.address}</td>
-                                                    <td className="py-2.5 px-3 text-center font-mono font-bold text-[#E91E63]">{w.booking_number}</td>
-                                                    <td className="py-2.5 px-3 text-start text-gray-700">{w.service_address}</td>
-                                                    <td className="py-2.5 px-3 text-center font-medium text-gray-800">
-                                                        {isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)}
+                                                    <td className="py-2.5 px-3 font-bold text-gray-900">
+                                                        <div>{w.name || w.worker_name}</div>
+                                                        {(w.phone || w.mobile || w.worker_phone) && (
+                                                            <div className="text-[10px] text-gray-400 font-mono font-normal dir-ltr ">{w.phone || w.mobile || w.worker_phone}</div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-2.5 px-3  text-gray-600">{w.address || w.worker_address || '—'}</td>
+                                                    <td className="py-2.5 px-3  font-mono">
+                                                        {w.booking_id ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => navigate(`/bookings/${w.booking_id}`)}
+                                                                className="text-[#E91E63] font-bold hover:underline outline-none"
+                                                            >
+                                                                #{w.booking_number || w.booking_ref}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="font-bold text-[#E91E63]">#{w.booking_number || w.booking_ref}</span>
+                                                        )}
+                                                        {(w.customer_name || w.customer) && (
+                                                            <div className="text-[10px] text-gray-600 font-bold truncate max-w-[130px] mx-auto mt-0.5">
+                                                                {w.customer_name || w.customer}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-2.5 px-3  text-gray-700">{w.service_address || '—'}</td>
+                                                    <td className="py-2.5 px-3  font-medium text-gray-800">
+                                                        <div>{isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)}</div>
+                                                        {(w.visit_time || w.time_slot || w.start_time) && (
+                                                            <div className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                                                {w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))

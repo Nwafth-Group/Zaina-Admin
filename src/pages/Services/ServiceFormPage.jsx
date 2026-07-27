@@ -321,7 +321,7 @@ export default function ServiceFormPage() {
     const isBabysitting = (watchServiceCode === 'BABYSITTER_HOURLY') || (String(id) === '3') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('babysitting') || selectedCategory.name_en?.toLowerCase().includes('nanny') || selectedCategory.name_ar?.includes('أطفال') || selectedCategory.name_en?.toLowerCase().includes('babysitter')));
     const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (String(id) === '4') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام')));
     const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (String(id) === '2') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
-    const isOtherService = (watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
+    const isOtherService = !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
     const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
 
     // Filterable Workers Picker (Female-only for Services 1, 3, 4; both genders for Service 2)
@@ -332,7 +332,7 @@ export default function ServiceFormPage() {
         hasNextPage: hasMoreWorkers,
         isFetchingNextPage: isFetchingMoreWorkers,
     } = useInfiniteQuery({
-        queryKey: ['page-workers', workerSearch, id, isHospitality, isOtherService],
+        queryKey: ['page-workers', workerSearch, id, isHospitality, isPedicureManicure, isOtherService],
         queryFn: async ({ pageParam = 1 }) => {
             const params = new URLSearchParams({ 
                 page: String(pageParam), 
@@ -343,7 +343,9 @@ export default function ServiceFormPage() {
             if (id) {
                 params.append('include_service_id', String(id));
             }
-            if (isOtherService) {
+            if (isPedicureManicure || isBabysitting || watchServiceCode === 'DOMESTIC_HELPER_HOURLY') {
+                params.append('gender', 'Female');
+            } else if (isOtherService) {
                 params.append('gender', 'Male');
             } else if (!isHospitality) {
                 params.append('gender', 'Female');
@@ -1082,7 +1084,7 @@ export default function ServiceFormPage() {
                                     <label className={LABEL_CLASS}>{t('form.visit_types')}</label>
                                     <span className="text-[10px] text-gray-400 font-semibold">{isArabic ? 'يجب اختيار نوع واحد على الأقل' : 'Select at least one'}</span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className={`grid grid-cols-1 ${(!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService) ? 'sm:grid-cols-2' : ''} gap-4`}>
                                     
                                     {/* Visit type 1: Single Visit Card */}
                                     <div 
@@ -1248,12 +1250,34 @@ export default function ServiceFormPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                             <div>
                                 <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
-                                <input type="number" {...register('min_workers')} className={INPUT_CLASS} />
+                                <input 
+                                    type="number" 
+                                    {...register('min_workers', {
+                                        onChange: (e) => {
+                                            const minVal = Number(e.target.value);
+                                            if (minVal > 0) {
+                                                setValue('max_workers', minVal, { shouldValidate: true });
+                                            }
+                                        }
+                                    })} 
+                                    className={INPUT_CLASS} 
+                                />
                                 <ErrorMsg name="min_workers" />
                             </div>
                             <div>
                                 <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
-                                <input type="number" {...register('max_workers')} className={INPUT_CLASS} />
+                                <input 
+                                    type="number" 
+                                    {...register('max_workers', {
+                                        onChange: (e) => {
+                                            const maxVal = Number(e.target.value);
+                                            if (maxVal > 0) {
+                                                setValue('min_workers', maxVal, { shouldValidate: true });
+                                            }
+                                        }
+                                    })} 
+                                    className={INPUT_CLASS} 
+                                />
                                 <ErrorMsg name="max_workers" />
                             </div>
                         </div>
@@ -1425,11 +1449,11 @@ export default function ServiceFormPage() {
 
                 {/* TAB 4: WORKING DAYS & SHIFTS */}
                 {activeTab === 'shifts' && (
-                    <div className={(isHospitality || isBabysitting) ? "max-w-xl mx-auto space-y-6" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
+                    <div className={(isHospitality || isBabysitting || isPedicureManicure || isOtherService) ? "w-full space-y-6" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
                         
                         {/* Working Days Select */}
                         <FormSection icon="calendar" title={t('form.working_days')} description={isArabic ? 'اختر الأيام المتاحة لتقديم الخدمة.' : 'Select days of the week when this service is active.'}>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className={`grid ${(!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService) ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'} gap-2.5`}>
                                 {WEEK_DAYS.map((day) => (
                                     <label key={day} className="flex items-center gap-2 p-2.5 border border-gray-100 bg-gray-50/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
                                         <input type="checkbox" value={day} {...register('working_days')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
@@ -1440,7 +1464,7 @@ export default function ServiceFormPage() {
                         </FormSection>
 
                         {/* Shift Start/End Times List Builder */}
-                        {!isHospitality && !isBabysitting && (
+                        {!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService && (
                             <FormSection
                                 icon="clock"
                                 title={t('form.shifts')}

@@ -15,7 +15,8 @@ export default function TransportDispatch() {
     const [selectedTime, setSelectedTime] = useState('');
 
     const queryString = useMemo(() => {
-        const params = new URLSearchParams({ service_date: selectedDate });
+        const params = new URLSearchParams();
+        if (selectedDate) params.append('service_date', selectedDate);
         if (selectedGovernorate) params.append('governorate', selectedGovernorate);
         if (selectedStatus) params.append('status', selectedStatus);
         if (selectedTime) params.append('start_time', selectedTime);
@@ -163,13 +164,16 @@ export default function TransportDispatch() {
 
                 <div>
                     <label className="block text-[11px] font-bold text-gray-600 mb-1">{isArabic ? 'المحافظة' : 'Governorate'}</label>
-                    <input
-                        type="text"
+                    <select
                         value={selectedGovernorate}
                         onChange={(e) => setSelectedGovernorate(e.target.value)}
-                        placeholder={isArabic ? 'تصفية بالمحافظة (مثال: القاهرة)' : 'Filter governorate...'}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
-                    />
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none bg-white font-medium"
+                    >
+                        <option value="">{isArabic ? 'جميع المحافظات' : 'All Governorates'}</option>
+                        {['القاهرة', 'الجيزة', 'الإسكندرية', 'عمان', 'الشرقية', 'الدقهلية', 'القليوبية'].map((gov) => (
+                            <option key={gov} value={gov}>{gov}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div>
@@ -210,16 +214,16 @@ export default function TransportDispatch() {
 
                 <div className="divide-y divide-gray-100">
                     {isLoading ? (
-                        <div className="p-12 text-center text-gray-400 font-bold">
+                        <div className="p-12  text-gray-400 font-bold">
                             <div className="flex justify-center items-center gap-2">
                                 <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                 <span>{isArabic ? 'جاري تحميل جدول التوزيع...' : 'Loading dispatch schedule...'}</span>
                             </div>
                         </div>
                     ) : isError ? (
-                        <div className="p-8 text-center text-rose-500 font-bold">{error.message}</div>
+                        <div className="p-8  text-rose-500 font-bold">{error.message}</div>
                     ) : regions.length === 0 ? (
-                        <div className="p-12 text-center text-gray-400 font-bold">
+                        <div className="p-12  text-gray-400 font-bold">
                             {isArabic ? 'لا توجد شفتات توصيل أو حجوزات نشطة بهذا التاريخ.' : 'No dispatch batches found for selected date.'}
                         </div>
                     ) : (

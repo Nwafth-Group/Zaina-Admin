@@ -99,19 +99,19 @@ export default function DeparturePoints() {
             {/* Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'اسم النقطة' : 'Point Name'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'العنوان' : 'Address'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الإحداثيات' : 'Coordinates'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4 ">{isArabic ? 'اسم النقطة' : 'Point Name'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'العنوان' : 'Address'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الإحداثيات' : 'Coordinates'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="4" className="py-12 text-center text-gray-400 font-bold">
+                                    <td colSpan="4" className="py-12  text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{isArabic ? 'جاري التحميل...' : 'Loading...'}</span>
@@ -120,21 +120,21 @@ export default function DeparturePoints() {
                                 </tr>
                             ) : points.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="py-12 text-center text-gray-400 font-bold">
+                                    <td colSpan="4" className="py-12  text-gray-400 font-bold">
                                         {isArabic ? 'لا توجد نقاط انطلاق مضافات بعد.' : 'No departure points added.'}
                                     </td>
                                 </tr>
                             ) : (
                                 points.map((point) => (
                                     <tr key={point.id} className="hover:bg-gray-50/80 transition-colors">
-                                        <td className="py-3 px-4 text-start font-bold text-gray-900 flex items-center gap-2">
+                                        <td className="py-3 px-4 font-bold text-gray-900 flex items-center gap-2">
                                             <span className="text-lg">📍</span>
                                             <span>{point.name}</span>
                                         </td>
-                                        <td className="py-3 px-4 text-center text-gray-600">
+                                        <td className="py-3 px-4  text-gray-600">
                                             {point.address || '—'}
                                         </td>
-                                        <td className="py-3 px-4 text-center font-mono text-[11px] text-gray-500">
+                                        <td className="py-3 px-4  font-mono text-[11px] text-gray-500">
                                             {point.latitude && point.longitude ? (
                                                 <a
                                                     href={`https://maps.google.com/?q=${point.latitude},${point.longitude}`}
@@ -149,7 +149,7 @@ export default function DeparturePoints() {
                                                 '—'
                                             )}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <div className="flex justify-center">
                                                 <RowActionsMenu
                                                     label={isArabic ? 'إجراءات' : 'Actions'}

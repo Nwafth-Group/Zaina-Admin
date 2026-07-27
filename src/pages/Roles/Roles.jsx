@@ -118,7 +118,7 @@ export default function Roles() {
 
     if (!canView) {
         return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 ">
                 <div className="w-14 h-14 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
                     <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -172,7 +172,7 @@ export default function Roles() {
                         <button
                             key={card.key}
                             onClick={() => setStatusFilter(card.key)}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between ${
                                 isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
                             }`}
                         >
@@ -207,21 +207,21 @@ export default function Roles() {
             {/* Roles Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-center border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('role_management.role_name')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('role_management.identifier')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('role_management.description')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('role_management.assigned_users')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('role_management.status')}</th>
-                                {canManage && <th className="py-3.5 px-4 text-center w-28">{t('role_management.actions')}</th>}
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4 ">{t('role_management.role_name')}</th>
+                                <th className="py-3.5 px-4 ">{t('role_management.identifier')}</th>
+                                <th className="py-3.5 px-4 ">{t('role_management.description')}</th>
+                                <th className="py-3.5 px-4 ">{t('role_management.assigned_users')}</th>
+                                <th className="py-3.5 px-4 ">{t('role_management.status')}</th>
+                                {canManage && <th className="py-3.5 px-4  w-28">{t('role_management.actions')}</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="6" className="py-12  text-xs text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{t('role_management.loading')}</span>
@@ -230,7 +230,7 @@ export default function Roles() {
                                 </tr>
                             ) : filteredRoles.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="6" className="py-12  text-xs text-gray-400 font-bold">
                                         {t('role_management.no_roles')}
                                     </td>
                                 </tr>
@@ -245,22 +245,22 @@ export default function Roles() {
                                     const countLabel = uCount === 0 ? t('role_management.users_count_zero') : (uCount === 1 ? t('role_management.users_count_one') : t('role_management.users_count_other', { count: uCount }));
                                     
                                     return (
-                                        <tr key={role.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                            <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                        <tr key={role.id} className="hover:bg-gray-50/80 transition-colors ">
+                                            <td className="py-3 px-4  font-bold text-gray-900">
                                                 {t(`roles.${role.name}`, { defaultValue: role.name })}
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <span className="bg-gray-100 text-gray-700 text-[11px] px-2.5 py-1 rounded font-mono font-bold">{role.code}</span>
                                             </td>
-                                            <td className="py-3 px-4 text-center text-gray-500 max-w-[250px] truncate" title={role.description}>
+                                            <td className="py-3 px-4  text-gray-500 max-w-[250px] truncate" title={role.description}>
                                                 {role.description || '-'}
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <span className="bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-1 rounded-full text-[11px]">
                                                     {countLabel}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 {canManage ? (
                                                     <button
                                                         onClick={() => toggleStatusMutation.mutate({ id: role.id, currentStatus: role.status, roleData: role })}
@@ -277,7 +277,7 @@ export default function Roles() {
                                                 )}
                                             </td>
                                             {canManage && (
-                                                <td className="py-3 px-4 text-center">
+                                                <td className="py-3 px-4 ">
                                                     <div className="flex justify-center items-center gap-1.5">
                                                         <button
                                                             onClick={() => setActionModal({ isOpen: true, roleToEdit: role })}

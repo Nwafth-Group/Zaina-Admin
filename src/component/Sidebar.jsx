@@ -103,7 +103,12 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
                         </svg>
                     ),
                     permission: 'reviews.view'
-                },
+                }
+            ]
+        },
+        {
+            title: isArabic ? 'النقل والتغطية' : 'Transport & Zones',
+            items: [
                 {
                     to: '/transport-dispatch',
                     label: isArabic ? 'إدارة نقل وتوزيع العاملات' : 'Worker Transport & Dispatch',

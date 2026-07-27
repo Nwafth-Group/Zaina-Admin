@@ -162,7 +162,7 @@ export default function LegalDocuments() {
                         <button
                             key={card.key}
                             onClick={() => setSelectedTab(card.key)}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between ${
                                 isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
                             }`}
                         >
@@ -187,7 +187,7 @@ export default function LegalDocuments() {
                         <span>{isArabic ? 'جاري التحميل...' : 'Loading...'}</span>
                     </div>
                 ) : documents.length === 0 ? (
-                    <div className="py-16 text-center text-gray-400 font-bold text-xs bg-white rounded-2xl border border-gray-200">{t('empty')}</div>
+                    <div className="py-16  text-gray-400 font-bold text-xs bg-white rounded-2xl border border-gray-200">{t('empty')}</div>
                 ) : (
                     Object.entries(getGroupedDocuments()).map(([key, group]) => {
                         if (group.items.length === 0) return null;
@@ -205,23 +205,23 @@ export default function LegalDocuments() {
                                     </span>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-center border-collapse">
+                                    <table className="w-full  border-collapse">
                                         <thead>
-                                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                                <th scope="col" className="py-3.5 px-4 text-center">{isArabic ? 'العنوان العربي' : 'Arabic Title'}</th>
-                                                <th scope="col" className="py-3.5 px-4 text-center">{isArabic ? 'العنوان الإنجليزي' : 'English Title'}</th>
-                                                <th scope="col" className="py-3.5 px-4 text-center">{t('sort_order')}</th>
-                                                <th scope="col" className="py-3.5 px-4 text-center">{t('status')}</th>
-                                                <th scope="col" className="py-3.5 px-4 text-center w-28">{t('actions')}</th>
+                                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                                <th scope="col" className="py-3.5 px-4 ">{isArabic ? 'العنوان العربي' : 'Arabic Title'}</th>
+                                                <th scope="col" className="py-3.5 px-4 ">{isArabic ? 'العنوان الإنجليزي' : 'English Title'}</th>
+                                                <th scope="col" className="py-3.5 px-4 ">{t('sort_order')}</th>
+                                                <th scope="col" className="py-3.5 px-4 ">{t('status')}</th>
+                                                <th scope="col" className="py-3.5 px-4  w-28">{t('actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                             {group.items.map((doc) => (
-                                                <tr key={doc.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                                    <td className="py-3 px-4 text-center font-bold text-gray-900">{doc.title_ar}</td>
-                                                    <td className="py-3 px-4 text-center font-medium text-gray-700">{doc.title_en}</td>
-                                                    <td className="py-3 px-4 text-center font-bold text-gray-600 font-mono">{doc.sort_order}</td>
-                                                    <td className="py-3 px-4 text-center">
+                                                <tr key={doc.id} className="hover:bg-gray-50/80 transition-colors ">
+                                                    <td className="py-3 px-4  font-bold text-gray-900">{doc.title_ar}</td>
+                                                    <td className="py-3 px-4  font-medium text-gray-700">{doc.title_en}</td>
+                                                    <td className="py-3 px-4  font-bold text-gray-600 font-mono">{doc.sort_order}</td>
+                                                    <td className="py-3 px-4 ">
                                                         <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                             doc.is_active
                                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -231,7 +231,7 @@ export default function LegalDocuments() {
                                                             {doc.is_active ? t('active') : t('inactive')}
                                                         </span>
                                                     </td>
-                                                    <td className="py-3 px-4 text-center">
+                                                    <td className="py-3 px-4 ">
                                                         <div className="flex justify-center">
                                                             <RowActionsMenu
                                                                 label={isArabic ? 'خيارات' : 'Options'}
@@ -384,7 +384,7 @@ export default function LegalDocuments() {
             {/* Delete Confirmation Modal */}
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-gray-100 text-center">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-gray-100 ">
                         <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
                             ⚠️
                         </div>

@@ -429,40 +429,40 @@ export default function PointsManagement() {
             {activeTab === 'rules' && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-center border-collapse">
+                        <table className="w-full  border-collapse">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الاسم' : 'Name'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الفئة' : 'Category'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'النقاط' : 'Points'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'التكرار' : 'Frequency'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'خيارات' : 'Actions'}</th>
+                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'الاسم' : 'Name'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'الفئة' : 'Category'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'النقاط' : 'Points'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'التكرار' : 'Frequency'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'الحالة' : 'Status'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'خيارات' : 'Actions'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                 {isRulesLoading ? (
                                     <tr>
-                                        <td colSpan="6" className="text-center p-8 text-gray-400">
+                                        <td colSpan="6" className=" p-8 text-gray-400">
                                             {isArabic ? 'جاري التحميل...' : 'Loading rules...'}
                                         </td>
                                     </tr>
                                 ) : !rulesData || rulesData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="text-center p-8 text-gray-400 font-bold">
+                                        <td colSpan="6" className=" p-8 text-gray-400 font-bold">
                                             {isArabic ? 'لا توجد قواعد مضافة بعد.' : 'No points earning rules found.'}
                                         </td>
                                     </tr>
                                 ) : (
                                     rulesData.map(rule => (
                                         <tr key={rule.id} className="hover:bg-gray-50/80 transition-colors">
-                                            <td className="py-3 px-4 text-start font-bold text-gray-900">
+                                            <td className="py-3 px-4  font-bold text-gray-900">
                                                 <div>{isArabic ? rule.title_ar : rule.title_en}</div>
                                                 <div className="text-[11px] text-gray-400 font-normal mt-0.5">
                                                     {isArabic ? rule.subtitle_ar : rule.subtitle_en}
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4 text-start">
+                                            <td className="py-3 px-4 ">
                                                 <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-bold">
                                                     {rule.rule_category === 'referral'
                                                         ? (isArabic ? 'دعوة صديق' : 'Referral')
@@ -475,15 +475,15 @@ export default function PointsManagement() {
                                                         : rule.rule_category}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center text-[#E91E63] font-black">
+                                            <td className="py-3 px-4  text-[#E91E63] font-black">
                                                 {rule.points} {isArabic ? 'نقطة' : 'Pts'}
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <span className="text-gray-500 capitalize text-xs font-medium">
                                                     {rule.frequency_type?.replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                     rule.status
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -493,7 +493,7 @@ export default function PointsManagement() {
                                                     {rule.status ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <div className="flex justify-center gap-2">
                                                     <button
                                                         onClick={() => openEditRuleModal(rule)}
@@ -534,44 +534,44 @@ export default function PointsManagement() {
             {activeTab === 'services' && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-center border-collapse">
+                        <table className="w-full  border-collapse">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'كود الخدمة' : 'Service Code'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'اسم الخدمة' : 'Service Name'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'السعر الأساسي' : 'Base Price'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'إمكانية الدفع بالنقاط' : 'Pay by Points'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'طريقة الاحتساب' : 'Calculation'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'النقاط المطلوبة' : 'Required Points'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'تعديل' : 'Edit'}</th>
+                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'كود الخدمة' : 'Service Code'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'اسم الخدمة' : 'Service Name'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'السعر الأساسي' : 'Base Price'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'إمكانية الدفع بالنقاط' : 'Pay by Points'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'طريقة الاحتساب' : 'Calculation'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'النقاط المطلوبة' : 'Required Points'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'تعديل' : 'Edit'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                 {isServicesLoading ? (
                                     <tr>
-                                        <td colSpan="7" className="text-center p-8 text-gray-400">
+                                        <td colSpan="7" className=" p-8 text-gray-400">
                                             {isArabic ? 'جاري التحميل...' : 'Loading services...'}
                                         </td>
                                     </tr>
                                 ) : !servicesData || servicesData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="text-center p-8 text-gray-400 font-bold">
+                                        <td colSpan="7" className=" p-8 text-gray-400 font-bold">
                                             {isArabic ? 'لا توجد خدمات مضافة.' : 'No services found.'}
                                         </td>
                                     </tr>
                                 ) : (
                                     servicesData.map(svc => (
                                         <tr key={svc.id} className="hover:bg-gray-50/80 transition-colors">
-                                            <td className="py-3 px-4 text-start font-mono text-xs font-bold text-gray-600">
+                                            <td className="py-3 px-4  font-mono text-xs font-bold text-gray-600">
                                                 {svc.service_code}
                                             </td>
-                                            <td className="py-3 px-4 text-start font-bold text-gray-900">
+                                            <td className="py-3 px-4  font-bold text-gray-900">
                                                 {isArabic ? svc.name_ar : svc.name_en}
                                             </td>
-                                            <td className="py-3 px-4 text-start font-black text-gray-900">
+                                            <td className="py-3 px-4  font-black text-gray-900">
                                                 {svc.base_price} EGP
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                     svc.points_redemption_enabled
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -581,16 +581,16 @@ export default function PointsManagement() {
                                                     {svc.points_redemption_enabled ? (isArabic ? 'متاح' : 'Enabled') : (isArabic ? 'غير متاح' : 'Disabled')}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center capitalize text-xs font-medium text-gray-600">
+                                            <td className="py-3 px-4  capitalize text-xs font-medium text-gray-600">
                                                 {svc.points_redemption_method === 'fixed' ? (isArabic ? 'ثابت' : 'Fixed') : (isArabic ? 'نسبة السعر' : 'Price-based')}
                                             </td>
-                                            <td className="py-3 px-4 text-center text-[#E91E63] font-black">
+                                            <td className="py-3 px-4  text-[#E91E63] font-black">
                                                 {svc.points_redemption_method === 'fixed'
                                                     ? `${svc.points_required_fixed} Pts`
                                                     : `1 EGP = ${svc.points_conversion_rate} Pts`
                                                 }
                                             </td>
-                                            <td className="py-3 px-4 text-center">
+                                            <td className="py-3 px-4 ">
                                                 <button
                                                     onClick={() => openEditServiceModal(svc)}
                                                     className="text-[#E91E63] hover:text-[#c2185b] font-bold text-xs transition-colors"
@@ -655,7 +655,7 @@ export default function PointsManagement() {
                                                 setCustomerResults([]);
                                                 setCustomerSearchInput('');
                                             }}
-                                            className="w-full text-left rtl:text-right px-4 py-3 hover:bg-gray-50 flex justify-between items-center transition-colors"
+                                            className="w-full text-left rtl: px-4 py-3 hover:bg-gray-50 flex justify-between items-center transition-colors"
                                         >
                                             <div>
                                                 <div className="font-semibold text-gray-800">{cust.full_name}</div>
@@ -684,7 +684,7 @@ export default function PointsManagement() {
                                     <div className="font-bold text-gray-800 text-base mt-1">{selectedCustomer.full_name}</div>
                                     <div className="text-xs text-gray-500">{selectedCustomer.phone_number}</div>
                                 </div>
-                                <div className="text-right">
+                                <div className="">
                                     <div className="text-xs text-gray-400 font-bold uppercase">{isArabic ? 'الرصيد الحالي' : 'Current Balance'}</div>
                                     <div className="text-[#E91E63] text-xl font-extrabold mt-0.5">{selectedCustomer.points || 0} Pts</div>
                                 </div>
@@ -804,27 +804,27 @@ export default function PointsManagement() {
                     {/* Table ledger */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-center border-collapse">
+                            <table className="w-full  border-collapse">
                                 <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'العميل' : 'Customer'}</th>
-                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'النوع' : 'Type'}</th>
-                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'النقاط' : 'Amount'}</th>
-                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'الرصيد السابق/اللاحق' : 'Before/After'}</th>
-                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'البيان' : 'Description'}</th>
-                                        <th className="py-3.5 px-4 text-center">{isArabic ? 'التاريخ' : 'Date'}</th>
+                                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                        <th className="py-3.5 px-4 ">{isArabic ? 'العميل' : 'Customer'}</th>
+                                        <th className="py-3.5 px-4 ">{isArabic ? 'النوع' : 'Type'}</th>
+                                        <th className="py-3.5 px-4 ">{isArabic ? 'النقاط' : 'Amount'}</th>
+                                        <th className="py-3.5 px-4 ">{isArabic ? 'الرصيد السابق/اللاحق' : 'Before/After'}</th>
+                                        <th className="py-3.5 px-4 ">{isArabic ? 'البيان' : 'Description'}</th>
+                                        <th className="py-3.5 px-4 ">{isArabic ? 'التاريخ' : 'Date'}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                                     {isTxLoading ? (
                                         <tr>
-                                            <td colSpan="6" className="text-center p-8 text-gray-400">
+                                            <td colSpan="6" className=" p-8 text-gray-400">
                                                 {isArabic ? 'جاري التحميل...' : 'Loading transactions...'}
                                             </td>
                                         </tr>
                                     ) : !txData || !txData.items || txData.items.length === 0 ? (
                                         <tr>
-                                            <td colSpan="6" className="text-center p-8 text-gray-400 font-bold">
+                                            <td colSpan="6" className=" p-8 text-gray-400 font-bold">
                                                 {isArabic ? 'لا توجد قيود مسجلة.' : 'No transactions recorded.'}
                                             </td>
                                         </tr>
@@ -836,9 +836,9 @@ export default function PointsManagement() {
 
                                             return (
                                                 <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors">
-                                                    <td className="py-3 px-4 text-start font-bold text-gray-900">
+                                                    <td className="py-3 px-4  font-bold text-gray-900">
                                                         {tx.user ? (
-                                                            <div className="flex flex-col text-start">
+                                                            <div className="flex flex-col ">
                                                                 <div>{tx.user.full_name}</div>
                                                                 <div className="text-[11px] text-gray-400 font-normal mt-0.5" dir="ltr">{tx.user.phone_number}</div>
                                                             </div>
@@ -846,7 +846,7 @@ export default function PointsManagement() {
                                                             <span className="text-gray-400">{isArabic ? 'مستخدم غير معروف' : 'Unknown User'}</span>
                                                         )}
                                                     </td>
-                                                    <td className="py-3 px-4 text-center">
+                                                    <td className="py-3 px-4 ">
                                                         <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
                                                             tx.type === 'earn' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
                                                             tx.type === 'redeem' ? 'bg-rose-50 text-[#E91E63] border border-rose-100' :
@@ -857,15 +857,15 @@ export default function PointsManagement() {
                                                             {tx.type}
                                                         </span>
                                                     </td>
-                                                    <td className={`py-3 px-4 text-center font-black ${
+                                                    <td className={`py-3 px-4  font-black ${
                                                         isCredit ? 'text-emerald-600' : 'text-rose-600'
                                                     }`}>
                                                         {isCredit ? '+' : '-'}{Math.abs(tx.amount)} Pts
                                                     </td>
-                                                    <td className="py-3 px-4 text-center text-gray-500 text-xs font-mono font-bold">
+                                                    <td className="py-3 px-4  text-gray-500 text-xs font-mono font-bold">
                                                         {tx.points_before} &rarr; {tx.points_after}
                                                     </td>
-                                                    <td className="py-3 px-4 text-start">
+                                                    <td className="py-3 px-4 ">
                                                         <div className="font-bold text-gray-900">{isArabic ? tx.title_ar : tx.title_en}</div>
                                                         {(tx.reason || tx.created_by) && (
                                                             <div className="text-[11px] text-gray-400 mt-0.5">
@@ -874,7 +874,7 @@ export default function PointsManagement() {
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="py-3 px-4 text-center text-[11px] text-gray-500 font-medium">
+                                                    <td className="py-3 px-4  text-[11px] text-gray-500 font-medium">
                                                         {tx.created_at ? tx.created_at.substring(0, 10) : '—'}
                                                     </td>
                                                 </tr>

@@ -88,7 +88,7 @@ export default function Reports() {
                         <button
                             key={card.key}
                             onClick={() => selectStatus(card.key)}
-                            className={`p-3.5 rounded-xl border text-start transition-all flex items-center justify-between ${
+                            className={`p-3.5 rounded-xl border  transition-all flex items-center justify-between ${
                                 isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
                             }`}
                         >
@@ -123,23 +123,23 @@ export default function Reports() {
             {/* Reports / Issues Data Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-center border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('table.report_number')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.booking_id')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.customer')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.service')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.reason')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.created_date')}</th>
-                                <th className="py-3.5 px-4 text-center w-28">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4 ">{t('table.report_number')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.booking_id')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.customer')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.service')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.reason')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.status')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.created_date')}</th>
+                                <th className="py-3.5 px-4  w-28">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={8} className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan={8} className="py-12  text-xs text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{t('loading')}</span>
@@ -148,31 +148,31 @@ export default function Reports() {
                                 </tr>
                             ) : reports.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan={8} className="py-12  text-xs text-gray-400 font-bold">
                                         {t('no_data')}
                                     </td>
                                 </tr>
                             ) : (
                                 reports.map((report) => (
-                                    <tr key={report.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                        <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                    <tr key={report.id} className="hover:bg-gray-50/80 transition-colors ">
+                                        <td className="py-3 px-4  font-bold text-gray-900">
                                             {report.report_number || `REP-${report.id}`}
                                         </td>
-                                        <td className="py-3 px-4 text-center font-mono font-bold text-gray-700" dir="ltr">
+                                        <td className="py-3 px-4  font-mono font-bold text-gray-700" dir="ltr">
                                             {report.booking_ref || `#${report.booking_id}`}
                                         </td>
-                                        <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                        <td className="py-3 px-4  font-bold text-gray-900">
                                             {report.customer_name || (isArabic ? 'عميل زينة' : 'Zaina Customer')}
                                         </td>
-                                        <td className="py-3 px-4 text-center font-medium text-gray-700">
+                                        <td className="py-3 px-4  font-medium text-gray-700">
                                             {report.service_name || '—'}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <span className="font-bold text-gray-800">
                                                 {t(`reasons.${report.reason}`, { defaultValue: report.reason })}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                 report.status === 'submitted'
                                                     ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -193,10 +193,10 @@ export default function Reports() {
                                                 {t(`status.${report.status}`, { defaultValue: report.status })}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center text-xs text-gray-500 font-medium" dir="ltr">
+                                        <td className="py-3 px-4  text-xs text-gray-500 font-medium" dir="ltr">
                                             {report.created_at}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <div className="flex justify-center">
                                                 <button
                                                     onClick={() => setDetailsId(report.id)}

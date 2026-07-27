@@ -116,7 +116,7 @@ export default function Clients() {
                             key={card.value || 'all'}
                             type="button"
                             onClick={() => selectVerification(card.value)}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between outline-none ${
                                 isActive
                                     ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
                                     : 'bg-white border-gray-200 hover:border-gray-300'
@@ -153,25 +153,25 @@ export default function Clients() {
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-6 text-center">{t('table.name')}</th>
-                                <th className="py-3.5 px-6 text-center">{t('table.email')}</th>
-                                <th className="py-3.5 px-6 text-center">{t('table.phone')}</th>
-                                <th className="py-3.5 px-6 text-center">{t('table.verification')}</th>
-                                <th className="py-3.5 px-6 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-6 text-center">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-6 ">{t('table.name')}</th>
+                                <th className="py-3.5 px-6 ">{t('table.email')}</th>
+                                <th className="py-3.5 px-6 ">{t('table.phone')}</th>
+                                <th className="py-3.5 px-6 ">{t('table.verification')}</th>
+                                <th className="py-3.5 px-6 ">{t('table.status')}</th>
+                                <th className="py-3.5 px-6 ">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">{t('loading')}</td>
+                                    <td colSpan="6" className="py-12  text-xs text-gray-400 font-bold">{t('loading')}</td>
                                 </tr>
                             ) : clients.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">{t('no_data')}</td>
+                                    <td colSpan="6" className="py-12  text-xs text-gray-400 font-bold">{t('no_data')}</td>
                                 </tr>
                             ) : (
                                 clients.map((client) => {
@@ -180,24 +180,24 @@ export default function Clients() {
                                         <tr 
                                             key={client.id} 
                                             onClick={() => navigate(`/clients/${client.id}`)}
-                                            className="hover:bg-gray-50/80 transition cursor-pointer text-xs text-center"
+                                            className="hover:bg-gray-50/80 transition cursor-pointer text-xs "
                                         >
-                                            <td className="py-3.5 px-6 text-center font-bold text-gray-900">{client.full_name || '-'}</td>
-                                            <td className="py-3.5 px-6 text-center text-gray-600">{client.email || '-'}</td>
-                                            <td className="py-3.5 px-6 text-center font-medium text-gray-700" dir="ltr">{client.mobile_number || '-'}</td>
-                                            <td className="py-3.5 px-6 text-center">
+                                            <td className="py-3.5 px-6  font-bold text-gray-900">{client.full_name || '-'}</td>
+                                            <td className="py-3.5 px-6  text-gray-600">{client.email || '-'}</td>
+                                            <td className="py-3.5 px-6  font-medium text-gray-700" dir="ltr">{client.mobile_number || '-'}</td>
+                                            <td className="py-3.5 px-6 ">
                                                 <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${VERIFICATION_STYLES[vStatus] || VERIFICATION_STYLES.unverified}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${vStatus === 'approved' ? 'bg-emerald-500' : vStatus === 'pending' ? 'bg-amber-500 animate-pulse' : vStatus === 'rejected' ? 'bg-rose-500' : 'bg-gray-400'}`}></span>
                                                     {t(`verification.${vStatus}`, { defaultValue: vStatus })}
                                                 </span>
                                             </td>
-                                            <td className="py-3.5 px-6 text-center">
+                                            <td className="py-3.5 px-6 ">
                                                 <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${client.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${client.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
                                                     {client.status === 'active' ? t('status.active') : t('status.inactive')}
                                                 </span>
                                             </td>
-                                            <td className="py-3.5 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <td className="py-3.5 px-6 " onClick={(e) => e.stopPropagation()}>
                                                 <RowActionsMenu
                                                     label={t('table.actions')}
                                                     items={[

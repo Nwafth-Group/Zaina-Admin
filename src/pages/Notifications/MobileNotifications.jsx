@@ -158,7 +158,7 @@ export default function MobileNotifications() {
                                 setFilters((f) => ({ ...f, status: card.key }));
                                 setPage(1);
                             }}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between ${
                                 isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
                             }`}
                         >
@@ -210,21 +210,21 @@ export default function MobileNotifications() {
             {/* Data Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'عنوان الإشعار' : 'Notification Title'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الجمهور المستهدف' : 'Audience'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'وقت الإرسال' : 'Send Time'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'المُنشئ' : 'Created By'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4 ">{isArabic ? 'عنوان الإشعار' : 'Notification Title'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الجمهور المستهدف' : 'Audience'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'وقت الإرسال' : 'Send Time'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الحالة' : 'Status'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'المُنشئ' : 'Created By'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="6" className="py-12  text-xs text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{t('loading', { defaultValue: isArabic ? 'جاري تحميل الإشعارات...' : 'Loading notifications...' })}</span>
@@ -233,17 +233,17 @@ export default function MobileNotifications() {
                                 </tr>
                             ) : notifications.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="6" className="py-12  text-xs text-gray-400 font-bold">
                                         {t('no_data', { defaultValue: isArabic ? 'لا توجد إشعارات مجدولة بعد.' : 'No notifications scheduled yet.' })}
                                     </td>
                                 </tr>
                             ) : (
                                 notifications.map((notification) => (
                                     <tr key={notification.id} onClick={() => navigate(`/mobile-notifications/${notification.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer">
-                                        <td className="py-3 px-4 text-start font-bold text-gray-900">
+                                        <td className="py-3 px-4  font-bold text-gray-900">
                                             {notification.title}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                 notification.audience === 'all'
                                                     ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -258,10 +258,10 @@ export default function MobileNotifications() {
                                                     : (isArabic ? 'العملاء غير النشطين' : 'Inactive Customers')}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center font-mono text-xs font-bold text-gray-700" dir="ltr">
+                                        <td className="py-3 px-4  font-mono text-xs font-bold text-gray-700" dir="ltr">
                                             {notification.send_date} {notification.send_time}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                 notification.status === 'scheduled'
                                                     ? 'bg-amber-50 text-amber-700 border-amber-200'
@@ -283,10 +283,10 @@ export default function MobileNotifications() {
                                                     : (isArabic ? 'ملغى' : 'Cancelled')}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center font-medium text-gray-600">
+                                        <td className="py-3 px-4  font-medium text-gray-600">
                                             {notification.creator?.full_name || notification.creator?.first_name || '-'}
                                         </td>
-                                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="py-3 px-4 " onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-center">
                                                 <RowActionsMenu
                                                     label={t('actions.title', { defaultValue: isArabic ? 'إجراءات' : 'Actions' })}

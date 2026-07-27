@@ -210,23 +210,23 @@ export default function Coupons() {
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('table.name')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.code')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.type')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.value')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.validity')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.usage')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-4">{t('table.name')}</th>
+                                <th className="py-3.5 px-4">{t('table.code')}</th>
+                                <th className="py-3.5 px-4">{t('table.type')}</th>
+                                <th className="py-3.5 px-4">{t('table.value')}</th>
+                                <th className="py-3.5 px-4">{t('table.validity')}</th>
+                                <th className="py-3.5 px-4">{t('table.usage')}</th>
+                                <th className="py-3.5 px-4">{t('table.status')}</th>
+                                <th className="py-3.5 px-4">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="8" className="py-12 text-center text-gray-400">
+                                    <td colSpan="8" className="py-12 text-gray-400">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span className="font-bold text-gray-500">{t('loading')}</span>
@@ -235,30 +235,30 @@ export default function Coupons() {
                                 </tr>
                             ) : coupons.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="py-12 text-center text-gray-400 font-bold">{t('no_data')}</td>
+                                    <td colSpan="8" className="py-12 text-gray-400 font-bold">{t('no_data')}</td>
                                 </tr>
                             ) : (
                                 coupons.map((c) => (
                                     <tr key={c.id} onClick={() => navigate(`/coupons/${c.id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer">
-                                        <td className="py-3 px-4 text-start font-bold text-gray-900">{c.name}</td>
-                                        <td className="py-3 px-4 text-start">
+                                        <td className="py-3 px-4 font-bold text-gray-900">{c.name}</td>
+                                        <td className="py-3 px-4">
                                             <span className="font-mono text-xs font-black text-[#E91E63] bg-pink-50 px-2.5 py-1 rounded border border-pink-100 whitespace-nowrap">{c.code}</span>
                                         </td>
-                                        <td className="py-3 px-4 text-start font-bold text-gray-600">
+                                        <td className="py-3 px-4 font-bold text-gray-600">
                                             {t(`types.${c.type}`)}
                                         </td>
-                                        <td className="py-3 px-4 text-start font-black text-gray-900">
+                                        <td className="py-3 px-4 font-black text-gray-900">
                                             {c.type === 'percentage' ? `${c.value}%` : `${c.value} EGP`}
                                         </td>
-                                        <td className="py-3 px-4 text-start text-[11px] text-gray-500">
+                                        <td className="py-3 px-4 text-[11px] text-gray-500">
                                             <p className="font-bold text-gray-700">{c.start_date.substring(0, 10)}</p>
                                             <p className="text-gray-400 mt-0.5">{t('details.end_date')}: {c.end_date.substring(0, 10)}</p>
                                         </td>
-                                        <td className="py-3 px-4 text-center text-xs">
+                                        <td className="py-3 px-4 text-xs">
                                             <span className="font-black text-gray-900">{c.used_count}</span>
                                             <span className="text-gray-400 font-normal"> / {c.usage_limit ?? '∞'}</span>
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4">
                                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                 c.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -268,7 +268,7 @@ export default function Coupons() {
                                                 {t(`status.${c.status}`)}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                                             <RowActionsMenu
                                                 label={t('table.actions')}
                                                 items={[
@@ -313,19 +313,6 @@ export default function Coupons() {
 
             {/* Pagination */}
             <Pagination meta={meta} onPageChange={setPage} />
-
-            {/* Details Modal */}
-            {detailsId && (
-                <CouponDetailsModal couponId={detailsId} onClose={() => setDetailsId(null)} />
-            )}
-
-            {/* Action Form Modal */}
-            {actionModal.isOpen && (
-                <CouponActionModal
-                    couponToEdit={actionModal.couponToEdit}
-                    onClose={() => setActionModal({ isOpen: false, couponToEdit: null })}
-                />
-            )}
 
             {/* Delete Confirmation Dialog */}
             {deleteTarget && (

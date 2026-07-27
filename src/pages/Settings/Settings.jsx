@@ -25,7 +25,7 @@ export default function Settings() {
 
     if (!hasPermission('location.edit')) {
         return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-gray-500 font-medium">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10  text-gray-500 font-medium">
                 {t('forbidden')}
             </div>
         );
@@ -41,7 +41,7 @@ export default function Settings() {
                     <Link
                         key={card.key}
                         to={card.to}
-                        className="group w-24 h-24 sm:w-28 sm:h-28 flex flex-col items-center justify-center gap-2 rounded-xl border border-gray-100 bg-gray-50 hover:bg-[#FDF0F3] hover:border-[#E91E63] transition-colors text-center p-2"
+                        className="group w-24 h-24 sm:w-28 sm:h-28 flex flex-col items-center justify-center gap-2 rounded-xl border border-gray-100 bg-gray-50 hover:bg-[#FDF0F3] hover:border-[#E91E63] transition-colors  p-2"
                     >
                         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#E91E63] shadow-sm group-hover:scale-105 transition-transform">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>

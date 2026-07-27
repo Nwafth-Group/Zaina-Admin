@@ -137,7 +137,7 @@ export default function Announcements() {
                     <span>{t('loading')}</span>
                 </div>
             ) : announcements.length === 0 ? (
-                <div className="py-16 text-center text-gray-400 font-bold text-xs bg-white rounded-2xl border border-gray-200">
+                <div className="py-16  text-gray-400 font-bold text-xs bg-white rounded-2xl border border-gray-200">
                     {t('no_data')}
                 </div>
             ) : viewMode === 'grid' ? (
@@ -195,34 +195,34 @@ export default function Announcements() {
             ) : (
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-right border-collapse">
+                        <table className="w-full  border-collapse">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'العنوان' : 'Title'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'نص الإعلان' : 'Body'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'المستلمين' : 'Recipients'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'التاريخ' : 'Date'}</th>
-                                    <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
+                                <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'العنوان' : 'Title'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'نص الإعلان' : 'Body'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'المستلمين' : 'Recipients'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'التاريخ' : 'Date'}</th>
+                                    <th className="py-3.5 px-4 ">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-xs">
                                 {announcements.map((announcement) => (
                                     <tr key={announcement.id} onClick={() => navigate(`/announcements/${announcement.id}`)} className="hover:bg-gray-50/80 transition cursor-pointer">
-                                        <td className="py-3 px-4 text-start font-bold text-gray-900 max-w-[200px] truncate">
+                                        <td className="py-3 px-4  font-bold text-gray-900 max-w-[200px] truncate">
                                             {announcement.title}
                                         </td>
-                                        <td className="py-3 px-4 text-start text-gray-600 max-w-[300px] truncate">
+                                        <td className="py-3 px-4  text-gray-600 max-w-[300px] truncate">
                                             {announcement.body}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-pink-50 text-[#E91E63]">
                                                 {announcement.readers_count ?? 0} {isArabic ? 'مستلم' : 'recipients'}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center text-gray-500 font-medium">
+                                        <td className="py-3 px-4  text-gray-500 font-medium">
                                             {formatDate(announcement.created_at)}
                                         </td>
-                                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="py-3 px-4 " onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-center">
                                                 <RowActionsMenu
                                                     label={t('actions.title')}

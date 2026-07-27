@@ -161,7 +161,7 @@ export default function Reviews() {
                                 setActiveTab(card.value);
                                 setCurrentPage(1);
                             }}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between outline-none ${
                                 isActive
                                     ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
                                     : 'bg-white border-gray-200 hover:border-gray-300'
@@ -216,22 +216,22 @@ export default function Reviews() {
             {/* Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                                <th className="py-3.5 px-4 text-start">{isArabic ? 'العميل' : 'Customer'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الهدف المُقيَّم' : 'Target Item'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'التقييم' : 'Rating'}</th>
-                                <th className="py-3.5 px-4 text-start">{isArabic ? 'التعليق' : 'Comment'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'التاريخ' : 'Date'}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'العميل' : 'Customer'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الهدف المُقيَّم' : 'Target Item'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'التقييم' : 'Rating'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'التعليق' : 'Comment'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الحالة' : 'Status'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'التاريخ' : 'Date'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-center text-gray-400 font-bold">
+                                    <td colSpan="7" className="py-12  text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{isArabic ? 'جاري التحميل...' : 'Loading...'}</span>
@@ -240,7 +240,7 @@ export default function Reviews() {
                                 </tr>
                             ) : reviewsList.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-center text-gray-400 font-bold">
+                                    <td colSpan="7" className="py-12  text-gray-400 font-bold">
                                         {isArabic ? 'لا توجد تقييمات مطابقة للفلاتر الحالية.' : 'No reviews match selected filters.'}
                                     </td>
                                 </tr>
@@ -253,7 +253,7 @@ export default function Reviews() {
 
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                                            <td className="py-3.5 px-4 text-start font-bold text-gray-900">
+                                            <td className="py-3.5 px-4  font-bold text-gray-900">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-7 h-7 rounded-full bg-pink-100 text-[#E91E63] font-black text-xs flex items-center justify-center">
                                                         {item.customer?.name ? item.customer.name.charAt(0) : 'U'}
@@ -265,7 +265,7 @@ export default function Reviews() {
                                                 </div>
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
+                                            <td className="py-3.5 px-4 ">
                                                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                                                     isService ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'
                                                 }`}>
@@ -273,23 +273,23 @@ export default function Reviews() {
                                                 </span>
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
+                                            <td className="py-3.5 px-4 ">
                                                 {renderStars(item.rating)}
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-start max-w-xs truncate text-gray-700 font-medium" title={item.comment}>
+                                            <td className="py-3.5 px-4  max-w-xs truncate text-gray-700 font-medium" title={item.comment}>
                                                 {item.comment || '—'}
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
+                                            <td className="py-3.5 px-4 ">
                                                 {getStatusBadge(item.status)}
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center text-gray-500 font-mono text-[11px]">
+                                            <td className="py-3.5 px-4  text-gray-500 font-mono text-[11px]">
                                                 {item.created_at ? new Date(item.created_at).toLocaleDateString('ar-EG') : '—'}
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
+                                            <td className="py-3.5 px-4 ">
                                                 <div className="flex justify-center">
                                                     <RowActionsMenu
                                                         label={isArabic ? 'إجراءات' : 'Actions'}

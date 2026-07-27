@@ -172,7 +172,7 @@ export default function Employees() {
 
     if (!canView) {
         return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 ">
                 <div className="w-14 h-14 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
                     <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -234,7 +234,7 @@ export default function Employees() {
                                 }
                                 setPage(1);
                             }}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between ${
                                 isActive ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm` : 'bg-white border-gray-200 hover:border-gray-300'
                             }`}
                         >
@@ -319,23 +319,23 @@ export default function Employees() {
             {/* Employees Data Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-center border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center w-16">{t('table.image')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.name')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.contact')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.role')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.type')}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'حد النقاط الشهري' : 'Monthly Limit'}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center w-28">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4  w-16">{t('table.image')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.name')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.contact')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.role')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.type')}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'حد النقاط الشهري' : 'Monthly Limit'}</th>
+                                <th className="py-3.5 px-4 ">{t('table.status')}</th>
+                                <th className="py-3.5 px-4  w-28">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="8" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="8" className="py-12  text-xs text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{t('loading')}</span>
@@ -344,14 +344,14 @@ export default function Employees() {
                                 </tr>
                             ) : employees.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="8" className="py-12  text-xs text-gray-400 font-bold">
                                         {t('no_data')}
                                     </td>
                                 </tr>
                             ) : (
                                 employees.map((employee) => (
-                                    <tr key={employee.id} className="hover:bg-gray-50/80 transition-colors text-center">
-                                        <td className="py-3 px-4 text-center">
+                                    <tr key={employee.id} className="hover:bg-gray-50/80 transition-colors ">
+                                        <td className="py-3 px-4 ">
                                             <div className="w-10 h-10 mx-auto rounded-full bg-gradient-to-tr from-[#E91E63] to-[#F4A9BC] text-white flex items-center justify-center font-bold overflow-hidden shadow-sm">
                                                 {employee.image ? (
                                                     <img src={employee.image} alt={employee.first_name} className="w-full h-full object-cover" />
@@ -360,24 +360,24 @@ export default function Employees() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-3 px-4 text-center font-bold text-gray-900">
+                                        <td className="py-3 px-4  font-bold text-gray-900">
                                             {employee.full_name}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <div className="font-medium text-gray-900">{employee.email}</div>
                                             <div className="text-[11px] text-gray-400 mt-0.5" dir="ltr">{employee.mobile_number}</div>
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             {employee.primary_role ? (
                                                 <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap inline-flex">
                                                     {t(`roles_map.${employee.primary_role}`, { defaultValue: employee.primary_role })}
                                                 </span>
                                             ) : '-'}
                                         </td>
-                                        <td className="py-3 px-4 text-center font-bold text-gray-600 capitalize">
+                                        <td className="py-3 px-4  font-bold text-gray-600 capitalize">
                                             {t(`types.${employee.type}`, { defaultValue: employee.type })}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             {employee.monthly_points_limit !== null && employee.monthly_points_limit > 0 ? (
                                                 <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap inline-flex">
                                                     {employee.monthly_points_limit.toLocaleString()} Pts
@@ -386,7 +386,7 @@ export default function Employees() {
                                                 <span className="text-gray-400 text-xs italic">{isArabic ? 'غير محدود' : 'Unlimited'}</span>
                                             )}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${
                                                 employee.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -396,7 +396,7 @@ export default function Employees() {
                                                 {employee.status === 'active' ? t('status.active') : t('status.inactive')}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4 ">
                                             <div className="flex justify-center">
                                                 <RowActionsMenu
                                                     label={t('actions.edit')}

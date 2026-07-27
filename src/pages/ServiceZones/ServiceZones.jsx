@@ -99,7 +99,7 @@ export default function ServiceZones() {
             {/* Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                 <th className="py-3.5 px-4 ">{isArabic ? 'اسم المنطقة' : 'Zone Name'}</th>

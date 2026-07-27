@@ -269,22 +269,22 @@ export default function Workers() {
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-center border-collapse">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('table.image')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.name')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.nationality')}</th>
-                                <th className="py-3.5 px-4 text-center">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.rating')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-4">{t('table.image')}</th>
+                                <th className="py-3.5 px-4">{t('table.name')}</th>
+                                <th className="py-3.5 px-4">{t('table.nationality')}</th>
+                                <th className="py-3.5 px-4">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</th>
+                                <th className="py-3.5 px-4">{t('table.rating')}</th>
+                                <th className="py-3.5 px-4">{t('table.status')}</th>
+                                <th className="py-3.5 px-4">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-center text-gray-400">
+                                    <td colSpan="7" className="py-12 text-gray-400">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span className="font-bold text-gray-500">{t('loading')}</span>
@@ -293,7 +293,7 @@ export default function Workers() {
                                 </tr>
                             ) : workers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-center text-gray-400 font-bold">{t('no_data')}</td>
+                                    <td colSpan="7" className="py-12 text-gray-400 font-bold">{t('no_data')}</td>
                                 </tr>
                             ) : (
                                 workers.map((worker) => (
@@ -302,8 +302,8 @@ export default function Workers() {
                                         onClick={() => navigate(`/workers/${worker.id}`)}
                                         className="hover:bg-gray-50/70 transition-colors cursor-pointer"
                                     >
-                                        <td className="py-3 px-4 text-center">
-                                            <div className="w-10 h-10 rounded-full bg-pink-50 border border-pink-100 mx-auto flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+                                        <td className="py-3 px-4">
+                                            <div className="w-10 h-10 rounded-full bg-pink-50 border border-pink-100 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
                                                 {worker.image ? (
                                                     <img src={worker.image} alt={worker.name} className="w-full h-full object-cover" />
                                                 ) : (
@@ -313,9 +313,9 @@ export default function Workers() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-3 px-4 text-start font-bold text-gray-900">{worker.name}</td>
-                                        <td className="py-3 px-4 text-start text-gray-600 font-medium">{worker.nationality || '—'}</td>
-                                        <td className="py-3 px-4 text-start">
+                                        <td className="py-3 px-4 font-bold text-gray-900">{worker.name}</td>
+                                        <td className="py-3 px-4 text-gray-600 font-medium">{worker.nationality || '—'}</td>
+                                        <td className="py-3 px-4">
                                             {worker.assigned_service ? (
                                                 <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-pink-50 text-[#E91E63] border border-pink-100 whitespace-nowrap">
                                                     {serviceLabel(worker.assigned_service)}
@@ -324,13 +324,13 @@ export default function Workers() {
                                                 <span className="text-gray-400 font-medium">—</span>
                                             )}
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4">
                                             <div className="inline-flex items-center justify-center gap-1 bg-amber-50 border border-amber-200/60 rounded-lg py-0.5 px-2">
                                                 <span className="text-xs font-mono font-black text-amber-700">{Number(worker.rating || 0).toFixed(1)}</span>
                                                 <svg className="w-3.5 h-3.5 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-4 text-center">
+                                        <td className="py-3 px-4">
                                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
                                                 worker.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -340,7 +340,7 @@ export default function Workers() {
                                                 {worker.status === 'active' ? t('status.active') : t('status.inactive')}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                                             {hasPermission('workers.edit') ? (
                                                 <RowActionsMenu
                                                     label={t('actions.edit')}

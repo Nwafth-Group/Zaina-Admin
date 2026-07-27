@@ -245,7 +245,7 @@ export default function Bookings() {
                             key={card.value || 'all'}
                             type="button"
                             onClick={() => selectStatus(card.value)}
-                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between outline-none ${
                                 isActive
                                     ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
                                     : 'bg-white border-gray-200 hover:border-gray-300'
@@ -313,50 +313,50 @@ export default function Bookings() {
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
+                    <table className="w-full  border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                                <th className="py-3.5 px-4 text-center">{t('table.ref')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.customer')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.service_visit_type')}</th>
-                                <th className="py-3.5 px-4 text-center whitespace-nowrap">{t('table.price_type')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.schedule')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.assigned_workers')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.amount')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.status')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.payment')}</th>
-                                <th className="py-3.5 px-4 text-center">{t('table.actions')}</th>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
+                                <th className="py-3.5 px-4 ">{t('table.ref')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.customer')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.service_visit_type')}</th>
+                                <th className="py-3.5 px-4  whitespace-nowrap">{t('table.price_type')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.schedule')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.assigned_workers')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.amount')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.status')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.payment')}</th>
+                                <th className="py-3.5 px-4 ">{t('table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="10" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="10" className="py-12  text-xs text-gray-400 font-bold">
                                         {isArabic ? 'جاري تحميل الحجوزات...' : 'Loading bookings...'}
                                     </td>
                                 </tr>
                             ) : bookings.length === 0 ? (
                                 <tr>
-                                    <td colSpan="10" className="py-12 text-center text-xs text-gray-400 font-bold">
+                                    <td colSpan="10" className="py-12  text-xs text-gray-400 font-bold">
                                         {t('no_data')}
                                     </td>
                                 </tr>
                             ) : (
                                 bookings.map((b) => (
-                                    <tr key={b.id} onClick={() => navigate(`/bookings/${b.id}`)} className="hover:bg-gray-50/80 transition cursor-pointer text-xs text-center">
+                                    <tr key={b.id} onClick={() => navigate(`/bookings/${b.id}`)} className="hover:bg-gray-50/80 transition cursor-pointer text-xs ">
                                         {/* Reference */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <span className="font-mono text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">{b.booking_ref}</span>
                                         </td>
      
                                         {/* Customer */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <p className="font-bold text-gray-900 line-clamp-1">{b.customer_name || '—'}</p>
                                             {b.customer_phone && <p className="text-[11px] text-gray-400 mt-0.5" dir="ltr">{b.customer_phone}</p>}
                                         </td>
      
                                         {/* Service / Visit Type */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <p className="font-bold text-gray-800 line-clamp-1">{b.service_name || '—'}</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5 whitespace-nowrap">
                                                 {t(`visit_types.${b.visit_type}`, b.visit_type)}
@@ -364,44 +364,44 @@ export default function Bookings() {
                                         </td>
     
                                         {/* Price Type */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <span className="text-gray-600 whitespace-nowrap">
                                                 {t(`pricing_types.${b.pricing_type}`, b.pricing_type)}
                                             </span>
                                         </td>
      
                                         {/* Schedule */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <p className="font-bold text-gray-800 whitespace-nowrap">{b.booking_date || '—'}</p>
                                             {b.time_slot && <p className="text-[11px] text-gray-400 mt-0.5 whitespace-nowrap" dir="ltr">{b.time_slot}</p>}
                                         </td>
     
                                         {/* Workers */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <span className="inline-flex items-center justify-center min-w-[24px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">{b.workers_count}</span>
                                         </td>
     
                                         {/* Amount */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <span className="font-black text-gray-900 whitespace-nowrap">{b.total_amount} <span className="text-[10px] font-normal text-gray-400">{b.currency}</span></span>
                                         </td>
     
                                         {/* Status */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${STATUS_STYLES[b.status] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                                 {t(`status.${b.status}`, b.status)}
                                             </span>
                                         </td>
     
                                         {/* Payment */}
-                                        <td className="py-3.5 px-4 text-center">
+                                        <td className="py-3.5 px-4 ">
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${PAYMENT_STYLES[b.payment_status] || 'bg-gray-100 text-gray-600'}`}>
                                                 {t(`payment.${b.payment_status}`, b.payment_status)}
                                             </span>
                                         </td>
     
                                         {/* Actions — clicks here must not trigger the row's open-details handler */}
-                                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-4 py-3 " onClick={(e) => e.stopPropagation()}>
                                         <RowActionsMenu
                                             label={t('table.actions')}
                                             items={[
