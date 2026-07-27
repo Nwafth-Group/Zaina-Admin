@@ -5,6 +5,27 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
+const format12Hour = (timeStr) => {
+    if (!timeStr || timeStr === '—' || timeStr === 'غير محدد') return timeStr || '—';
+    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (!match) return timeStr;
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+};
+
+const format12HourRange = (timeSlotStr) => {
+    if (!timeSlotStr || timeSlotStr === '—') return '—';
+    const parts = String(timeSlotStr).split('-').map(s => s.trim());
+    if (parts.length === 2) {
+        return `${format12Hour(parts[0])} - ${format12Hour(parts[1])}`;
+    }
+    return format12Hour(timeSlotStr);
+};
+
 export default function TransportGroupDetails() {
     const [searchParams] = useSearchParams();
     const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
@@ -62,7 +83,7 @@ export default function TransportGroupDetails() {
         setActiveGroup(group);
         setDispatchForm({
             departure_point_id: group.departure_point?.id || (departurePoints[0]?.id ?? ''),
-            departure_time: group.departure_time || '07:00',
+            departure_time: format12Hour(group.departure_time || '07:00 AM'),
             driver_id: group.driver?.id || (drivers[0]?.id ?? ''),
             notes: group.notes || '',
         });
@@ -87,10 +108,11 @@ export default function TransportGroupDetails() {
     };
 
     const generateWhatsAppText = (group) => {
-        let text = `*جدول نقل وسائقي العاملات*\n📅 التاريخ: ${date}\n📍 المنطقة: ${governorate} - ${area}\n⏱️ وقت بدء الخدمات: ${group.start_time}\n🚀 وقت الانطلاق: ${group.departure_time || 'غير محدد'}\n🚏 نقطة الانطلاق: ${group.departure_point?.name || 'غير محدودة'}\n👨‍✈️ السائق: ${group.driver?.name || 'غير محدد'}\n\n*بيانات التوصيل والعملاء:*\n`;
+        let text = `*جدول نقل وسائقي العاملات*\n📅 التاريخ: ${date}\n📍 المنطقة: ${governorate} - ${area}\n⏱️ وقت بدء الخدمات: ${format12Hour(group.start_time)}\n🚀 وقت الانطلاق: ${format12Hour(group.departure_time) || 'غير محدد'}\n🚏 نقطة الانطلاق: ${group.departure_point?.name || 'غير محدودة'}\n👨‍✈️ السائق: ${group.driver?.name || 'غير محدد'}\n\n*بيانات التوصيل والعملاء:*\n`;
 
         group.workers_list.forEach((w, i) => {
-            text += `${i + 1}. العاملة: ${w.name} | العميل: ${w.booking_number} | العنوان: ${w.service_address}\n`;
+            const timeRange = format12HourRange(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`);
+            text += `${i + 1}. العاملة: ${w.name} | العميل: ${w.booking_number} | الخدمة: ${w.service_name} (${timeRange}) | العنوان: ${w.service_address}\n`;
         });
 
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
@@ -120,7 +142,7 @@ export default function TransportGroupDetails() {
             `"${(w.customer_name || w.customer || '').replace(/"/g, '""')}"`,
             `"${(w.customer_phone || w.phone_number || '').replace(/"/g, '""')}"`,
             `"${(isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)) || ''}"`,
-            `"${(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`).replace(/"/g, '""')}"`,
+            `"${(format12HourRange(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`)).replace(/"/g, '""')}"`,
             `"${(w.service_address || '').replace(/"/g, '""')}"`,
         ]);
 
@@ -210,15 +232,15 @@ export default function TransportGroupDetails() {
                             <div>
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-xl bg-[#FDF0F3] text-[#E91E63] font-mono font-black text-sm border border-[#fbdbe3]">
-                                        ⏱️ {group.start_time}
+                                        ⏱️ {format12Hour(group.start_time)}
                                     </span>
                                     <h3 className="text-sm font-bold text-gray-900">
-                                        {isArabic ? `مجموعة انطلاق فترة الساعة ${group.start_time}` : `Shift Batch ${group.start_time}`}
+                                        {isArabic ? `مجموعة انطلاق فترة الساعة ${format12Hour(group.start_time)}` : `Shift Batch ${format12Hour(group.start_time)}`}
                                     </h3>
                                 </div>
                                 <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-4">
                                     <span>🚏 {isArabic ? 'نقطة الانطلاق' : 'Departure Point'}: <strong>{group.departure_point?.name || 'غير محددة'}</strong></span>
-                                    <span>🚀 {isArabic ? 'وقت الانطلاق' : 'Departure Time'}: <strong className="font-mono">{group.departure_time || 'غير محدد'}</strong></span>
+                                    <span>🚀 {isArabic ? 'وقت الانطلاق' : 'Departure Time'}: <strong className="font-mono">{format12Hour(group.departure_time) || 'غير محدد'}</strong></span>
                                     <span>👨‍✈️ {isArabic ? 'السائق' : 'Driver'}: <strong>{group.driver?.name || 'غير محدد'} {group.driver?.mobile || group.driver?.phone ? `(${group.driver?.mobile || group.driver?.phone})` : ''}</strong></span>
                                 </div>
                             </div>
@@ -304,8 +326,8 @@ export default function TransportGroupDetails() {
                                                     <td className="py-2.5 px-3  font-medium text-gray-800">
                                                         <div>{isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)}</div>
                                                         {(w.visit_time || w.time_slot || w.start_time) && (
-                                                            <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                                                                {w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`}
+                                                            <div className="text-[10px] text-gray-400 font-mono mt-0.5" dir="ltr">
+                                                                {format12HourRange(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`)}
                                                             </div>
                                                         )}
                                                     </td>
@@ -350,16 +372,26 @@ export default function TransportGroupDetails() {
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 mb-1">{isArabic ? 'وقت الانطلاق *' : 'Departure Time *'}</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         required
                                         value={dispatchForm.departure_time}
                                         onChange={(e) => setDispatchForm({ ...dispatchForm, departure_time: e.target.value })}
-                                        placeholder="07:00"
-                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-[#E91E63] outline-none"
-                                    />
-                                    <span className="text-[10px] text-gray-400 mt-1 block">
-                                        {isArabic ? `يجب أن يكون قبل ${activeGroup?.start_time}` : `Before ${activeGroup?.start_time}`}
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-1 focus:ring-[#E91E63] outline-none bg-white cursor-pointer"
+                                    >
+                                        <option value="">{isArabic ? 'اختر وقت الانطلاق...' : 'Select time...'}</option>
+                                        {[
+                                            '05:00 AM', '05:30 AM', '06:00 AM', '06:30 AM', '07:00 AM', '07:30 AM', 
+                                            '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', 
+                                            '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', 
+                                            '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', 
+                                            '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', 
+                                            '08:00 PM', '08:30 PM', '09:00 PM', '09:30 PM', '10:00 PM'
+                                        ].map((time) => (
+                                            <option key={time} value={time}>{time}</option>
+                                        ))}
+                                    </select>
+                                    <span className="text-[10px] text-gray-500 font-bold mt-1 block">
+                                        {isArabic ? `يجب أن يكون قبل ${format12Hour(activeGroup?.start_time || '11:00 AM')}` : `Before ${format12Hour(activeGroup?.start_time || '11:00 AM')}`}
                                     </span>
                                 </div>
 

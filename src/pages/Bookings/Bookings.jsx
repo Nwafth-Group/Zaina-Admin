@@ -55,6 +55,7 @@ export default function Bookings() {
     const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS); // staged until "Apply"
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [cancelTarget, setCancelTarget] = useState(null); // booking pending cancel confirm
+    const [cancelNote, setCancelNote] = useState('');
     const [rescheduleTarget, setRescheduleTarget] = useState(null);
     const [page, setPage] = useState(1);
     const [isExporting, setIsExporting] = useState(false);
@@ -78,16 +79,17 @@ export default function Bookings() {
                 responseType: 'blob',
             });
 
-            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8;' }));
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.ms-excel;charset=utf-8;' }));
             const link = document.createElement('a');
             link.href = url;
             const dateStr = new Date().toISOString().split('T')[0];
-            link.setAttribute('download', `bookings_export_${dateStr}.csv`);
+            link.setAttribute('download', `bookings_export_${dateStr}.xls`);
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
 
+            
             toast.success(isArabic ? 'تم تصدير ملف الإكسل بنجاح' : 'Bookings exported successfully');
         } catch (err) {
             toast.error(isArabic ? 'حدث خطأ أثناء تصدير البيانات' : 'Failed to export bookings');

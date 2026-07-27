@@ -4,6 +4,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../api/axios.js';
 
+const format12Hour = (timeStr) => {
+    if (!timeStr || timeStr === '—' || timeStr === 'غير محدد') return timeStr || '—';
+    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (!match) return timeStr;
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+};
+
 export default function TransportDispatch() {
     const { i18n } = useTranslation('common');
     const navigate = useNavigate();
@@ -250,7 +262,7 @@ export default function TransportDispatch() {
                                             </span>
                                             <span>•</span>
                                             <span>
-                                                ⏱️ {isArabic ? 'أول شفت يبدأ:' : 'Earliest Start:'} <strong className="text-gray-800 font-mono">{item.earliest_start_time}</strong>
+                                                ⏱️ {isArabic ? 'أول شفت يبدأ:' : 'Earliest Start:'} <strong className="text-gray-800 font-mono">{format12Hour(item.earliest_start_time)}</strong>
                                             </span>
                                         </div>
                                     </div>

@@ -28,6 +28,7 @@ export default function ServiceZoneFormPage() {
     const googleMapRef = useRef(null);
     const polygonRef = useRef(null);
     const markersRef = useRef([]);
+    const hasFittedBoundsRef = useRef(false);
 
     const { data: zoneData, isLoading: isLoadingZone } = useQuery({
         queryKey: ['service-zone-details', id],
@@ -38,13 +39,19 @@ export default function ServiceZoneFormPage() {
     useEffect(() => {
         if (isEdit && zoneData?.data) {
             const z = zoneData.data;
+            const coords = z.polygon_coordinates || [];
             setForm({
                 name: z.name || '',
                 governorate: z.governorate || '',
                 city: z.city || '',
                 status: z.status || 'active',
-                polygon_coordinates: z.polygon_coordinates || [],
+                polygon_coordinates: coords,
             });
+
+            if (googleMapRef.current && coords.length > 0) {
+                renderPolygonOnMap(coords, true);
+                hasFittedBoundsRef.current = true;
+            }
         }
     }, [isEdit, zoneData]);
 
@@ -89,13 +96,17 @@ export default function ServiceZoneFormPage() {
         const initMap = () => {
             if (!mapRef.current) return;
 
-            const initialCenter = (form.polygon_coordinates && form.polygon_coordinates.length > 0)
-                ? { lat: Number(form.polygon_coordinates[0].lat), lng: Number(form.polygon_coordinates[0].lng) }
+            const coordsToUse = form.polygon_coordinates.length > 0 
+                ? form.polygon_coordinates 
+                : (zoneData?.data?.polygon_coordinates || []);
+
+            const initialCenter = (coordsToUse && coordsToUse.length > 0)
+                ? { lat: Number(coordsToUse[0].lat ?? coordsToUse[0][0]), lng: Number(coordsToUse[0].lng ?? coordsToUse[0][1]) }
                 : EGYPT_CENTER;
 
             const map = new window.google.maps.Map(mapRef.current, {
                 center: initialCenter,
-                zoom: (form.polygon_coordinates && form.polygon_coordinates.length > 0) ? 12 : 7,
+                zoom: (coordsToUse && coordsToUse.length > 0) ? 12 : 7,
                 mapTypeControl: false,
                 streetViewControl: false,
             });
@@ -110,16 +121,23 @@ export default function ServiceZoneFormPage() {
                 });
             });
 
-            renderPolygonOnMap(form.polygon_coordinates, true);
+            if (coordsToUse && coordsToUse.length > 0) {
+                renderPolygonOnMap(coordsToUse, true);
+                hasFittedBoundsRef.current = true;
+            }
         };
 
         loadScript();
-    }, []);
+    }, [isLoadingZone]);
 
     // Re-render markers and polygon lines whenever polygon_coordinates change
     useEffect(() => {
-        if (googleMapRef.current) {
-            renderPolygonOnMap(form.polygon_coordinates, false);
+        if (googleMapRef.current && form.polygon_coordinates) {
+            const shouldFit = !hasFittedBoundsRef.current && form.polygon_coordinates.length > 0;
+            renderPolygonOnMap(form.polygon_coordinates, shouldFit);
+            if (shouldFit) {
+                hasFittedBoundsRef.current = true;
+            }
         }
     }, [form.polygon_coordinates]);
 
