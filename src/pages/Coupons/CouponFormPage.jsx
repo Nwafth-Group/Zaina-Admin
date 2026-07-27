@@ -108,7 +108,7 @@ export default function CouponFormPage() {
             setSelectedUsers(fullCoupon.users || []);
             setIsForAllCities(Boolean(fullCoupon.is_for_all_cities));
             setSelectedCityIds((fullCoupon.cities || []).map(c => c.id));
-            setSelectedAreaIds((fullCoupon.areas || []).map(a => a.id));
+            setSelectedAreaIds((fullCoupon.service_zones || fullCoupon.serviceZones || []).map(z => z.id));
             setIsForAllServices(Boolean(fullCoupon.is_for_all_services));
             setMinWorkers(fullCoupon.min_workers ?? '');
             setSelectedServices((fullCoupon.services || []).map(s => ({
@@ -120,15 +120,15 @@ export default function CouponFormPage() {
         }
     }, [fullCoupon, isEditMode, reset]);
 
-    // Fetch cities & areas lists
+    // Fetch cities & service zones lists
     const { data: cities = [] } = useQuery({
         queryKey: ['citiesList'],
         queryFn: async () => (await axiosInstance.get('/admin/cities')).data.data.items || [],
     });
 
-    const { data: areas = [] } = useQuery({
-        queryKey: ['areasList'],
-        queryFn: async () => (await axiosInstance.get('/admin/areas')).data.data.items || [],
+    const { data: serviceZones = [] } = useQuery({
+        queryKey: ['serviceZonesList'],
+        queryFn: async () => (await axiosInstance.get('/admin/service-zones?per_page=100')).data.data.items || [],
     });
 
     // Fetch services list
@@ -176,7 +176,7 @@ export default function CouponFormPage() {
             if (!isForAllCities) {
                 payload.cities = selectedCityIds;
                 if (selectedAreaIds.length > 0) {
-                    payload.areas = selectedAreaIds;
+                    payload.service_zone_ids = selectedAreaIds;
                 }
             }
             if (isForAllServices) {
@@ -315,7 +315,7 @@ export default function CouponFormPage() {
         }));
     };
 
-    const filteredAreas = areas.filter(a => selectedCityIds.includes(a.city_id));
+    const filteredAreas = serviceZones;
 
     return (
         <div className="space-y-6 font-main max-w-7xl mx-auto pb-12">
@@ -550,7 +550,7 @@ export default function CouponFormPage() {
                                         onChange={() => setIsForAllCities(true)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
                                     />
-                                    <span className="text-xs font-bold text-gray-800">{t('details.all_cities')}</span>
+                                    <span className="text-xs font-bold text-gray-800">{isArabic ? 'جميع المناطق الجغرافية' : 'All Service Zones'}</span>
                                 </label>
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
@@ -559,55 +559,31 @@ export default function CouponFormPage() {
                                         onChange={() => setIsForAllCities(false)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
                                     />
-                                    <span className="text-xs font-bold text-gray-800">{isArabic ? 'مدن ومناطق محددة فقط' : 'Specific Cities & Areas Only'}</span>
+                                    <span className="text-xs font-bold text-gray-800">{isArabic ? 'مناطق تغطية جغرافية محددة فقط' : 'Specific Service Zones Only'}</span>
                                 </label>
                             </div>
 
                             {!isForAllCities && (
                                 <div className="space-y-4 pt-2">
-                                    {/* Cities Checkboxes */}
-                                    <div>
-                                        <label className="block text-xs font-extrabold text-gray-700 mb-2">{isArabic ? 'المدن المشمولة:' : 'Covered Cities:'}</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {cities.map(c => {
-                                                const isChecked = selectedCityIds.includes(c.id);
-                                                return (
-                                                    <button
-                                                        key={c.id}
-                                                        type="button"
-                                                        onClick={() => handleCityToggle(c.id)}
-                                                        className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold border transition-all ${
-                                                            isChecked
-                                                                ? 'bg-[#E91E63] text-white border-[#E91E63] shadow-2xs'
-                                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                                                        }`}
-                                                    >
-                                                        {isArabic ? c.name_ar : c.name_en}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    {/* Areas Checkboxes */}
-                                    {filteredAreas.length > 0 && (
-                                        <div className="pt-3 border-t border-gray-100">
-                                            <label className="block text-xs font-extrabold text-gray-700 mb-2">{isArabic ? 'المناطق المحددة (اختياري):' : 'Specific Areas (Optional):'}</label>
+                                    {/* Service Zones Checkboxes */}
+                                    {serviceZones.length > 0 && (
+                                        <div>
+                                            <label className="block text-xs font-extrabold text-gray-700 mb-2">{isArabic ? 'مناطق التغطية الجغرافية المحددة:' : 'Specific Service Zones:'}</label>
                                             <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
-                                                {filteredAreas.map(a => {
-                                                    const isChecked = selectedAreaIds.includes(a.id);
+                                                {serviceZones.map(z => {
+                                                    const isChecked = selectedAreaIds.includes(z.id);
                                                     return (
                                                         <button
-                                                            key={a.id}
+                                                            key={z.id}
                                                             type="button"
-                                                            onClick={() => handleAreaToggle(a.id)}
+                                                            onClick={() => handleAreaToggle(z.id)}
                                                             className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
                                                                 isChecked
                                                                     ? 'bg-purple-600 text-white border-purple-600 shadow-2xs'
                                                                     : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                                                             }`}
                                                         >
-                                                            {isArabic ? a.name_ar : a.name_en}
+                                                            {z.name}
                                                         </button>
                                                     );
                                                 })}

@@ -397,7 +397,7 @@ export default function ClientDetails() {
                                             <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
                                                 <tr>
                                                     <th className="p-4 text-center">{isArabic ? 'العنوان' : 'Label'}</th>
-                                                    <th className="p-4 text-center">{isArabic ? 'المدينة / المنطقة' : 'City / Area'}</th>
+                                                    <th className="p-4 text-center">{isArabic ? 'منطقة التغطية' : 'Service Zone'}</th>
                                                     <th className="p-4 text-center">{isArabic ? 'الشارع' : 'Street'}</th>
                                                     <th className="p-4 text-center">{isArabic ? 'التفاصيل' : 'Details'}</th>
                                                 </tr>
@@ -413,10 +413,10 @@ export default function ClientDetails() {
                                                     addresses.map((addr) => (
                                                         <tr key={addr.id} className="hover:bg-gray-50/60 transition-colors bg-white">
                                                             <td className="p-4 font-bold text-gray-900 text-start">{addr.label || '-'}</td>
-                                                            <td className="p-4 font-medium text-gray-700 text-start">{addr.city?.name_ar || addr.city_name || '-'} / {addr.area?.name_ar || addr.area_name || '-'}</td>
+                                                            <td className="p-4 font-medium text-gray-700 text-start">{addr.service_zone?.name || addr.service_zone_name || addr.serviceZone?.name || '-'}</td>
                                                             <td className="p-4 text-gray-600 text-start">{addr.street || '-'}</td>
                                                             <td className="p-4 text-gray-600 font-medium text-start">
-                                                                {addr.building_no ? `${isArabic ? 'مبنى' : 'Bldg'} ${addr.building_no}, ${isArabic ? 'طابق' : 'Flr'} ${addr.floor_no}, ${isArabic ? 'شقة' : 'Appt'} ${addr.apartment_no}` : addr.description || '-'}
+                                                                {addr.building_no ? `${isArabic ? 'مبنى' : 'Bldg'} ${addr.building_no}, ${isArabic ? 'طابق' : 'Flr'} ${addr.floor ?? addr.floor_no ?? '-'}, ${isArabic ? 'شقة' : 'Appt'} ${addr.apartment_no ?? '-'}` : addr.description || '-'}
                                                             </td>
                                                         </tr>
                                                     ))

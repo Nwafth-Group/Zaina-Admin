@@ -103,6 +103,46 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
                         </svg>
                     ),
                     permission: 'reviews.view'
+                },
+                {
+                    to: '/transport-dispatch',
+                    label: isArabic ? 'إدارة نقل وتوزيع العاملات' : 'Worker Transport & Dispatch',
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h-3.375a1.125 1.125 0 00-1.125 1.125v4.125m4.5-5.25v5.25m0 0H7.5" />
+                        </svg>
+                    ),
+                    permission: 'transport_dispatch.view'
+                },
+                {
+                    to: '/drivers',
+                    label: isArabic ? 'سائقين النقل' : 'Drivers',
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6 0 3.375 3.375 0 016 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                        </svg>
+                    ),
+                    permission: 'drivers.view'
+                },
+                {
+                    to: '/departure-points',
+                    label: isArabic ? 'نقاط الانطلاق' : 'Departure Points',
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                    ),
+                    permission: 'departure_points.view'
+                },
+                {
+                    to: '/service-zones',
+                    label: isArabic ? 'مناطق التغطية (Geo-fencing)' : 'Service Zones',
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503-11.488l4.875 2.437c.381.19.622.58.622 1.006v9.458c0 .812-.86 1.33-1.593.963L15 14.25M9 6.75L3.486 9.507C3.105 9.697 2.864 10.087 2.864 10.513v9.458c0 .812.86 1.33 1.593.963L9 18.75m0-12l6 3m-6 3l6 3" />
+                        </svg>
+                    ),
+                    permission: 'service_zones.view'
                 }
             ]
         },
@@ -199,46 +239,6 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
         {
             title: isArabic ? 'الإعدادات' : 'Settings',
             items: [
-                {
-                    to: '/settings/countries',
-                    label: isArabic ? 'الدول' : 'Countries',
-                    icon: (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M3.6 9h16.8 M3.6 15h16.8 M12 3a15 15 0 010 18 M12 3a15 15 0 000 18" />
-                        </svg>
-                    ),
-                    permission: 'location.edit'
-                },
-                {
-                    to: '/settings/governorates',
-                    label: isArabic ? 'المحافظات' : 'Governorates',
-                    icon: (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503-11.488l4.875 2.437c.381.19.622.58.622 1.006v9.458c0 .812-.86 1.33-1.593.963L15 14.25M9 6.75L3.486 9.507C3.105 9.697 2.864 10.087 2.864 10.513v9.458c0 .812.86 1.33 1.593.963L9 18.75m0-12l6 3m-6 3l6 3" />
-                        </svg>
-                    ),
-                    permission: 'location.edit'
-                },
-                {
-                    to: '/settings/cities',
-                    label: isArabic ? 'المدن' : 'Cities',
-                    icon: (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18 M5 21V7l7-4 7 4v14 M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
-                        </svg>
-                    ),
-                    permission: 'location.edit'
-                },
-                {
-                    to: '/settings/areas',
-                    label: isArabic ? 'المناطق' : 'Areas',
-                    icon: (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                        </svg>
-                    ),
-                    permission: 'location.edit'
-                },
                 {
                     to: '/settings/company-info',
                     label: isArabic ? 'بيانات الشركة' : 'Company Info',

@@ -82,10 +82,10 @@ export default function CouponDetails() {
                 payload.users = (fullDetails.users || []).map(u => u.id);
             }
             if (!fullDetails.is_for_all_cities) {
-                payload.cities = (fullDetails.cities || []).map(c => c.id);
-            }
-            if (fullDetails.areas && fullDetails.areas.length > 0) {
-                payload.areas = fullDetails.areas.map(a => a.id);
+                const zones = fullDetails.service_zones || fullDetails.serviceZones || [];
+                if (zones.length > 0) {
+                    payload.service_zone_ids = zones.map(z => z.id);
+                }
             }
             if (!fullDetails.is_for_all_services) {
                 payload.services = (fullDetails.services || []).map(s => ({
@@ -351,14 +351,14 @@ export default function CouponDetails() {
                                     )}
                                 </div>
 
-                                {/* Areas constraint */}
-                                {coupon.areas && coupon.areas.length > 0 && (
+                                {/* Service Zones constraint */}
+                                {(coupon.service_zones || coupon.serviceZones) && (coupon.service_zones || coupon.serviceZones).length > 0 && (
                                     <div className="pt-3 border-t border-gray-100">
-                                        <p className="text-xs font-bold text-gray-700 mb-2">🏢 {t('details.areas', { count: coupon.areas_count })}</p>
+                                        <p className="text-xs font-bold text-gray-700 mb-2">🏢 {t('details.service_zones', { defaultValue: 'مناطق التغطية الجغرافية المحددة:' })}</p>
                                         <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                                            {coupon.areas.map((a) => (
-                                                <span key={a.id} className="text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded-xl">
-                                                    {a.name}
+                                            {(coupon.service_zones || coupon.serviceZones).map((z) => (
+                                                <span key={z.id} className="text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded-xl">
+                                                    {z.name}
                                                 </span>
                                             ))}
                                         </div>

@@ -123,6 +123,12 @@ export default function PointsManagement() {
         },
     });
 
+    const { data: customersCountData } = useQuery({
+        queryKey: ['customers-count-points'],
+        queryFn: async () => (await axiosInstance.get('/admin/users?type=customer&per_page=1')).data.data,
+    });
+    const totalCustomersCount = customersCountData?.meta?.total ?? customersCountData?.counts?.all ?? 0;
+
     // Customer search for adjustments
     useEffect(() => {
         if (!customerSearchInput.trim()) {
@@ -362,38 +368,38 @@ export default function PointsManagement() {
                 )}
             </div>
 
-            {/* Summary Metric Cards */}
+            {/* Summary Metric Cards (Matching Drivers Layout & Colors) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                <div className="p-4 rounded-xl border bg-[#FDF0F3] border-[#fbdbe3] text-gray-700 flex items-center justify-between shadow-2xs">
                     <div>
-                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'قواعد كسب النقاط' : 'Earning Rules'}</p>
-                        <p className="text-2xl font-black mt-1">{rulesData?.length || 0}</p>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'قواعد كسب النقاط' : 'Earning Rules'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{rulesData?.length || 0}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-pink-50 text-[#E91E63] flex items-center justify-center text-lg">🎁</div>
+                    <div className="text-2xl">🎁</div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-gray-700 flex items-center justify-between shadow-2xs">
                     <div>
-                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'خدمات النقاط' : 'Service Points'}</p>
-                        <p className="text-2xl font-black mt-1">{servicesData?.length || 0}</p>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'خدمات النقاط' : 'Service Points'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{servicesData?.length || 0}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">⚡</div>
+                    <div className="text-2xl">⚡</div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                <div className="p-4 rounded-xl border border-purple-200 bg-purple-50 text-gray-700 flex items-center justify-between shadow-2xs">
                     <div>
-                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'حسابات العملاء' : 'Customer Accounts'}</p>
-                        <p className="text-2xl font-black mt-1">{customerResults?.length || '—'}</p>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'حسابات العملاء' : 'Customer Accounts'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{totalCustomersCount}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-lg">👥</div>
+                    <div className="text-2xl">👥</div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-gray-200 bg-white text-gray-700 flex items-center justify-between shadow-sm">
+                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 text-gray-700 flex items-center justify-between shadow-2xs">
                     <div>
-                        <p className="text-xs font-bold text-gray-400">{isArabic ? 'إجمالي السجلات' : 'Transactions Log'}</p>
-                        <p className="text-2xl font-black mt-1">{txData?.meta?.total || txData?.items?.length || 0}</p>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'إجمالي السجلات' : 'Transactions Log'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{txData?.meta?.total || txData?.items?.length || 0}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg">📜</div>
+                    <div className="text-2xl">📜</div>
                 </div>
             </div>
 

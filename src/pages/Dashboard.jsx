@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axios.js';
 import { TrendBars, TrendArea, Donut, HBars } from '../component/Charts.jsx';
-import BookingDetailsModal from './Bookings/BookingDetailsModal';
 
 const STATUS_COLORS = {
     Upcoming: '#3B82F6',
@@ -46,7 +45,6 @@ export default function Dashboard() {
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
     const [activeStatus, setActiveStatus] = useState(null);
-    const [detailsId, setDetailsId] = useState(null);
 
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ['dashboardStats'],
@@ -187,12 +185,6 @@ export default function Dashboard() {
             </div>
         </div>
 
-        {detailsId && (
-            <BookingDetailsModal
-                bookingId={detailsId}
-                onClose={() => { setDetailsId(null); queryClient.invalidateQueries({ queryKey: ['dashboardStats'] }); }}
-            />
-        )}
         </>
     );
 }

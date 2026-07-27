@@ -6,7 +6,6 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import RowActionsMenu, { EyeIcon, EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
-import CouponActionModal from './CouponActionModal';
 
 const TrashIcon = () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -28,8 +27,6 @@ export default function Coupons() {
     const queryClient = useQueryClient();
     const isArabic = i18n.language?.startsWith('ar');
 
-    const [actionModal, setActionModal] = useState({ isOpen: false, couponToEdit: null });
-    const [detailsId, setDetailsId] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
@@ -98,10 +95,10 @@ export default function Coupons() {
                 payload.users = (fullDetails.users || []).map(u => u.id);
             }
             if (!fullDetails.is_for_all_cities) {
-                payload.cities = (fullDetails.cities || []).map(c => c.id);
-            }
-            if (fullDetails.areas && fullDetails.areas.length > 0) {
-                payload.areas = fullDetails.areas.map(a => a.id);
+                const zones = fullDetails.service_zones || fullDetails.serviceZones || [];
+                if (zones.length > 0) {
+                    payload.service_zone_ids = zones.map(z => z.id);
+                }
             }
             if (!fullDetails.is_for_all_services) {
                 payload.services = (fullDetails.services || []).map(s => ({

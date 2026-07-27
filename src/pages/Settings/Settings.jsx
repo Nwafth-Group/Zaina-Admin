@@ -5,31 +5,10 @@ import { hasPermission } from '../../utils/permissions.js';
 
 const CARDS = [
     {
-        key: 'countries',
-        to: '/settings/countries',
+        key: 'service_zones',
+        to: '/service-zones',
         icon: (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M3.6 9h16.8 M3.6 15h16.8 M12 3a15 15 0 010 18 M12 3a15 15 0 000 18" />
-        ),
-    },
-    {
-        key: 'governorates',
-        to: '/settings/governorates',
-        icon: (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11h4v10" />
-        ),
-    },
-    {
-        key: 'cities',
-        to: '/settings/cities',
-        icon: (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18 M5 21V7l7-4 7 4v14 M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
-        ),
-    },
-    {
-        key: 'areas',
-        to: '/settings/areas',
-        icon: (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503-11.488l4.875 2.437c.381.19.622.58.622 1.006v9.458c0 .812-.86 1.33-1.593.963L15 14.25M9 6.75L3.486 9.507C3.105 9.697 2.864 10.087 2.864 10.513v9.458c0 .812.86 1.33 1.593.963L9 18.75m0-12l6 3m-6 3l6 3" />
         ),
     },
     {

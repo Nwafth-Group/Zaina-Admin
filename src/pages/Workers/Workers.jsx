@@ -167,11 +167,11 @@ export default function Workers() {
     ];
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-black text-gray-900">
+                    <h1 className="text-xl font-black text-gray-900 tracking-tight">
                         {isArabic ? 'إدارة العاملات' : 'Workers Management'}
                     </h1>
                     <p className="text-xs text-gray-500 mt-1">
@@ -180,35 +180,38 @@ export default function Workers() {
                 </div>
             </div>
 
-            {/* Summary Metric Tab Cards */}
+            {/* Summary Metric Tab Cards (Matching Drivers Layout & Colors) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {WORKER_TABS.map((tab) => {
-                    const isSelected = filters.status === tab.statusValue && (tab.key !== 'female' || filters.gender === 'female');
+                {[
+                    { key: 'all', statusValue: '', genderValue: '', label: isArabic ? 'جميع العاملات' : 'All Workers', icon: '👩‍🍳', color: 'bg-[#FDF0F3] border-[#fbdbe3]' },
+                    { key: 'active', statusValue: 'active', genderValue: '', label: isArabic ? 'العاملات النشطات' : 'Active Workers', icon: '✅', color: 'bg-emerald-50 border-emerald-200' },
+                    { key: 'inactive', statusValue: 'inactive', genderValue: '', label: isArabic ? 'غير النشطات' : 'Inactive Workers', icon: '⏸️', color: 'bg-gray-50 border-gray-200' },
+                    { key: 'female', statusValue: '', genderValue: 'female', label: isArabic ? 'عاملات إناث' : 'Female Workers', icon: '👩', color: 'bg-purple-50 border-purple-200' },
+                ].map((card) => {
+                    const isSelected = filters.status === card.statusValue && (card.key !== 'female' || filters.gender === 'female');
                     return (
                         <button
-                            key={tab.key}
+                            key={card.key}
                             type="button"
                             onClick={() => {
                                 setFilters((f) => ({
                                     ...f,
-                                    status: tab.statusValue,
-                                    gender: tab.genderValue || '',
+                                    status: card.statusValue,
+                                    gender: card.genderValue || '',
                                 }));
                                 setPage(1);
                             }}
-                            className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${isSelected ? tab.activeClass : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                                isSelected
+                                    ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                             <div>
-                                <p className={`text-xs font-bold ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
-                                    {tab.label}
-                                </p>
-                                <p className="text-2xl font-black mt-1">
-                                    {counts[tab.key] ?? 0}
-                                </p>
+                                <p className="text-xs font-bold text-gray-500">{card.label}</p>
+                                <p className="text-2xl font-black text-gray-900 mt-1">{counts[card.key] ?? 0}</p>
                             </div>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${isSelected ? 'bg-white/20 text-white' : tab.iconBg}`}>
-                                {tab.icon}
-                            </div>
+                            <div className="text-2xl">{card.icon}</div>
                         </button>
                     );
                 })}

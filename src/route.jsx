@@ -29,10 +29,6 @@ import Coupons from './pages/Coupons/Coupons.jsx';
 import CouponDetails from './pages/Coupons/CouponDetails.jsx';
 import CouponFormPage from './pages/Coupons/CouponFormPage.jsx';
 import Settings from './pages/Settings/Settings.jsx';
-import Countries from './pages/Settings/Countries.jsx';
-import Governorates from './pages/Settings/Governorates.jsx';
-import Cities from './pages/Settings/Cities.jsx';
-import Areas from './pages/Settings/Areas.jsx';
 import CompanyInfo from './pages/Settings/CompanyInfo.jsx';
 import Roles from './pages/Roles/Roles.jsx';
 import MobileNotifications from './pages/Notifications/MobileNotifications.jsx';
@@ -42,10 +38,18 @@ import Reports from './pages/Reports/Reports.jsx';
 import LegalDocuments from './pages/LegalDocuments/LegalDocuments.jsx';
 import PointsManagement from './pages/Points/PointsManagement.jsx';
 import Reviews from './pages/Reviews/Reviews.jsx';
+import Drivers from './pages/Drivers/Drivers.jsx';
+import DriverFormPage from './pages/Drivers/DriverFormPage.jsx';
+import DeparturePoints from './pages/DeparturePoints/DeparturePoints.jsx';
+import DeparturePointFormPage from './pages/DeparturePoints/DeparturePointFormPage.jsx';
+import ServiceZones from './pages/ServiceZones/ServiceZones.jsx';
+import ServiceZoneFormPage from './pages/ServiceZones/ServiceZoneFormPage.jsx';
+import TransportDispatch from './pages/Transport/TransportDispatch.jsx';
+import TransportGroupDetails from './pages/Transport/TransportGroupDetails.jsx';
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: '/auth',
     element: <GuestRoute />,
     children: [
       { path: '', element: <AuthLayout />, children: [{ index: true, element: <LoginPage /> }, { path: 'login', element: <LoginPage /> }] },
@@ -56,13 +60,13 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children : [
       {
-      path: '/',
-      element: <AdminLayout />,
-      children: [
-        {
-          index: true,
-          element: <Dashboard />,
-        },
+        path: '',
+        element: <AdminLayout />,
+        children: [
+          {
+            index: true,
+            element: <Dashboard />,
+          },
         {
           path: 'operations',
           element: <Operations />,
@@ -176,13 +180,20 @@ export const router = createBrowserRouter([
           element: <PermissionRoute permission="location.edit" />,
           children: [
             { path: 'settings', element: <Settings /> },
-            { path: 'settings/countries', element: <Countries /> },
-            { path: 'settings/governorates', element: <Governorates /> },
-            { path: 'settings/cities', element: <Cities /> },
-            { path: 'settings/areas', element: <Areas /> },
             { path: 'settings/company-info', element: <CompanyInfo /> },
           ],
         },
+        { path: 'drivers', element: <Drivers /> },
+        { path: 'drivers/create', element: <DriverFormPage /> },
+        { path: 'drivers/:id/edit', element: <DriverFormPage /> },
+        { path: 'departure-points', element: <DeparturePoints /> },
+        { path: 'departure-points/create', element: <DeparturePointFormPage /> },
+        { path: 'departure-points/:id/edit', element: <DeparturePointFormPage /> },
+        { path: 'service-zones', element: <ServiceZones /> },
+        { path: 'service-zones/create', element: <ServiceZoneFormPage /> },
+        { path: 'service-zones/:id/edit', element: <ServiceZoneFormPage /> },
+        { path: 'transport-dispatch', element: <TransportDispatch /> },
+        { path: 'transport-dispatch/details', element: <TransportGroupDetails /> },
         {
           element: <PermissionRoute permission="roles.view" />,
           children: [

@@ -26,57 +26,7 @@ const calculateEndTime = (startTimeStr, durationHours) => {
     }
 };
 
-function ServiceCoverageRow({ index, register, control, setValue, errors, citiesList, isArabic, t, onRemove, canRemove }) {
-    const cityId = useWatch({ control, name: `coverages.${index}.city_id` });
-    
-    // Fetch areas for the selected city
-    const { data: areas = [] } = useQuery({
-        queryKey: ['areas', cityId],
-        queryFn: async () => (await axiosInstance.get(`/admin/areas?city_id=${cityId}`)).data.data.items || [],
-        enabled: !!cityId,
-    });
 
-    const rowErrors = errors?.coverages?.[index] || {};
-    const cityField = register(`coverages.${index}.city_id`);
-
-    return (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3">
-            <div className="flex justify-between items-center">
-                <span className="text-xs font-semibold text-gray-500">{t('form.coverages')} #{index + 1}</span>
-                {canRemove && (
-                    <button type="button" onClick={onRemove} className="text-xs font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors">
-                        {t('form.remove')}
-                    </button>
-                )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.city')}</label>
-                    <SelectField registration={{ ...cityField, onChange: (e) => { cityField.onChange(e); setValue(`coverages.${index}.area_id`, ''); } }}>
-                        <option value="">{t('form.select_city')}</option>
-                        {citiesList.map((c) => <option key={c.id} value={c.id}>{isArabic ? c.name_ar : c.name_en}</option>)}
-                    </SelectField>
-                    {rowErrors.city_id && <p className="text-red-500 text-xs mt-1">{rowErrors.city_id.message}</p>}
-                </div>
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.area')}</label>
-                    <SelectField registration={register(`coverages.${index}.area_id`)} disabled={!cityId}>
-                        <option value="">{t('form.select_area')}</option>
-                        {areas.map((a) => <option key={a.id} value={a.id}>{isArabic ? a.name_ar : a.name_en}</option>)}
-                    </SelectField>
-                </div>
-                <div>
-                    <label className={LABEL_CLASS}>{t('form.status')}</label>
-                    <SelectField registration={register(`coverages.${index}.status`)}>
-                        <option value="active">{t('status.active')}</option>
-                        <option value="inactive">{t('status.inactive')}</option>
-                        <option value="coming_soon">{isArabic ? 'قريباً' : 'Coming Soon'}</option>
-                    </SelectField>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 export default function ServiceFormPage() {
     const { id } = useParams();
@@ -86,6 +36,7 @@ export default function ServiceFormPage() {
     const isEditMode = !!id;
     const isArabic = i18n.language === 'ar';
     const [activeTab, setActiveTab] = useState('basic');
+    const [selectedZoneIds, setSelectedZoneIds] = useState([]);
 
     // Filterable Workers Picker
     const [workerSearchInput, setWorkerSearchInput] = useState('');
@@ -106,12 +57,22 @@ export default function ServiceFormPage() {
         queryKey: ['categoriesList'],
         queryFn: async () => (await axiosInstance.get('/admin/categories')).data.data.items || [],
     });
-
-    // Fetch Cities for Coverage tab
-    const { data: citiesList = [] } = useQuery({
-        queryKey: ['citiesList'],
-        queryFn: async () => (await axiosInstance.get('/admin/cities')).data.data.items || [],
+    
+    // Fetch Geo-fenced Service Zones
+    const { data: serviceZonesList = [] } = useQuery({
+        queryKey: ['serviceZonesList'],
+        queryFn: async () => {
+            const res = (await axiosInstance.get('/admin/service-zones?per_page=100')).data;
+            return res?.data?.items || res?.data || [];
+        },
     });
+
+    // Auto-select all zones in Create Mode
+    useEffect(() => {
+        if (!isEditMode && serviceZonesList.length > 0 && selectedZoneIds.length === 0) {
+            setSelectedZoneIds(serviceZonesList.map(z => String(z.id)));
+        }
+    }, [isEditMode, serviceZonesList]);
 
     const schema = yup.object().shape({
         category_id: yup.string().nullable().notRequired(),
@@ -147,12 +108,6 @@ export default function ServiceFormPage() {
             then: (s) => s.required(t('validation.required')).min(0).max(100),
             otherwise: (s) => s.nullable(),
         }),
-
-        coverages: yup.array().of(yup.object().shape({
-            city_id: yup.string().required(t('validation.required')),
-            area_id: yup.string().nullable(),
-            status: yup.string().required(t('validation.required'))
-        })).min(1, t('validation.required')),
 
         start_time: yup.string().nullable()
             .test('start_time_hosp', isArabic ? 'وقت البدء يجب أن يكون بين 8:00 ص و 8:00 م' : 'Start time must be between 8:00 AM and 8:00 PM for Hospitality Services', function(value) {
@@ -314,7 +269,6 @@ export default function ServiceFormPage() {
             single_visit_discount: 0,
             three_days_checked: false,
             three_days_discount: 0,
-            coverages: [{ city_id: '', area_id: '', status: 'active' }],
             base_price: '',
             start_time: '',
             end_time: '',
@@ -349,7 +303,6 @@ export default function ServiceFormPage() {
     });
 
     const { fields: featureFields, append: appendFeature, remove: removeFeature } = useFieldArray({ control, name: 'features' });
-    const { fields: coverageFields, append: appendCoverage, remove: removeCoverage } = useFieldArray({ control, name: 'coverages' });
     const { fields: shiftFields, append: appendShift, remove: removeShift } = useFieldArray({ control, name: 'shifts' });
     const { fields: childAgeGroupFields, append: appendChildAgeGroup, remove: removeChildAgeGroup } = useFieldArray({ control, name: 'child_age_groups' });
 
@@ -469,12 +422,6 @@ export default function ServiceFormPage() {
         if (isEditMode && fullServiceData) {
             const singleVisit = (fullServiceData.available_visit_types || []).find(vt => vt.type === 'single_visit');
             const threeDays = (fullServiceData.available_visit_types || []).find(vt => vt.type === '3_days_per_week');
-            
-            const coverages = (fullServiceData.coverages || []).map((c) => ({
-                city_id: String(c.city?.id || ''),
-                area_id: c.area?.id ? String(c.area.id) : '',
-                status: c.status || 'active',
-            }));
 
             // Map working days from schedules or available_days
             let workingDaysSet = [];
@@ -506,6 +453,13 @@ export default function ServiceFormPage() {
                 shifts = Object.keys(shiftTimes).map((sTime) => ({ start_time: sTime, end_time: shiftTimes[sTime] }));
             }
 
+            const rawZoneIds = (fullServiceData.service_zone_ids && fullServiceData.service_zone_ids.length > 0)
+                ? fullServiceData.service_zone_ids
+                : (fullServiceData.service_zones || []).map(z => z.id);
+            if (rawZoneIds && rawZoneIds.length > 0) {
+                setSelectedZoneIds(rawZoneIds.map(String));
+            }
+
             reset({
                 category_id: fullServiceData.category?.id ? String(fullServiceData.category.id) : '',
                 type: fullServiceData.type || 'hourly',
@@ -523,7 +477,6 @@ export default function ServiceFormPage() {
                 three_days_checked: !!threeDays,
                 three_days_discount: threeDays ? threeDays.discount : 0,
                 
-                coverages: coverages.length ? coverages : [{ city_id: '', area_id: '', status: 'active' }],
                 
                 start_time: fullServiceData.start_time ? fullServiceData.start_time.slice(0, 5) : '',
                 end_time: fullServiceData.end_time ? fullServiceData.end_time.slice(0, 5) : '',
@@ -605,11 +558,9 @@ export default function ServiceFormPage() {
                 vtIndex++;
             }
 
-            // Coverages
-            (data.coverages || []).forEach((cov, i) => {
-                payload.append(`coverages[${i}][city_id]`, cov.city_id);
-                if (cov.area_id) payload.append(`coverages[${i}][area_id]`, cov.area_id);
-                payload.append(`coverages[${i}][status]`, cov.status || 'active');
+            // Service Zones
+            (selectedZoneIds || []).forEach((zid, i) => {
+                payload.append(`service_zone_ids[${i}]`, zid);
             });
 
             // Start & End Windows
@@ -714,7 +665,6 @@ export default function ServiceFormPage() {
                 description_en: 'basic',
                 type: 'basic',
                 base_price: 'locations',
-                coverages: 'locations',
                 default_duration: 'durations',
                 min_duration: 'durations',
                 max_duration: 'durations',
@@ -758,7 +708,6 @@ export default function ServiceFormPage() {
             description_en: 'basic',
             type: 'basic',
             base_price: 'locations',
-            coverages: 'locations',
             default_duration: 'durations',
             min_duration: 'durations',
             max_duration: 'durations',
@@ -876,7 +825,7 @@ export default function ServiceFormPage() {
                 {tabs.map((tab) => {
                     const active = activeTab === tab.id;
                     const hasErr = (tab.id === 'basic' && (errors.name_ar || errors.name_en || errors.description_ar || errors.description_en || errors.type)) ||
-                                   (tab.id === 'locations' && (errors.base_price || errors.coverages || errors.visit_types)) ||
+                                   (tab.id === 'locations' && (errors.base_price || errors.visit_types)) ||
                                    (tab.id === 'durations' && (errors.default_duration || errors.min_duration || errors.max_duration || errors.min_workers || errors.max_workers || errors.covered_persons_per_worker || errors.min_children || errors.max_children || errors.child_age_groups)) ||
                                    (tab.id === 'shifts' && (errors.working_days || errors.shifts)) ||
                                    (tab.id === 'rules' && (errors.rules || errors.terms_ar || errors.terms_en)) ||
@@ -1067,28 +1016,50 @@ export default function ServiceFormPage() {
                     <div className="space-y-6">
                         <FormSection
                             icon="location"
-                            title={t('form.coverages')}
-                            description={isArabic ? 'اختر المدن والمناطق التي تغطيها هذه الخدمة وحالتها.' : 'Configure city and area coverage scopes for this service.'}
-                            action={<button type="button" onClick={() => appendCoverage({ city_id: '', area_id: '', status: 'active' })} className="text-xs font-semibold text-[#E91E63] hover:bg-[#FDF0F3] px-2.5 py-1 rounded transition-colors">+ {t('form.add_coverage')}</button>}
+                            title={isArabic ? 'مناطق التغطية الجغرافية (Geo-Fenced Zones)' : 'Geo-Fenced Service Zones'}
+                            description={isArabic ? 'اختر المناطق الجغرافية المحددة بالخرائط التي تنطبق عليها هذه الخدمة.' : 'Select polygon zones on the map where this service is active.'}
                         >
-                            {errors.coverages?.message && <p className="text-red-500 text-xs">{errors.coverages.message}</p>}
-                            <div className="space-y-3">
-                                {coverageFields.map((field, index) => (
-                                    <ServiceCoverageRow
-                                        key={field.id}
-                                        index={index}
-                                        register={register}
-                                        control={control}
-                                        setValue={setValue}
-                                        errors={errors}
-                                        citiesList={citiesList}
-                                        isArabic={isArabic}
-                                        t={t}
-                                        onRemove={() => removeCoverage(index)}
-                                        canRemove={coverageFields.length > 1}
-                                    />
-                                ))}
-                            </div>
+                            {serviceZonesList.length === 0 ? (
+                                <p className="text-xs text-gray-400 italic py-2">
+                                    {isArabic ? 'لا توجد مناطق تغطية مضافة حالياً. يمكنك إنشاء مناطق جديدة من صفحة "مناطق التغطية".' : 'No service zones found. Create new zones from Service Zones page.'}
+                                </p>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                                    {serviceZonesList.map((zone) => {
+                                        const isSelected = selectedZoneIds.some((zid) => String(zid) === String(zone.id));
+                                        return (
+                                            <div
+                                                key={zone.id}
+                                                onClick={() => {
+                                                    setSelectedZoneIds((prev) =>
+                                                        isSelected ? prev.filter((zid) => String(zid) !== String(zone.id)) : [...prev, String(zone.id)]
+                                                    );
+                                                }}
+                                                className={`cursor-pointer p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                                                    isSelected
+                                                        ? 'border-[#E91E63] bg-[#FDF0F3]/40 text-gray-900 shadow-2xs'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2.5">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={() => {}}
+                                                        className="w-4 h-4 text-[#E91E63] rounded border-gray-300 focus:ring-[#E91E63]"
+                                                    />
+                                                    <div>
+                                                        <p className="text-xs font-extrabold text-gray-800">{zone.name}</p>
+                                                    </div>
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${zone.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                                                    {zone.status === 'active' ? (isArabic ? 'مفعلة' : 'Active') : (isArabic ? 'معطلة' : 'Inactive')}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </FormSection>
 
                         <FormSection icon="sparkles" title={isArabic ? 'الأسعار والزيارات' : 'Prices & Visit Options'}>

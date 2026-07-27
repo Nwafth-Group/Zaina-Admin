@@ -88,10 +88,10 @@ export default function Clients() {
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Header */}
             <div>
-                <h1 className="text-xl font-black text-gray-900">
+                <h1 className="text-xl font-black text-gray-900 tracking-tight">
                     {isArabic ? 'إدارة العملاء' : 'Clients Management'}
                 </h1>
                 <p className="text-xs text-gray-500 mt-1">
@@ -99,50 +99,34 @@ export default function Clients() {
                 </p>
             </div>
 
-            {/* Summary Metric Tab Cards */}
+            {/* Summary Metric Tab Cards (Matching Drivers Layout & Colors) */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {VERIFICATION_TABS.map((tab) => {
-                    const active = verification === tab.value;
-                    let activeStyle = 'bg-[#E91E63] text-white border-[#E91E63] shadow-md';
-                    let iconBg = 'bg-pink-50 text-[#E91E63]';
-                    let icon = '👥';
-
-                    if (tab.value === 'pending') {
-                        activeStyle = 'bg-amber-500 text-white border-amber-500 shadow-md';
-                        iconBg = 'bg-amber-50 text-amber-600';
-                        icon = '⏳';
-                    } else if (tab.value === 'approved') {
-                        activeStyle = 'bg-emerald-600 text-white border-emerald-600 shadow-md';
-                        iconBg = 'bg-emerald-50 text-emerald-600';
-                        icon = '✅';
-                    } else if (tab.value === 'rejected') {
-                        activeStyle = 'bg-rose-600 text-white border-rose-600 shadow-md';
-                        iconBg = 'bg-rose-50 text-rose-600';
-                        icon = '❌';
-                    } else if (tab.value === 'unverified') {
-                        activeStyle = 'bg-gray-800 text-white border-gray-800 shadow-md';
-                        iconBg = 'bg-gray-100 text-gray-600';
-                        icon = '🔒';
-                    }
+                {[
+                    { value: '', labelAr: 'جميع العملاء', labelEn: 'All Clients', icon: '👥', color: 'bg-[#FDF0F3] border-[#fbdbe3]' },
+                    { value: 'pending', labelAr: 'قيد التوثيق', labelEn: 'Pending Verification', icon: '⏳', color: 'bg-amber-50 border-amber-200' },
+                    { value: 'approved', labelAr: 'حسابات موثقة', labelEn: 'Approved', icon: '✅', color: 'bg-emerald-50 border-emerald-200' },
+                    { value: 'rejected', labelAr: 'توثيق مرفوض', labelEn: 'Rejected', icon: '❌', color: 'bg-rose-50 border-rose-200' },
+                    { value: 'unverified', labelAr: 'غير موثقة', labelEn: 'Unverified', icon: '🔒', color: 'bg-gray-50 border-gray-200' },
+                ].map((card) => {
+                    const isActive = verification === card.value;
+                    const countVal = counts[card.value || 'all'] ?? 0;
 
                     return (
                         <button
-                            key={tab.value || 'all'}
+                            key={card.value || 'all'}
                             type="button"
-                            onClick={() => selectVerification(tab.value)}
-                            className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${active ? activeStyle : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                            onClick={() => selectVerification(card.value)}
+                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                                isActive
+                                    ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                             <div>
-                                <p className={`text-xs font-bold ${active ? 'text-white/80' : 'text-gray-400'}`}>
-                                    {t(tab.label)}
-                                </p>
-                                <p className="text-2xl font-black mt-1">
-                                    {counts[tab.value || 'all'] ?? 0}
-                                </p>
+                                <p className="text-xs font-bold text-gray-500">{isArabic ? card.labelAr : card.labelEn}</p>
+                                <p className="text-2xl font-black text-gray-900 mt-1">{countVal}</p>
                             </div>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${active ? 'bg-white/20 text-white' : iconBg}`}>
-                                {icon}
-                            </div>
+                            <div className="text-2xl">{card.icon}</div>
                         </button>
                     );
                 })}

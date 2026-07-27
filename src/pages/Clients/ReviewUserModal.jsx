@@ -243,7 +243,7 @@ export default function ReviewUserModal({ userId, onClose }) {
                                             <thead className="bg-gray-50 text-gray-500 uppercase font-bold border-b border-gray-100">
                                                 <tr>
                                                     <th className="p-4">{isArabic ? 'العنوان' : 'Label'}</th>
-                                                    <th className="p-4">{isArabic ? 'المدينة / المنطقة' : 'City / Area'}</th>
+                                                    <th className="p-4">{isArabic ? 'منطقة التغطية' : 'Service Zone'}</th>
                                                     <th className="p-4">{isArabic ? 'الشارع' : 'Street'}</th>
                                                     <th className="p-4">{isArabic ? 'التفاصيل' : 'Details'}</th>
                                                 </tr>
@@ -259,10 +259,10 @@ export default function ReviewUserModal({ userId, onClose }) {
                                                     addresses.map((addr) => (
                                                         <tr key={addr.id} className="hover:bg-gray-50/50 transition-colors">
                                                             <td className="p-4 font-semibold text-gray-700">{addr.label || '-'}</td>
-                                                            <td className="p-4">{addr.city?.name_ar || addr.city_name || '-'} / {addr.area?.name_ar || addr.area_name || '-'}</td>
+                                                            <td className="p-4">{addr.service_zone?.name || addr.service_zone_name || addr.serviceZone?.name || '-'}</td>
                                                             <td className="p-4">{addr.street || '-'}</td>
                                                             <td className="p-4">
-                                                                {addr.building_no ? `${isArabic ? 'مبنى' : 'Bldg'} ${addr.building_no}, ${isArabic ? 'طابق' : 'Flr'} ${addr.floor_no}, ${isArabic ? 'شقة' : 'Appt'} ${addr.apartment_no}` : addr.description || '-'}
+                                                                {addr.building_no ? `${isArabic ? 'مبنى' : 'Bldg'} ${addr.building_no}, ${isArabic ? 'طابق' : 'Flr'} ${addr.floor ?? addr.floor_no ?? '-'}, ${isArabic ? 'شقة' : 'Appt'} ${addr.apartment_no ?? '-'}` : addr.description || '-'}
                                                             </td>
                                                         </tr>
                                                     ))

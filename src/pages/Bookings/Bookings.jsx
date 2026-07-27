@@ -13,8 +13,7 @@ import { hasPermission } from '../../utils/permissions.js';
 const DEFAULT_FILTERS = {
     status: '',
     payment_status: '',
-    city_id: '',
-    area_id: '',
+    service_zone_id: '',
     date_from: '',
     date_to: '',
     sort_by: 'created_at',
@@ -69,8 +68,7 @@ export default function Bookings() {
             if (search.trim()) params.append('search', search.trim());
             if (filters.status) params.append('status', filters.status);
             if (filters.payment_status) params.append('payment_status', filters.payment_status);
-            if (filters.city_id) params.append('city_id', filters.city_id);
-            if (filters.area_id) params.append('area_id', filters.area_id);
+            if (filters.service_zone_id) params.append('service_zone_id', filters.service_zone_id);
             if (filters.date_from) params.append('date_from', filters.date_from);
             if (filters.date_to) params.append('date_to', filters.date_to);
             if (filters.sort_by) params.append('sort_by', filters.sort_by);
@@ -157,11 +155,19 @@ export default function Bookings() {
         return params.toString();
     }, [page, search, filters]);
 
+    // Fetch Geo-fenced Service Zones for filtering
+    const { data: serviceZonesList = [] } = useQuery({
+        queryKey: ['serviceZonesList'],
+        queryFn: async () => {
+            const res = (await axiosInstance.get('/admin/service-zones?per_page=100')).data;
+            return res?.data?.items || res?.data || [];
+        },
+    });
+
     // `status` is handled by the tab bar, so it's excluded from the drawer badge.
     const activeFilterCount =
         (filters.payment_status ? 1 : 0) +
-        (filters.city_id ? 1 : 0) +
-        (filters.area_id ? 1 : 0) +
+        (filters.service_zone_id ? 1 : 0) +
         (filters.date_from ? 1 : 0) +
         (filters.date_to ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
@@ -189,18 +195,7 @@ export default function Bookings() {
         queryFn: async () => (await axiosInstance.get('/admin/categories')).data.data.items || [],
     });
 
-    // Cities feed the city dropdown.
-    const { data: cities = [] } = useQuery({
-        queryKey: ['citiesList'],
-        queryFn: async () => (await axiosInstance.get('/admin/cities')).data.data.items || [],
-    });
 
-    // Areas are scoped to the city chosen inside the drawer (dependent dropdown).
-    const { data: areas = [] } = useQuery({
-        queryKey: ['areasList', draftFilters.city_id],
-        queryFn: async () => (await axiosInstance.get(`/admin/areas?city_id=${draftFilters.city_id}`)).data.data.items || [],
-        enabled: !!draftFilters.city_id,
-    });
 
     // Cancelling a booking from the row menu (status -> cancelled, logged server-side).
     const cancelMutation = useMutation({
@@ -222,10 +217,10 @@ export default function Bookings() {
     if (isError) return <div className="p-8 text-red-500 font-bold">{error.message}</div>;
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Header */}
             <div>
-                <h1 className="text-xl font-black text-gray-900">
+                <h1 className="text-xl font-black text-gray-900 tracking-tight">
                     {isArabic ? 'إدارة الحجوزات' : 'Bookings Management'}
                 </h1>
                 <p className="text-xs text-gray-500 mt-1">
@@ -233,50 +228,34 @@ export default function Bookings() {
                 </p>
             </div>
 
-            {/* Summary Metric Tab Cards */}
+            {/* Summary Metric Tab Cards (Matching Drivers Layout & Colors) */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {STATUS_TABS.map((tab) => {
-                    const active = filters.status === tab.value;
-                    let activeStyle = 'bg-[#E91E63] text-white border-[#E91E63] shadow-md';
-                    let iconBg = 'bg-pink-50 text-[#E91E63]';
-                    let icon = '📅';
-
-                    if (tab.value === 'Upcoming') {
-                        activeStyle = 'bg-blue-600 text-white border-blue-600 shadow-md';
-                        iconBg = 'bg-blue-50 text-blue-600';
-                        icon = '🔹';
-                    } else if (tab.value === 'inService') {
-                        activeStyle = 'bg-amber-500 text-white border-amber-500 shadow-md';
-                        iconBg = 'bg-amber-50 text-amber-600';
-                        icon = '⏳';
-                    } else if (tab.value === 'completed') {
-                        activeStyle = 'bg-emerald-600 text-white border-emerald-600 shadow-md';
-                        iconBg = 'bg-emerald-50 text-emerald-600';
-                        icon = '✅';
-                    } else if (tab.value === 'cancelled') {
-                        activeStyle = 'bg-rose-600 text-white border-rose-600 shadow-md';
-                        iconBg = 'bg-rose-50 text-rose-600';
-                        icon = '❌';
-                    }
+                {[
+                    { value: '', labelKey: 'tabs.all', icon: '📅', color: 'bg-[#FDF0F3] border-[#fbdbe3]' },
+                    { value: 'Upcoming', labelKey: 'status.Upcoming', icon: '🔹', color: 'bg-blue-50 border-blue-200' },
+                    { value: 'inService', labelKey: 'status.inService', icon: '⏳', color: 'bg-amber-50 border-amber-200' },
+                    { value: 'completed', labelKey: 'status.completed', icon: '✅', color: 'bg-emerald-50 border-emerald-200' },
+                    { value: 'cancelled', labelKey: 'status.cancelled', icon: '❌', color: 'bg-rose-50 border-rose-200' },
+                ].map((card) => {
+                    const isActive = filters.status === card.value;
+                    const countVal = counts[card.value || 'all'] ?? 0;
 
                     return (
                         <button
-                            key={tab.value || 'all'}
+                            key={card.value || 'all'}
                             type="button"
-                            onClick={() => selectStatus(tab.value)}
-                            className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${active ? activeStyle : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                            onClick={() => selectStatus(card.value)}
+                            className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                                isActive
+                                    ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                             <div>
-                                <p className={`text-xs font-bold ${active ? 'text-white/80' : 'text-gray-400'}`}>
-                                    {t(tab.label)}
-                                </p>
-                                <p className="text-2xl font-black mt-1">
-                                    {counts[tab.value || 'all'] ?? 0}
-                                </p>
+                                <p className="text-xs font-bold text-gray-500">{t(card.labelKey)}</p>
+                                <p className="text-2xl font-black text-gray-900 mt-1">{countVal}</p>
                             </div>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${active ? 'bg-white/20 text-white' : iconBg}`}>
-                                {icon}
-                            </div>
+                            <div className="text-2xl">{card.icon}</div>
                         </button>
                     );
                 })}
@@ -494,23 +473,15 @@ export default function Bookings() {
 
 
 
-                        {/* Location — city + area side by side */}
+                        {/* Location — Geo-Fenced Service Zone */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.location_label')}</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <select value={draftFilters.city_id} onChange={(e) => selectCity(e.target.value)} className={`${selectClass} w-full`}>
-                                    <option value="">{t('filters.all_cities')}</option>
-                                    {cities.map((c) => (
-                                        <option key={c.id} value={c.id}>{isArabic ? c.name_ar : c.name_en}</option>
-                                    ))}
-                                </select>
-                                <select value={draftFilters.area_id} onChange={(e) => updateDraft('area_id', e.target.value)} disabled={!draftFilters.city_id} className={`${selectClass} w-full disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}>
-                                    <option value="">{draftFilters.city_id ? t('filters.all_areas') : t('filters.select_city_first')}</option>
-                                    {areas.map((a) => (
-                                        <option key={a.id} value={a.id}>{isArabic ? a.name_ar : a.name_en}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{isArabic ? 'منطقة التغطية الجغرافية' : 'Service Zone'}</label>
+                            <select value={draftFilters.service_zone_id} onChange={(e) => updateDraft('service_zone_id', e.target.value)} className={`${selectClass} w-full`}>
+                                <option value="">{isArabic ? 'جميع المناطق الجغرافية' : 'All Service Zones'}</option>
+                                {serviceZonesList.map((z) => (
+                                    <option key={z.id} value={z.id}>{z.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">

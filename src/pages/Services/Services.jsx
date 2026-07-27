@@ -5,9 +5,6 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
-// استدعاء نافذة الإضافة والتعديل
-import ServiceActionModal from './ServiceActionModal';
-import ServiceDetailsModal from './ServiceDetailsModal';
 import RowActionsMenu, { EditIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
 import TagList from '../../component/TagList.jsx';
 import Pagination from '../../component/Pagination.jsx';
@@ -27,9 +24,6 @@ export default function Services() {
     const currentLang = i18n.language;
     const isArabic = currentLang?.startsWith('ar');
 
-    // حالة للتحكم بفتح وإغلاق نافذة الإضافة/التعديل
-    const [actionModal, setActionModal] = useState({ isOpen: false, serviceToEdit: null });
-    const [detailsId, setDetailsId] = useState(null);
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');              // committed search (applies live)
     const [filters, setFilters] = useState(DEFAULT_FILTERS); // committed drawer filters
@@ -140,84 +134,44 @@ export default function Services() {
     if (isError) return <div className="p-8 text-red-500 font-bold">حدث خطأ: {error.message}</div>;
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 font-main w-full">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-black text-gray-900">
+                    <h1 className="text-xl font-black text-gray-900 tracking-tight">
                         {isArabic ? 'إدارة الخدمات' : 'Services Management'}
                     </h1>
                     <p className="text-xs text-gray-500 mt-1">
-                        {isArabic ? 'إدارة وتعديل الخدمات وتأكيدات التغطية وتخصيص العمالة في النظام' : 'Manage services, pricing rules, coverage areas, and worker assignments.'}
+                        {isArabic ? 'إدارة وتعديل الخدمات ومناطق التغطية الجغرافية وتخصيص العمالة في النظام' : 'Manage services, pricing rules, service zones, and worker assignments.'}
                     </p>
                 </div>
             </div>
 
-            {/* Summary Metric Stat Cards */}
+            {/* Summary Metric Stat Cards (Matching Drivers Layout & Colors) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button
-                    type="button"
-                    onClick={() => { setFilters((f) => ({ ...f, status: '', type: '' })); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${!filters.status && !filters.type ? 'bg-[#E91E63] text-white border-[#E91E63] shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                >
-                    <div>
-                        <p className={`text-xs font-bold ${!filters.status && !filters.type ? 'text-white/80' : 'text-gray-400'}`}>
-                            {isArabic ? 'جميع الخدمات' : 'All Services'}
-                        </p>
-                        <p className="text-2xl font-black mt-1">{services.length}</p>
-                    </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${!filters.status && !filters.type ? 'bg-white/20 text-white' : 'bg-pink-50 text-[#E91E63]'}`}>
-                        ✨
-                    </div>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => { setFilters((f) => ({ ...f, status: 'active', type: '' })); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${filters.status === 'active' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                >
-                    <div>
-                        <p className={`text-xs font-bold ${filters.status === 'active' ? 'text-emerald-100' : 'text-gray-400'}`}>
-                            {isArabic ? 'الخدمات النشطة' : 'Active Services'}
-                        </p>
-                        <p className="text-2xl font-black mt-1">{activeCount}</p>
-                    </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${filters.status === 'active' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
-                        ✅
-                    </div>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => { setFilters((f) => ({ ...f, status: 'inactive', type: '' })); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${filters.status === 'inactive' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                >
-                    <div>
-                        <p className={`text-xs font-bold ${filters.status === 'inactive' ? 'text-rose-100' : 'text-gray-400'}`}>
-                            {isArabic ? 'غير النشطة' : 'Inactive Services'}
-                        </p>
-                        <p className="text-2xl font-black mt-1">{inactiveCount}</p>
-                    </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${filters.status === 'inactive' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600'}`}>
-                        🔒
-                    </div>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => { setFilters((f) => ({ ...f, status: '', type: 'hourly' })); }}
-                    className={`p-4 rounded-xl border text-right transition flex items-center justify-between ${filters.type === 'hourly' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                >
-                    <div>
-                        <p className={`text-xs font-bold ${filters.type === 'hourly' ? 'text-blue-100' : 'text-gray-400'}`}>
-                            {isArabic ? 'خدمات بالساعة' : 'Hourly Services'}
-                        </p>
-                        <p className="text-2xl font-black mt-1">{hourlyCount}</p>
-                    </div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${filters.type === 'hourly' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
-                        ⏱️
-                    </div>
-                </button>
+                {[
+                    { key: 'all', label: isArabic ? 'جميع الخدمات' : 'All Services', count: services.length, icon: '🛠️', color: 'bg-[#FDF0F3] border-[#fbdbe3]', onClick: () => setFilters((f) => ({ ...f, status: '', type: '' })), isActive: !filters.status && !filters.type },
+                    { key: 'active', label: isArabic ? 'الخدمات النشطة' : 'Active Services', count: activeCount, icon: '✅', color: 'bg-emerald-50 border-emerald-200', onClick: () => setFilters((f) => ({ ...f, status: 'active', type: '' })), isActive: filters.status === 'active' },
+                    { key: 'inactive', label: isArabic ? 'غير النشطة' : 'Inactive Services', count: inactiveCount, icon: '⏸️', color: 'bg-gray-50 border-gray-200', onClick: () => setFilters((f) => ({ ...f, status: 'inactive', type: '' })), isActive: filters.status === 'inactive' },
+                    { key: 'hourly', label: isArabic ? 'خدمات بالساعة' : 'Hourly Services', count: hourlyCount, icon: '⏱️', color: 'bg-blue-50 border-blue-200', onClick: () => setFilters((f) => ({ ...f, status: '', type: 'hourly' })), isActive: filters.type === 'hourly' },
+                ].map((card) => (
+                    <button
+                        key={card.key}
+                        type="button"
+                        onClick={card.onClick}
+                        className={`p-4 rounded-xl border text-start transition-all flex items-center justify-between outline-none ${
+                            card.isActive
+                                ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
+                                : 'bg-white border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                        <div>
+                            <p className="text-xs font-bold text-gray-500">{card.label}</p>
+                            <p className="text-2xl font-black text-gray-900 mt-1">{card.count ?? 0}</p>
+                        </div>
+                        <div className="text-2xl">{card.icon}</div>
+                    </button>
+                ))}
             </div>
 
             {/* Filter controls bar */}
@@ -479,21 +433,6 @@ export default function Services() {
                     </div>
                 </aside>
             </div>
-
-            {/* نافذة الإضافة والتعديل */}
-            {actionModal.isOpen && (
-                <ServiceActionModal
-                    serviceToEdit={actionModal.serviceToEdit}
-                    categories={categories || []}
-                    onClose={() => setActionModal({ isOpen: false, serviceToEdit: null })}
-                />
-            )}
-
-            {/* نافذة تفاصيل الخدمة */}
-            {detailsId && (
-                <ServiceDetailsModal serviceId={detailsId} onClose={() => setDetailsId(null)} />
-            )}
-
         </div>
     );
 }

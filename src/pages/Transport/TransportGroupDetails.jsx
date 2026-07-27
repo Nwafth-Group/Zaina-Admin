@@ -1,0 +1,329 @@
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import axiosInstance from '../../api/axios.js';
+
+export default function TransportGroupDetails() {
+    const [searchParams] = useSearchParams();
+    const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const governorate = searchParams.get('governorate') || 'عمان';
+    const area = searchParams.get('area') || '';
+
+    const navigate = useNavigate();
+    const { i18n } = useTranslation('common');
+    const isArabic = i18n.language?.startsWith('ar');
+    const queryClient = useQueryClient();
+
+    const [activeGroup, setActiveGroup] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [dispatchForm, setDispatchForm] = useState({
+        departure_point_id: '',
+        departure_time: '',
+        driver_id: '',
+        notes: '',
+    });
+
+    const { data: detailsData, isLoading } = useQuery({
+        queryKey: ['transport-region-details', date, governorate, area],
+        queryFn: async () => (await axiosInstance.get(`/admin/transport-dispatch/region-details?service_date=${date}&governorate=${encodeURIComponent(governorate)}&area=${encodeURIComponent(area)}`)).data,
+    });
+
+    const { data: pointsData } = useQuery({
+        queryKey: ['departure-points-lookup'],
+        queryFn: async () => (await axiosInstance.get('/admin/departure-points?per_page=100')).data,
+    });
+
+    const { data: driversData } = useQuery({
+        queryKey: ['drivers-lookup'],
+        queryFn: async () => (await axiosInstance.get('/admin/drivers?per_page=100')).data,
+    });
+
+    const departurePoints = pointsData?.data?.items || pointsData?.data || [];
+    const drivers = driversData?.data?.items || driversData?.data || [];
+    const regionInfo = detailsData?.data || { date, governorate, area, total_bookings: 0, total_workers: 0, groups: [] };
+
+    const updateDispatchMutation = useMutation({
+        mutationFn: async ({ groupId, payload }) => {
+            return (await axiosInstance.put(`/admin/transport-dispatch/groups/${groupId}`, payload)).data;
+        },
+        onSuccess: (res) => {
+            toast.success(res?.message || (isArabic ? 'تم تحديث بيانات الانطلاق بنجاح' : 'Dispatch info updated'));
+            queryClient.invalidateQueries({ queryKey: ['transport-region-details'] });
+            setIsModalOpen(false);
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء الحفظ' : 'Error updating dispatch'));
+        },
+    });
+
+    const openDispatchModal = (group) => {
+        setActiveGroup(group);
+        setDispatchForm({
+            departure_point_id: group.departure_point?.id || (departurePoints[0]?.id ?? ''),
+            departure_time: group.departure_time || '07:00',
+            driver_id: group.driver?.id || (drivers[0]?.id ?? ''),
+            notes: group.notes || '',
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleDispatchSubmit = (e) => {
+        e.preventDefault();
+        if (!activeGroup) return;
+
+        // Departure time validation warning
+        if (dispatchForm.departure_time >= activeGroup.start_time) {
+            if (!window.confirm(isArabic ? 'تنبيه: وقت الانطلاق مساوٍ أو بعد وقت بدء الخدمة! هل تريد المتابعة رغم ذلك؟' : 'Warning: Departure time is after service start time! Continue?')) {
+                return;
+            }
+        }
+
+        updateDispatchMutation.mutate({
+            groupId: activeGroup.group_id,
+            payload: dispatchForm,
+        });
+    };
+
+    const generateWhatsAppText = (group) => {
+        let text = `*جدول نقل وسائقي العاملات*\n📅 التاريخ: ${date}\n📍 المنطقة: ${governorate} - ${area}\n⏱️ وقت بدء الخدمات: ${group.start_time}\n🚀 وقت الانطلاق: ${group.departure_time || 'غير محدد'}\n🚏 نقطة الانطلاق: ${group.departure_point?.name || 'غير محدودة'}\n👨‍✈️ السائق: ${group.driver?.name || 'غير محدد'}\n\n*بيانات التوصيل والعملاء:*\n`;
+
+        group.workers_list.forEach((w, i) => {
+            text += `${i + 1}. العاملة: ${w.name} | العميل: ${w.booking_number} | العنوان: ${w.service_address}\n`;
+        });
+
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    };
+
+    if (isLoading) {
+        return <div className="p-8 text-center text-gray-500 font-bold">{isArabic ? 'جاري التحميل...' : 'Loading...'}</div>;
+    }
+
+    return (
+        <div className="max-w-6xl mx-auto space-y-6 font-main py-4">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <button
+                        onClick={() => navigate('/transport-dispatch')}
+                        className="text-xs text-gray-500 hover:text-[#E91E63] font-bold mb-1 flex items-center gap-1"
+                    >
+                        <span>←</span>
+                        <span>{isArabic ? 'العودة لقائمة المناطق' : 'Back to Dispatch Overview'}</span>
+                    </button>
+                    <h1 className="text-xl font-black text-gray-900">
+                        {governorate} - {area}
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-0.5 font-mono">
+                        {date}
+                    </p>
+                </div>
+            </div>
+
+            {/* Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'إجمالي الحجوزات بالمنطقة' : 'Total Bookings'}</p>
+                        <p className="text-2xl font-black text-gray-900 mt-1">{regionInfo.total_bookings}</p>
+                    </div>
+                    <div className="text-2xl">📋</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'إجمالي العاملات المطلوبات' : 'Total Workers'}</p>
+                        <p className="text-2xl font-black text-[#E91E63] mt-1">{regionInfo.total_workers}</p>
+                    </div>
+                    <div className="text-2xl">👩‍🍳</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-xs font-bold text-gray-500">{isArabic ? 'عدد مجموعات الانطلاق' : 'Departure Groups'}</p>
+                        <p className="text-2xl font-black text-emerald-600 mt-1">{regionInfo.groups?.length ?? 0}</p>
+                    </div>
+                    <div className="text-2xl">🚌</div>
+                </div>
+            </div>
+
+            {/* Groups Breakdown */}
+            <div className="space-y-6">
+                {regionInfo.groups.map((group, idx) => (
+                    <div key={idx} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                        {/* Group Header */}
+                        <div className="p-4 bg-gray-50/80 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 rounded-xl bg-[#FDF0F3] text-[#E91E63] font-mono font-black text-sm border border-[#fbdbe3]">
+                                        ⏱️ {group.start_time}
+                                    </span>
+                                    <h3 className="text-sm font-bold text-gray-900">
+                                        {isArabic ? `مجموعة انطلاق وجبة الساعة ${group.start_time}` : `Shift Batch ${group.start_time}`}
+                                    </h3>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-4">
+                                    <span>🚏 {isArabic ? 'نقطة الانطلاق' : 'Departure Point'}: <strong>{group.departure_point?.name || 'غير محددة'}</strong></span>
+                                    <span>🚀 {isArabic ? 'وقت الانطلاق' : 'Departure Time'}: <strong className="font-mono">{group.departure_time || 'غير محدد'}</strong></span>
+                                    <span>👨‍✈️ {isArabic ? 'السائق' : 'Driver'}: <strong>{group.driver?.name || 'غير محدد'}</strong></span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                                <button
+                                    onClick={() => openDispatchModal(group)}
+                                    className="px-3.5 py-2 bg-[#E91E63] text-white hover:bg-[#D81B60] rounded-xl text-xs font-bold transition shadow-2xs"
+                                >
+                                    {isArabic ? 'تجهيز الانطلاق والسائق' : 'Setup Dispatch & Driver'}
+                                </button>
+                                <button
+                                    onClick={() => generateWhatsAppText(group)}
+                                    className="px-3.5 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
+                                >
+                                    <span>💬</span>
+                                    <span>{isArabic ? 'إرسال للسائق عبر WhatsApp' : 'Send WhatsApp'}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Workers List Table */}
+                        <div className="p-4 space-y-4">
+                            <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider">
+                                {isArabic ? 'قائمة العاملات والتوزيع في هذه المجموعة' : 'Assigned Workers & Customer Drop-offs'}
+                            </h4>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-right border-collapse text-xs">
+                                    <thead>
+                                        <tr className="bg-gray-50 text-gray-500 font-bold uppercase text-[11px] border-b border-gray-100">
+                                            <th className="py-2.5 px-3 text-start">#</th>
+                                            <th className="py-2.5 px-3 text-start">{isArabic ? 'اسم العاملة' : 'Worker Name'}</th>
+                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'سكن العاملة' : 'Dorm Address'}</th>
+                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'رقم الحجز والعميل' : 'Booking & Customer'}</th>
+                                            <th className="py-2.5 px-3 text-start">{isArabic ? 'عنوان تقديم الخدمة' : 'Service Address'}</th>
+                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'الخدمة' : 'Service'}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {group.workers_list.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="py-6 text-center text-gray-400 font-bold">
+                                                    {isArabic ? 'لم يتم تعيين عاملات محددات لهذه المجموعات بعد.' : 'No workers assigned yet.'}
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            group.workers_list.map((w, wIdx) => (
+                                                <tr key={wIdx} className="hover:bg-gray-50/60">
+                                                    <td className="py-2.5 px-3 font-mono font-bold text-gray-400">{wIdx + 1}</td>
+                                                    <td className="py-2.5 px-3 font-bold text-gray-900">{w.name}</td>
+                                                    <td className="py-2.5 px-3 text-center text-gray-600">{w.address}</td>
+                                                    <td className="py-2.5 px-3 text-center font-mono font-bold text-[#E91E63]">{w.booking_number}</td>
+                                                    <td className="py-2.5 px-3 text-start text-gray-700">{w.service_address}</td>
+                                                    <td className="py-2.5 px-3 text-center font-medium text-gray-800">
+                                                        {isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Modal: Setup Group Dispatch */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-xl border border-gray-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 className="text-base font-black text-gray-900">
+                                {isArabic ? 'تحديث بيانات تجهيز الانطلاق' : 'Setup Dispatch & Driver'}
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 font-bold">✕</button>
+                        </div>
+
+                        <form onSubmit={handleDispatchSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">{isArabic ? 'نقطة الانطلاق *' : 'Departure Point *'}</label>
+                                <select
+                                    required
+                                    value={dispatchForm.departure_point_id}
+                                    onChange={(e) => setDispatchForm({ ...dispatchForm, departure_point_id: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs focus:ring-1 focus:ring-[#E91E63] outline-none bg-white"
+                                >
+                                    <option value="">{isArabic ? 'اختر نقطة الانطلاق...' : 'Select point...'}</option>
+                                    {departurePoints.map((p) => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">{isArabic ? 'وقت الانطلاق *' : 'Departure Time *'}</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={dispatchForm.departure_time}
+                                        onChange={(e) => setDispatchForm({ ...dispatchForm, departure_time: e.target.value })}
+                                        placeholder="07:00"
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                    />
+                                    <span className="text-[10px] text-gray-400 mt-1 block">
+                                        {isArabic ? `يجب أن يكون قبل ${activeGroup?.start_time}` : `Before ${activeGroup?.start_time}`}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">{isArabic ? 'السائق المسؤول *' : 'Driver *'}</label>
+                                    <select
+                                        required
+                                        value={dispatchForm.driver_id}
+                                        onChange={(e) => setDispatchForm({ ...dispatchForm, driver_id: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs focus:ring-1 focus:ring-[#E91E63] outline-none bg-white"
+                                    >
+                                        <option value="">{isArabic ? 'اختر السائق...' : 'Select driver...'}</option>
+                                        {drivers.map((d) => (
+                                            <option key={d.id} value={d.id}>{d.name} ({d.mobile})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">{isArabic ? 'ملاحظات وتوجيهات السائق' : 'Driver Notes'}</label>
+                                <textarea
+                                    rows="2"
+                                    value={dispatchForm.notes}
+                                    onChange={(e) => setDispatchForm({ ...dispatchForm, notes: e.target.value })}
+                                    placeholder={isArabic ? 'مثال: التجمع بمدخل السكن قبل 10 دقائق...' : 'e.g. Gather 10 mins early'}
+                                    className="w-full border border-gray-200 rounded-xl p-3 text-xs focus:ring-1 focus:ring-[#E91E63] outline-none"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200"
+                                >
+                                    {isArabic ? 'إلغاء' : 'Cancel'}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={updateDispatchMutation.isLoading}
+                                    className="px-5 py-2 bg-[#E91E63] text-white rounded-xl text-xs font-bold hover:bg-[#D81B60] disabled:opacity-50"
+                                >
+                                    {updateDispatchMutation.isLoading ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : (isArabic ? 'حفظ وتأكيد الانطلاق' : 'Save & Confirm')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

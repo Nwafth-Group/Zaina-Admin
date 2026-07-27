@@ -383,51 +383,49 @@ export default function ServiceDetails() {
                                         </div>
                                     )}
 
-                                    {/* 3. Coverage Areas Card */}
-                                    <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
-                                        <h4 className="text-sm font-extrabold text-gray-900 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
-                                            <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                                            </svg>
-                                            <span>{t('form.coverages')}</span>
-                                        </h4>
+                                    {/* 3. Geo-Fenced Service Zones Card */}
+                                    <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7 space-y-4">
+                                        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                                            <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <span>{isArabic ? 'مناطق التغطية الجغرافية (Geo-Fenced Service Zones)' : 'Geo-Fenced Service Zones'}</span>
+                                            </h4>
+                                            {service.service_zones?.length > 0 && (
+                                                <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-[#FDF0F3] text-[#E91E63] border border-[#E91E63]/20">
+                                                    {service.service_zones.length} {isArabic ? 'مناطق متوفرة' : 'Zones Active'}
+                                                </span>
+                                            )}
+                                        </div>
 
-                                        {service.coverages?.length ? (
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-start text-xs border-collapse">
-                                                    <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
-                                                        <tr>
-                                                            <th className="p-4 text-start">{t('form.city')}</th>
-                                                            <th className="p-4 text-start">{t('form.area')}</th>
-                                                            <th className="p-4 text-center">{t('form.status')}</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {service.coverages.map((cov) => (
-                                                            <tr key={cov.id} className="hover:bg-gray-50/60 transition-colors bg-white">
-                                                                <td className="p-4 font-bold text-gray-900">{isArabic ? cov.city?.name_ar : cov.city?.name_en}</td>
-                                                                <td className="p-4 text-gray-700 font-medium">
-                                                                    {cov.area?.name_ar || cov.area?.name_en ? (
-                                                                        isArabic ? cov.area.name_ar : cov.area.name_en
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic">{isArabic ? 'كل المدينة' : 'Whole city'}</span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="p-4 text-center">
-                                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                                                        cov.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                                                                    }`}>
-                                                                        {cov.status || 'active'}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                        {service.service_zones?.length ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                                {service.service_zones.map((zone) => (
+                                                    <div
+                                                        key={zone.id}
+                                                        className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-[#E91E63]/30 transition-all flex items-center justify-between gap-3 shadow-2xs"
+                                                    >
+                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-[#E91E63] shrink-0"></span>
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-extrabold text-gray-800 truncate">{zone.name}</p>
+                                                                {(zone.city || zone.governorate) && (
+                                                                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                                                                        {[zone.governorate, zone.city].filter(Boolean).join(' • ')}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${zone.status === 'active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-gray-100 text-gray-500'}`}>
+                                                            {zone.status === 'active' ? (isArabic ? 'مفعلة' : 'Active') : (isArabic ? 'معطلة' : 'Inactive')}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-gray-400 py-4 text-center">{isArabic ? 'لا توجد تغطية جغرافية محدودة (متاحة في جميع المناطق).' : 'No specific coverage restrictions.'}</p>
+                                            <p className="text-xs text-gray-400 py-4 text-center italic">{isArabic ? 'لا توجد مناطق تغطية محددة لهذه الخدمة.' : 'No service zones assigned.'}</p>
                                         )}
                                     </div>
                                 </div>
@@ -468,7 +466,7 @@ export default function ServiceDetails() {
                                                                 </button>
                                                             </td>
                                                             <td className="p-4 font-bold text-gray-900">{b.customer_name || '—'}</td>
-                                                            <td className="p-4 text-gray-600 font-medium">{b.worker_name || '—'}</td>
+                                                            <td className="p-4 text-gray-600 font-medium">{b.worker_name || (b.workers?.length ? b.workers.map(w => w.name || w.full_name).join(', ') : '—')}</td>
                                                             <td className="p-4 whitespace-nowrap text-gray-500 font-medium">{b.booking_date}</td>
                                                             <td className="p-4 font-extrabold text-gray-900 whitespace-nowrap">{b.total_amount} EGP</td>
                                                             <td className="p-4 text-center">
@@ -525,7 +523,7 @@ export default function ServiceDetails() {
                                                                     </button>
                                                                 ) : (r.booking_ref || '—')}
                                                             </td>
-                                                            <td className="p-4 font-bold text-gray-900">{r.customer?.name || '—'}</td>
+                                                            <td className="p-4 font-bold text-gray-900">{r.customer_name || r.customer?.name || (r.customer?.first_name ? `${r.customer.first_name} ${r.customer.last_name || ''}` : '—')}</td>
                                                             <td className="p-4 text-amber-500 font-extrabold whitespace-nowrap">⭐ {r.rating} / 5</td>
                                                             <td className="p-4 max-w-[240px] truncate text-gray-600 font-medium" title={r.comment}>{r.comment || '-'}</td>
                                                             <td className="p-4 text-gray-500 font-medium whitespace-nowrap">{r.created_at}</td>
