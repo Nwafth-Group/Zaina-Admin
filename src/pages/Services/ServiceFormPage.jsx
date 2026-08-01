@@ -629,9 +629,13 @@ export default function ServiceFormPage() {
             payload.append('acceptance_required', data.acceptance_required ? '1' : '0');
 
             // Workers
-            (data.workers || []).forEach((wId) => {
-                payload.append('workers[]', wId);
-            });
+            if (!data.workers || data.workers.length === 0) {
+                payload.append('workers', '');
+            } else {
+                data.workers.forEach((wId) => {
+                    payload.append('workers[]', wId);
+                });
+            }
 
             // Rules
             const appendRule = (key, val) => {

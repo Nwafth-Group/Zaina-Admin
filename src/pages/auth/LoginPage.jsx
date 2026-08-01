@@ -3,9 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
-import heroImage from '../../assets/hero.png';
 
-// استدعاء مكتبات الفورم والتحقق
+// Form & Validation
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -21,27 +20,22 @@ export default function LoginPage() {
 
     const isRtl = i18n.language?.startsWith('ar');
 
-    // Build the dynamic Logo URL from the backend server
-    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
-    const backendUrl = apiBase.replace('/api/v1/', '').replace('/api/v1', '');
-    const logoUrl = `${backendUrl}/assist/logo/logo.webp`;
-
     const base = import.meta.env.BASE_URL || '/';
     const cleanBase = base.endsWith('/') ? base : `${base}/`;
     const whiteLogoUrl = `${cleanBase}logo/white_logo.png`;
 
-    // 1. بناء قواعد التحقق (Schema) باستخدام Yup
+    // 1. Validation Schema
     const schema = yup.object().shape({
         email: yup
             .string()
-            .required(t('validation_email_required'))
-            .email(t('validation_email_invalid')),
+            .required(t('validation_email_required') || (isRtl ? 'البريد الإلكتروني مطلوب' : 'Email is required'))
+            .email(t('validation_email_invalid') || (isRtl ? 'البريد الإلكتروني غير صحيح' : 'Invalid email format')),
         password: yup
             .string()
-            .required(t('validation_password_required')),
+            .required(t('validation_password_required') || (isRtl ? 'كلمة المرور مطلوبة' : 'Password is required')),
     });
 
-    // 2. تهيئة React Hook Form
+    // 2. React Hook Form Setup
     const { 
         register, 
         handleSubmit, 
@@ -50,7 +44,7 @@ export default function LoginPage() {
         resolver: yupResolver(schema),
     });
 
-    // 3. إعداد الـ Mutation
+    // 3. Login Mutation
     const loginMutation = useMutation({
         mutationFn: (credentials) => {
             return axiosInstance.post('/admin/auth/login', credentials);
@@ -64,23 +58,21 @@ export default function LoginPage() {
                 localStorage.setItem('zaina_admin_user', JSON.stringify(admin));
                 queryClient.invalidateQueries({ queryKey: ['user'] });
                 
-                setSuccessMessage(message);
+                setSuccessMessage(message || (isRtl ? 'تم تسجيل الدخول بنجاح!' : 'Login successful!'));
                 setErrorMessage('');
                 
                 setTimeout(() => {
                     navigate('/', { replace: true }); 
-                }, 1000);
+                }, 800);
             }
         },
         onError: (error) => {
             const emailError = error.response?.data?.params?.email;
             const generalMessage = error.response?.data?.message;
 
-            console.log('Login Error Data:', error.response?.data); 
-            
             setSuccessMessage(''); 
 
-            const serverMessage = emailError || generalMessage || 'حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.';
+            const serverMessage = emailError || generalMessage || (isRtl ? 'حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.' : 'Unexpected error. Please try again.');
             setErrorMessage(serverMessage);
         }
     });
@@ -92,11 +84,12 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-main" dir={isRtl ? 'rtl' : 'ltr'}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 w-full min-h-screen">
                 
                 {/* Left Panel: Login Form */}
-                <div className="col-span-1 flex flex-col justify-center p-8 sm:p-12 bg-white relative z-10 shadow-2xl">
-                    <div className="max-w-md w-full mx-auto space-y-8">
+                <div className="col-span-1 flex flex-col justify-center p-8 sm:p-12 lg:p-16 bg-white relative z-10 shadow-2xl">
+                    <div className="max-w-md w-full mx-auto space-y-7">
+                        
                         {/* Logo & Welcome Header */}
                         <div className="text-center">
                             <h1 className="text-3xl font-extrabold text-[#212121] tracking-tight mb-2">
@@ -107,21 +100,22 @@ export default function LoginPage() {
                             </p>
                         </div>
 
-                        {/* Error and Success Notifications */}
+                        {/* Notifications */}
                         {errorMessage && (
-                            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-600 rounded-2xl text-sm text-center font-medium animate-shake">
+                            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-sm text-center font-medium animate-shake">
                                 {errorMessage}
                             </div>
                         )}
 
                         {successMessage && (
-                            <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-sm text-center font-medium animate-pulse">
+                            <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm text-center font-medium animate-pulse">
                                 {successMessage}
                             </div>
                         )}
 
                         {/* Login Form */}
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                            
                             {/* Email Field */}
                             <div>
                                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2 px-1">
@@ -137,42 +131,42 @@ export default function LoginPage() {
                                         type="email"
                                         placeholder={t('email_placeholder') || 'admin@ziena.com'}
                                         {...register('email')}
-                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-[72px] bg-[#F8F9FB] border rounded-[24px] text-[#212121] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
+                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-12 bg-[#F8F9FB] border rounded-xl text-[#212121] text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
                                             errors.email ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
                                         }`}
                                     />
                                 </div>
                                 {errors.email && (
-                                    <p className="text-red-500 text-xs mt-2 px-2 font-medium">{errors.email.message}</p>
+                                    <p className="text-red-500 text-xs mt-1.5 px-2 font-medium">{errors.email.message}</p>
                                 )}
-                             </div>
+                            </div>
                              
-                             {/* Password Field */}
-                             <div>
-                                 <div className="flex justify-between items-center mb-2 px-1">
-                                     <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                                         {isRtl ? 'كلمة المرور' : 'Password'}
-                                     </label>
-                                 </div>
-                                 <div className="relative">
-                                     <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-4' : 'left-0 pl-4'} flex items-center pointer-events-none text-slate-400`}>
-                                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                         </svg>
-                                     </div>
-                                     <input
-                                         type={showPassword ? 'text' : 'password'}
-                                         placeholder={t('password_placeholder') || '••••••••'}
-                                         {...register('password')}
-                                         className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-[72px] bg-[#F8F9FB] border rounded-[24px] text-[#212121] placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
-                                             errors.password ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
-                                         }`}
-                                     />
+                            {/* Password Field */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                        {isRtl ? 'كلمة المرور' : 'Password'}
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-4' : 'left-0 pl-4'} flex items-center pointer-events-none text-slate-400`}>
+                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder={t('password_placeholder') || '••••••••'}
+                                        {...register('password')}
+                                        className={`w-full ${isRtl ? 'pl-11 pr-12' : 'pl-12 pr-11'} h-12 bg-[#F8F9FB] border rounded-xl text-[#212121] text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
+                                            errors.password ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
+                                        }`}
+                                    />
                                     {/* Password Toggle Button */}
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className={`absolute inset-y-0 ${isRtl ? 'left-0 pl-4' : 'right-0 pr-4'} flex items-center text-slate-400 hover:text-slate-600 transition-colors`}
+                                        className={`absolute inset-y-0 ${isRtl ? 'left-0 pl-3.5' : 'right-0 pr-3.5'} flex items-center text-slate-400 hover:text-slate-600 transition-colors`}
                                     >
                                         {showPassword ? (
                                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -187,16 +181,16 @@ export default function LoginPage() {
                                     </button>
                                 </div>
                                 {errors.password && (
-                                    <p className="text-red-500 text-xs mt-2 px-2 font-medium">{errors.password.message}</p>
+                                    <p className="text-red-500 text-xs mt-1.5 px-2 font-medium">{errors.password.message}</p>
                                 )}
                             </div>
                             
                             {/* Submit Button */}
-                            <div>
+                            <div className="pt-2">
                                 <button 
                                     type="submit" 
                                     disabled={loginMutation.isPending || !!successMessage}
-                                    className="w-full py-4 text-white rounded-2xl text-md font-semibold hover:opacity-90 focus:outline-none transition-all duration-200 disabled:opacity-70 flex justify-center items-center shadow-lg shadow-rose-100"
+                                    className="w-full h-12 text-white rounded-xl text-sm font-semibold hover:opacity-90 focus:outline-none transition-all duration-200 disabled:opacity-70 flex justify-center items-center shadow-lg shadow-rose-100 cursor-pointer"
                                     style={{ background: 'linear-gradient(135deg, #F45B8C 0%, #FF8FA3 100%)' }}
                                 >
                                     {loginMutation.isPending ? (
@@ -211,12 +205,11 @@ export default function LoginPage() {
                             </div>
                         </form>
                     </div>
-
                 </div>
 
                 {/* Right Panel: Immersive Brand Cover */}
                 <div 
-                    className="hidden lg:flex col-span-1 relative items-center justify-center overflow-hidden"
+                    className="hidden lg:flex col-span-1 relative items-center justify-center overflow-hidden min-h-screen"
                     style={{ background: 'linear-gradient(135deg, #F45B8C 0%, #FF8FA3 100%)' }}
                 >
                     {/* Centered White Brand Logo */}
@@ -228,7 +221,7 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    {/* Subtle decorative circles */}
+                    {/* Decorative ambient blurred circles */}
                     <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-white/10 blur-3xl pointer-events-none" />
                     <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-white/10 blur-3xl pointer-events-none" />
                 </div>

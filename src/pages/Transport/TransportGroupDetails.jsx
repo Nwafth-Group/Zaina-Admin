@@ -26,6 +26,35 @@ const format12HourRange = (timeSlotStr) => {
     return format12Hour(timeSlotStr);
 };
 
+const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (!match) return 0;
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const ampm = match[3] ? match[3].toUpperCase() : null;
+    if (ampm) {
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+    }
+    return hours * 60 + minutes;
+};
+
+const getMaxDepartureTimeMinutes = (shiftStartTimeStr) => {
+    const shiftMins = parseTimeToMinutes(shiftStartTimeStr || '13:00');
+    // Departure time must be at least 1 hour (60 mins) before shift start
+    return Math.max(0, shiftMins - 60);
+};
+
+const formatMinutesTo12Hour = (totalMins) => {
+    let hours = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${String(mins).padStart(2, '0')} ${ampm}`;
+};
+
 export default function TransportGroupDetails() {
     const [searchParams] = useSearchParams();
     const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
@@ -75,15 +104,25 @@ export default function TransportGroupDetails() {
             setIsModalOpen(false);
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء الحفظ' : 'Error updating dispatch'));
+            const serverMsg = err.response?.data?.errors?.driver_id?.[0]
+                || err.response?.data?.errors?.departure_time?.[0]
+                || err.response?.data?.message
+                || (isArabic ? 'حدث خطأ أثناء الحفظ' : 'Error updating dispatch');
+            toast.error(serverMsg);
         },
     });
 
     const openDispatchModal = (group) => {
         setActiveGroup(group);
+        const maxMins = getMaxDepartureTimeMinutes(group.start_time);
+        let defaultDep = group.departure_time ? format12Hour(group.departure_time) : formatMinutesTo12Hour(maxMins);
+        if (parseTimeToMinutes(defaultDep) > maxMins) {
+            defaultDep = formatMinutesTo12Hour(maxMins);
+        }
+
         setDispatchForm({
             departure_point_id: group.departure_point?.id || (departurePoints[0]?.id ?? ''),
-            departure_time: format12Hour(group.departure_time || '07:00 AM'),
+            departure_time: defaultDep,
             driver_id: group.driver?.id || (drivers[0]?.id ?? ''),
             notes: group.notes || '',
         });
@@ -94,11 +133,17 @@ export default function TransportGroupDetails() {
         e.preventDefault();
         if (!activeGroup) return;
 
-        // Departure time validation warning
-        if (dispatchForm.departure_time >= activeGroup.start_time) {
-            if (!window.confirm(isArabic ? 'تنبيه: وقت الانطلاق مساوٍ أو بعد وقت بدء الخدمة! هل تريد المتابعة رغم ذلك؟' : 'Warning: Departure time is after service start time! Continue?')) {
-                return;
-            }
+        const maxMins = getMaxDepartureTimeMinutes(activeGroup.start_time);
+        const selectedMins = parseTimeToMinutes(dispatchForm.departure_time);
+
+        if (selectedMins > maxMins) {
+            const maxFormatted = formatMinutesTo12Hour(maxMins);
+            toast.error(
+                isArabic 
+                    ? `وقت الانطلاق يجب أن يكون قبل ساعة على الأقل من بداية الشفت (قبل ${maxFormatted})!` 
+                    : `Departure time must be at least 1 hour before shift start (Before ${maxFormatted})!`
+            );
+            return;
         }
 
         updateDispatchMutation.mutate({
@@ -119,56 +164,26 @@ export default function TransportGroupDetails() {
         window.open(url, '_blank');
     };
 
-    const handleExportBatchExcel = (group) => {
-        const headers = [
-            isArabic ? 'م' : '#',
-            isArabic ? 'اسم العاملة' : 'Worker Name',
-            isArabic ? 'هاتف العاملة' : 'Worker Mobile',
-            isArabic ? 'عنوان العاملة' : 'Worker Address',
-            isArabic ? 'رقم الحجز' : 'Booking Ref',
-            isArabic ? 'اسم العميل' : 'Customer Name',
-            isArabic ? 'هاتف العميل' : 'Customer Phone',
-            isArabic ? 'الخدمة' : 'Service',
-            isArabic ? 'توقيت الزيارة' : 'Visit Time Slot',
-            isArabic ? 'عنوان تقديم الخدمة' : 'Service Address',
-        ];
+    const handleExportBatchExcel = async (group) => {
+        try {
+            toast.loading(isArabic ? 'جاري إعداد ملف الإكسل...' : 'Preparing Excel file...', { id: 'export-toast' });
+            const response = await axiosInstance.get(`/admin/transport-dispatch/groups/${group.group_id}/export-excel`, {
+                responseType: 'blob',
+            });
 
-        const rows = (group.workers_list || []).map((w, idx) => [
-            idx + 1,
-            `"${(w.name || w.worker_name || '').replace(/"/g, '""')}"`,
-            `"${(w.phone || w.mobile || w.worker_phone || '').replace(/"/g, '""')}"`,
-            `"${(w.address || '').replace(/"/g, '""')}"`,
-            `"${(w.booking_number || w.booking_ref || '').replace(/"/g, '""')}"`,
-            `"${(w.customer_name || w.customer || '').replace(/"/g, '""')}"`,
-            `"${(w.customer_phone || w.phone_number || '').replace(/"/g, '""')}"`,
-            `"${(isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)) || ''}"`,
-            `"${(format12HourRange(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`)).replace(/"/g, '""')}"`,
-            `"${(w.service_address || '').replace(/"/g, '""')}"`,
-        ]);
-
-        const infoSection = [
-            [isArabic ? 'تاريخ النقل:' : 'Transport Date:', date],
-            [isArabic ? 'المنطقة:' : 'Region:', `${governorate} - ${area}`],
-            [isArabic ? 'فترة الانطلاق:' : 'Shift Batch:', group.start_time],
-            [isArabic ? 'نقطة الانطلاق:' : 'Departure Point:', group.departure_point?.name || '—'],
-            [isArabic ? 'وقت الانطلاق:' : 'Departure Time:', group.departure_time || '—'],
-            [isArabic ? 'السائق المسؤول:' : 'Driver:', `${group.driver?.name || '—'} (${group.driver?.mobile || group.driver?.phone || '—'})`],
-            [''],
-        ];
-
-        const csvContent = '\uFEFF' + 
-            infoSection.map(e => e.join(',')).join('\n') +
-            headers.join(',') + '\n' +
-            rows.map(e => e.join(',')).join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `dispatch_${governorate}_${area}_shift_${group.start_time}_${date}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            const blob = new Blob([response.data], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `transport_batch_${group.start_time}_${date}.xls`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success(isArabic ? 'تم تصدير ملف الإكسل بنجاح' : 'Excel file exported successfully', { id: 'export-toast' });
+        } catch (err) {
+            toast.error(isArabic ? 'حدث خطأ أثناء تصدير الملف' : 'Error exporting file', { id: 'export-toast' });
+        }
     };
 
     if (isLoading) {
@@ -304,29 +319,31 @@ export default function TransportGroupDetails() {
                                                         )}
                                                     </td>
                                                     <td className="py-2.5 px-3  text-gray-600">{w.address || w.worker_address || '—'}</td>
-                                                    <td className="py-2.5 px-3  font-mono">
-                                                        {w.booking_id ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => navigate(`/bookings/${w.booking_id}`)}
-                                                                className="text-[#E91E63] font-bold hover:underline outline-none"
-                                                            >
-                                                                #{w.booking_number || w.booking_ref}
-                                                            </button>
-                                                        ) : (
-                                                            <span className="font-bold text-[#E91E63]">#{w.booking_number || w.booking_ref}</span>
-                                                        )}
-                                                        {(w.customer_name || w.customer) && (
-                                                            <div className="text-[10px] text-gray-600 font-bold truncate max-w-[130px] mx-auto mt-0.5">
-                                                                {w.customer_name || w.customer}
-                                                            </div>
-                                                        )}
+                                                    <td className="py-2.5 px-3 font-mono">
+                                                        <div className="flex flex-col items-start text-start">
+                                                            {w.booking_id ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => navigate(`/bookings/${w.booking_id}`)}
+                                                                    className="text-[#E91E63] font-bold hover:underline outline-none text-start"
+                                                                >
+                                                                    #{w.booking_number || w.booking_ref}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="font-bold text-[#E91E63] text-start">#{w.booking_number || w.booking_ref}</span>
+                                                            )}
+                                                            {(w.customer_name || w.customer) && (
+                                                                <div className="text-xs text-gray-600 font-bold truncate max-w-[160px] text-start mt-0.5">
+                                                                    {w.customer_name || w.customer}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="py-2.5 px-3  text-gray-700">{w.service_address || '—'}</td>
                                                     <td className="py-2.5 px-3  font-medium text-gray-800">
                                                         <div>{isArabic ? (w.service_name_ar || w.service_name) : (w.service_name_en || w.service_name)}</div>
                                                         {(w.visit_time || w.time_slot || w.start_time) && (
-                                                            <div className="text-[10px] text-gray-400 font-mono mt-0.5" dir="ltr">
+                                                            <div className="text-[10px] text-gray-800 font-mono mt-0.5" dir="ltr">
                                                                 {format12HourRange(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`)}
                                                             </div>
                                                         )}
@@ -386,12 +403,16 @@ export default function TransportGroupDetails() {
                                             '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', 
                                             '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', 
                                             '08:00 PM', '08:30 PM', '09:00 PM', '09:30 PM', '10:00 PM'
-                                        ].map((time) => (
+                                        ]
+                                        .filter((time) => parseTimeToMinutes(time) <= getMaxDepartureTimeMinutes(activeGroup?.start_time))
+                                        .map((time) => (
                                             <option key={time} value={time}>{time}</option>
                                         ))}
                                     </select>
                                     <span className="text-[10px] text-gray-500 font-bold mt-1 block">
-                                        {isArabic ? `يجب أن يكون قبل ${format12Hour(activeGroup?.start_time || '11:00 AM')}` : `Before ${format12Hour(activeGroup?.start_time || '11:00 AM')}`}
+                                        {isArabic 
+                                            ? `* يجب أن يكون وقت الانطلاق قبل ساعة من بدء الشفت (قبل ${formatMinutesTo12Hour(getMaxDepartureTimeMinutes(activeGroup?.start_time))})` 
+                                            : `* Must be at least 1 hour before shift start (Before ${formatMinutesTo12Hour(getMaxDepartureTimeMinutes(activeGroup?.start_time))})`}
                                     </span>
                                 </div>
 
