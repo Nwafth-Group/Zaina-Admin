@@ -322,6 +322,7 @@ export default function ServiceFormPage() {
     const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (String(id) === '4') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام')));
     const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (String(id) === '2') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
     const isOtherService = !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
+    const isDeepCleaning = (watchServiceCode === 'DEEP_CLEANING') || (String(id) === '5') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
     const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
 
     // Filterable Workers Picker (Female-only for Services 1, 3, 4; both genders for Service 2)
@@ -1258,9 +1259,11 @@ export default function ServiceFormPage() {
                                     type="number" 
                                     {...register('min_workers', {
                                         onChange: (e) => {
-                                            const minVal = Number(e.target.value);
-                                            if (minVal > 0) {
-                                                setValue('max_workers', minVal, { shouldValidate: true });
+                                            if (isDeepCleaning) {
+                                                const val = Number(e.target.value);
+                                                if (val > 0) {
+                                                    setValue('max_workers', val, { shouldValidate: true });
+                                                }
                                             }
                                         }
                                     })} 
@@ -1274,9 +1277,11 @@ export default function ServiceFormPage() {
                                     type="number" 
                                     {...register('max_workers', {
                                         onChange: (e) => {
-                                            const maxVal = Number(e.target.value);
-                                            if (maxVal > 0) {
-                                                setValue('min_workers', maxVal, { shouldValidate: true });
+                                            if (isDeepCleaning) {
+                                                const val = Number(e.target.value);
+                                                if (val > 0) {
+                                                    setValue('min_workers', val, { shouldValidate: true });
+                                                }
                                             }
                                         }
                                     })} 
@@ -1285,6 +1290,13 @@ export default function ServiceFormPage() {
                                 <ErrorMsg name="max_workers" />
                             </div>
                         </div>
+                        {isDeepCleaning && (
+                            <p className="text-xs text-[#E91E63] font-bold mt-1">
+                                {isArabic 
+                                    ? '💡 لخدمة النظافة العميقة، يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
+                                    : '💡 For Deep Cleaning Service, Minimum and Maximum workers must always be the same number.'}
+                            </p>
+                        )}
 
                         {/* Person-Based Worker Calculation Rule (Pedicure & Manicure / Other Services Only) */}
                         {isPedicureManicure && (
