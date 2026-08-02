@@ -174,15 +174,8 @@ export const router = createBrowserRouter([
             { path: 'employees', element: <Employees /> },
           ],
         },
-        {
-          // Location management is gated behind the location.edit permission
-          // (super-admin only). Direct URL access redirects to the dashboard.
-          element: <PermissionRoute permission="location.edit" />,
-          children: [
-            { path: 'settings', element: <Settings /> },
-            { path: 'settings/company-info', element: <CompanyInfo /> },
-          ],
-        },
+        { path: 'settings', element: <Settings /> },
+        { path: 'settings/company-info', element: <CompanyInfo /> },
         { path: 'drivers', element: <Drivers /> },
         { path: 'drivers/create', element: <DriverFormPage /> },
         { path: 'drivers/:id/edit', element: <DriverFormPage /> },
