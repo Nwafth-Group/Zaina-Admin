@@ -23,14 +23,6 @@ const CARDS = [
 export default function Settings() {
     const { t } = useTranslation('settings');
 
-    if (!hasPermission('location.edit')) {
-        return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10  text-gray-500 font-medium">
-                {t('forbidden')}
-            </div>
-        );
-    }
-
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
             <h2 className="text-xl md:text-2xl font-bold text-gray-800">{t('title')}</h2>
