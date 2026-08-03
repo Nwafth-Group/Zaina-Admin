@@ -120,12 +120,7 @@ export default function CouponFormPage() {
         }
     }, [fullCoupon, isEditMode, reset]);
 
-    // Fetch cities & service zones lists
-    const { data: cities = [] } = useQuery({
-        queryKey: ['citiesList'],
-        queryFn: async () => (await axiosInstance.get('/admin/cities')).data.data.items || [],
-    });
-
+    // Fetch service zones list
     const { data: serviceZones = [] } = useQuery({
         queryKey: ['serviceZonesList'],
         queryFn: async () => (await axiosInstance.get('/admin/service-zones?per_page=100')).data.data.items || [],
@@ -288,10 +283,12 @@ export default function CouponFormPage() {
         if (exists) {
             setSelectedServices(prev => prev.filter(s => s.id !== service.id));
         } else {
+            const isFirstService = service.id === 1 || service.id === '1' || service.code === 'hourly_cleaning';
             setSelectedServices(prev => [...prev, {
                 id: service.id,
+                code: service.code,
                 name: isArabic ? service.name_ar : service.name_en,
-                allowed_visit_types: [],
+                allowed_visit_types: isFirstService ? ['single_visit', 'three_visits_per_week'] : ['single_visit'],
                 min_workers: '',
             }]);
         }
@@ -300,6 +297,9 @@ export default function CouponFormPage() {
     const handleVisitTypeToggle = (serviceId, visitType) => {
         setSelectedServices(prev => prev.map(s => {
             if (s.id !== serviceId) return s;
+            const isFirstService = s.id === 1 || s.id === '1' || s.code === 'hourly_cleaning';
+            if (!isFirstService && visitType === 'three_visits_per_week') return s;
+
             const hasVt = s.allowed_visit_types.includes(visitType);
             const updatedVt = hasVt
                 ? s.allowed_visit_types.filter(v => v !== visitType)
@@ -657,45 +657,56 @@ export default function CouponFormPage() {
                                         <div className="space-y-3 pt-3 border-t border-gray-100">
                                             <p className="text-xs font-extrabold text-gray-700">{isArabic ? 'تخصيص قواعد زيارات العاملات لكل خدمة:' : 'Per-service Visit Rules & Min Workers:'}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {selectedServices.map(svc => (
-                                                    <div key={svc.id} className="p-4 border border-gray-100 rounded-2xl bg-gray-50/60 space-y-3">
-                                                        <h6 className="text-xs font-extrabold text-gray-900 border-b border-gray-200/60 pb-2">{svc.name}</h6>
+                                                {selectedServices.map(svc => {
+                                                    const isFirstService = svc.id === 1 || svc.id === '1' || svc.code === 'hourly_cleaning';
+                                                    const availableVisitTypes = isFirstService
+                                                        ? ['single_visit', 'three_visits_per_week']
+                                                        : ['single_visit'];
 
-                                                        <div>
-                                                            <p className="text-[11px] font-bold text-gray-500 uppercase mb-1.5">{t('details.allowed_visit_types')}</p>
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {['single_visit', 'three_visits_per_week'].map(vt => {
-                                                                    const hasVt = svc.allowed_visit_types.includes(vt);
-                                                                    return (
-                                                                        <button
-                                                                            key={vt}
-                                                                            type="button"
-                                                                            onClick={() => handleVisitTypeToggle(svc.id, vt)}
-                                                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                                                                                hasVt
-                                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                                                                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                                                                            }`}
-                                                                        >
-                                                                            {vt}
-                                                                        </button>
-                                                                    );
-                                                                })}
+                                                    return (
+                                                        <div key={svc.id} className="p-4 border border-gray-100 rounded-2xl bg-gray-50/60 space-y-3">
+                                                            <h6 className="text-xs font-extrabold text-gray-900 border-b border-gray-200/60 pb-2">{svc.name}</h6>
+
+                                                            <div>
+                                                                <p className="text-[11px] font-bold text-gray-500 uppercase mb-1.5">{t('details.allowed_visit_types')}</p>
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {availableVisitTypes.map(vt => {
+                                                                        const hasVt = svc.allowed_visit_types?.includes(vt);
+                                                                        const vtLabel = vt === 'single_visit'
+                                                                            ? (isArabic ? 'زيارة واحدة' : 'Single Visit')
+                                                                            : (isArabic ? '3 زيارات أسبوعياً' : '3 Visits / Week');
+
+                                                                        return (
+                                                                            <button
+                                                                                key={vt}
+                                                                                type="button"
+                                                                                onClick={() => handleVisitTypeToggle(svc.id, vt)}
+                                                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                                                                                    hasVt
+                                                                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                                                                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                                                                }`}
+                                                                            >
+                                                                                {vtLabel}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">{isArabic ? 'الحد الأدنى للعاملات' : 'Min Workers'}</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={svc.min_workers || ''}
+                                                                    onChange={(e) => handleServiceMinWorkersChange(svc.id, e.target.value)}
+                                                                    placeholder="0"
+                                                                    className="w-full text-xs p-2 border border-gray-200 rounded-xl focus:border-[#E91E63] outline-none bg-white font-bold"
+                                                                />
                                                             </div>
                                                         </div>
-
-                                                        <div>
-                                                            <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">{isArabic ? 'الحد الأدنى للعاملات' : 'Min Workers'}</label>
-                                                            <input
-                                                                type="number"
-                                                                value={svc.min_workers}
-                                                                onChange={(e) => handleServiceMinWorkersChange(svc.id, e.target.value)}
-                                                                placeholder="0"
-                                                                className="w-full text-xs p-2 border border-gray-200 rounded-xl focus:border-[#E91E63] outline-none bg-white font-bold"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}

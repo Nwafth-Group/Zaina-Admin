@@ -87,6 +87,8 @@ export default function ClientDetails() {
                 response.data.message ||
                     t(payload.action === 'approve' ? 'review_modal.approve_success' : 'review_modal.reject_success'),
             );
+            queryClient.invalidateQueries({ queryKey: ['user-review', userId] });
+            queryClient.invalidateQueries({ queryKey: ['user-review'] });
             queryClient.invalidateQueries({ queryKey: ['users'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setIsRejecting(false);
@@ -391,39 +393,101 @@ export default function ClientDetails() {
 
                             {/* Tab: Addresses */}
                             {activeTab === 'addresses' && (
-                                <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-center text-xs border-collapse">
-                                            <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
-                                                <tr>
-                                                    <th className="p-4 text-center">{isArabic ? 'العنوان' : 'Label'}</th>
-                                                    <th className="p-4 text-center">{isArabic ? 'منطقة التغطية' : 'Service Zone'}</th>
-                                                    <th className="p-4 text-center">{isArabic ? 'الشارع' : 'Street'}</th>
-                                                    <th className="p-4 text-center">{isArabic ? 'التفاصيل' : 'Details'}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {addresses.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan="4" className="p-12 text-center text-gray-400 text-xs bg-white font-medium">
-                                                            {isArabic ? 'لا توجد عناوين مسجلة لهذا العميل.' : 'No addresses registered.'}
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    addresses.map((addr) => (
-                                                        <tr key={addr.id} className="hover:bg-gray-50/60 transition-colors bg-white">
-                                                            <td className="p-4 font-bold text-gray-900 text-start">{addr.label || '-'}</td>
-                                                            <td className="p-4 font-medium text-gray-700 text-start">{addr.service_zone?.name || addr.service_zone_name || addr.serviceZone?.name || '-'}</td>
-                                                            <td className="p-4 text-gray-600 text-start">{addr.street || '-'}</td>
-                                                            <td className="p-4 text-gray-600 font-medium text-start">
-                                                                {addr.building_no ? `${isArabic ? 'مبنى' : 'Bldg'} ${addr.building_no}, ${isArabic ? 'طابق' : 'Flr'} ${addr.floor ?? addr.floor_no ?? '-'}, ${isArabic ? 'شقة' : 'Appt'} ${addr.apartment_no ?? '-'}` : addr.description || '-'}
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div className="space-y-6">
+                                    {addresses.length === 0 ? (
+                                        <div className="bg-white rounded-3xl p-12 text-center text-gray-400 text-xs font-medium border border-gray-100 shadow-2xs">
+                                            {isArabic ? 'لا توجد عناوين مسجلة لهذا العميل.' : 'No addresses registered.'}
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            {addresses.map((addr) => {
+                                                const hasCoords = addr.latitude && addr.longitude;
+                                                const zoneName = addr.service_zone?.name || addr.service_zone_name || addr.serviceZone?.name;
+
+                                                return (
+                                                    <div key={addr.id} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-2xs space-y-4 hover:shadow-xs transition-shadow">
+                                                        {/* Header */}
+                                                        <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-9 h-9 rounded-2xl bg-pink-50 text-[#E91E63] flex items-center justify-center font-bold text-base border border-pink-100/50">
+                                                                    📍
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="text-sm font-black text-gray-900">{addr.label || (isArabic ? 'عنوان مسجل' : 'Registered Address')}</h4>
+                                                                    {zoneName && <span className="text-[11px] text-gray-400 font-bold">{zoneName}</span>}
+                                                                </div>
+                                                            </div>
+
+                                                            {addr.is_default && (
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                    {isArabic ? 'الافتراضي ⭐' : 'Default ⭐'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Info grid */}
+                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                            <div className="p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase block">{isArabic ? 'الشارع' : 'Street'}</span>
+                                                                <span className="font-extrabold text-gray-800">{addr.street || '-'}</span>
+                                                            </div>
+                                                            <div className="p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase block">{isArabic ? 'المبنى / الشقة' : 'Bldg / Appt'}</span>
+                                                                <span className="font-extrabold text-gray-800">
+                                                                    {addr.building_no ? `${isArabic ? 'مبنى' : 'Bldg'} ${addr.building_no}${addr.apartment_no ? `, ${isArabic ? 'شقة' : 'Appt'} ${addr.apartment_no}` : ''}` : '-'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Lat & Lng Details */}
+                                                        <div className="p-3 bg-pink-50/40 border border-pink-100 rounded-2xl flex flex-wrap items-center justify-between text-xs gap-2">
+                                                            <div className="flex items-center gap-4">
+                                                                <div>
+                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase block">{isArabic ? 'خط العرض (Lat)' : 'Latitude'}</span>
+                                                                    <span className="font-black text-[#E91E63] dir-ltr inline-block">{addr.latitude || '-'}</span>
+                                                                </div>
+                                                                <div className="h-6 w-px bg-pink-200/60"></div>
+                                                                <div>
+                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase block">{isArabic ? 'خط الطول (Lng)' : 'Longitude'}</span>
+                                                                    <span className="font-black text-[#E91E63] dir-ltr inline-block">{addr.longitude || '-'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {hasCoords && (
+                                                                <a
+                                                                    href={`https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="px-3 py-1.5 rounded-xl bg-[#E91E63] text-white text-[11px] font-bold hover:bg-[#D81B60] transition-colors inline-flex items-center gap-1.5 shadow-2xs"
+                                                                >
+                                                                    <span>🗺️</span>
+                                                                    <span>{isArabic ? 'خرائط جوجل' : 'Google Maps'}</span>
+                                                                </a>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Map Frame */}
+                                                        {hasCoords && (
+                                                            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shadow-2xs">
+                                                                <iframe
+                                                                    title={`map-${addr.id}`}
+                                                                    width="100%"
+                                                                    height="100%"
+                                                                    frameBorder="0"
+                                                                    scrolling="no"
+                                                                    marginHeight="0"
+                                                                    marginWidth="0"
+                                                                    src={`https://maps.google.com/maps?q=${addr.latitude},${addr.longitude}&z=15&output=embed`}
+                                                                    className="w-full h-full border-0"
+                                                                    loading="lazy"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

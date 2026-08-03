@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
-import ResetPasswordModal from '../Users/ResetPasswordModal.jsx';
-import RowActionsMenu, { ReviewIcon, KeyIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
+import RowActionsMenu, { ReviewIcon, ToggleIcon } from '../../component/RowActionsMenu.jsx';
 import Pagination from '../../component/Pagination.jsx';
 import { hasPermission } from '../../utils/permissions.js';
 
@@ -208,12 +207,6 @@ export default function Clients() {
                                                             onClick: () => navigate(`/clients/${client.id}`),
                                                         },
                                                         hasPermission('users.edit') && {
-                                                            key: 'reset',
-                                                            label: t('actions.reset_password'),
-                                                            icon: <KeyIcon />,
-                                                            onClick: () => setResetPasswordUserId(client.id),
-                                                        },
-                                                        hasPermission('users.edit') && {
                                                             key: 'toggle',
                                                             label: t('actions.toggle_status'),
                                                             icon: <ToggleIcon />,
@@ -234,8 +227,6 @@ export default function Clients() {
 
             {/* Pagination */}
             <Pagination meta={meta} onPageChange={setCurrentPage} />
-
-            {resetPasswordUserId && <ResetPasswordModal userId={resetPasswordUserId} onClose={() => setResetPasswordUserId(null)} />}
         </div>
     );
 }

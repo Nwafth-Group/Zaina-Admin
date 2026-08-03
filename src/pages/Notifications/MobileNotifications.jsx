@@ -94,6 +94,7 @@ export default function MobileNotifications() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? "تم إلغاء الإشعار بنجاح" : "Notification cancelled successfully"));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
+            queryClient.refetchQueries({ queryKey: ['mobile-notifications'] });
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء إلغاء الإشعار." : "Error cancelling notification."));
@@ -105,6 +106,7 @@ export default function MobileNotifications() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? "تم إرسال الإشعار بنجاح" : "Notification sent successfully"));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
+            queryClient.refetchQueries({ queryKey: ['mobile-notifications'] });
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء إرسال الإشعار." : "Error sending notification."));
@@ -283,8 +285,8 @@ export default function MobileNotifications() {
                                                     : (isArabic ? 'ملغى' : 'Cancelled')}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4  font-medium text-gray-600">
-                                            {notification.creator?.full_name || notification.creator?.first_name || '-'}
+                                        <td className="py-3 px-4 font-medium text-gray-600">
+                                            {notification.creator_name || notification.creator?.full_name || notification.creator?.first_name || '-'}
                                         </td>
                                         <td className="py-3 px-4 " onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-center">
