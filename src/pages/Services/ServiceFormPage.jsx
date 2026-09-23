@@ -94,7 +94,17 @@ export default function ServiceFormPage() {
         description_en: yup.string().required(t('validation.required')).max(500),
         status: yup.string().required(t('validation.required')),
         service_code: yup.string().nullable().max(50),
-        base_price: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(0),
+        base_price: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
+        options: yup.array().of(
+            yup.object().shape({
+                name_ar: yup.string().required(t('validation.required')),
+                name_en: yup.string().required(t('validation.required')),
+                unit_price: yup.number().transform((val) => (isNaN(val) ? undefined : val)).required(t('validation.required')).min(0),
+                min_qty: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(0),
+                max_qty: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(1),
+                status: yup.string().default('active'),
+            })
+        ).nullable(),
         
         single_visit_checked: yup.boolean(),
         three_days_checked: yup.boolean(),
@@ -282,6 +292,7 @@ export default function ServiceFormPage() {
             min_children: '',
             max_children: '',
             child_age_groups: [],
+            options: [],
             working_days: [],
             shifts: [{ start_time: '09:00', end_time: '' }],
             features: [],
@@ -305,6 +316,7 @@ export default function ServiceFormPage() {
     const { fields: featureFields, append: appendFeature, remove: removeFeature } = useFieldArray({ control, name: 'features' });
     const { fields: shiftFields, append: appendShift, remove: removeShift } = useFieldArray({ control, name: 'shifts' });
     const { fields: childAgeGroupFields, append: appendChildAgeGroup, remove: removeChildAgeGroup } = useFieldArray({ control, name: 'child_age_groups' });
+    const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({ control, name: 'options' });
 
     const watchType = watch('type');
     const watchHasDurationRange = watch('has_duration_range');
@@ -398,8 +410,13 @@ export default function ServiceFormPage() {
             if (!watch('worker_gender_options')?.length) {
                 setValue('worker_gender_options', ['Male']);
             }
+            if (!isDeepCleaning) {
+                setValue('base_price', 0);
+                setValue('min_workers', 1);
+                setValue('max_workers', 1);
+            }
         }
-    }, [isHospitality, isBabysitting, isPedicureManicure, isOtherService, setValue]);
+    }, [isHospitality, isBabysitting, isPedicureManicure, isOtherService, isDeepCleaning, setValue]);
 
     const watchMinWorkers = watch('min_workers');
     useEffect(() => {
@@ -493,6 +510,15 @@ export default function ServiceFormPage() {
                 min_children: fullServiceData.min_children || '',
                 max_children: fullServiceData.max_children || '',
                 child_age_groups: fullServiceData.child_age_groups || [],
+                options: (fullServiceData.options || []).map(opt => ({
+                    id: opt.id,
+                    name_ar: opt.name_ar || '',
+                    name_en: opt.name_en || '',
+                    unit_price: opt.unit_price ?? '',
+                    min_qty: opt.min_qty ?? 1,
+                    max_qty: opt.max_qty ?? 10,
+                    status: opt.status || 'active',
+                })),
                 
                 working_days: workingDaysSet,
                 shifts: shifts.length ? shifts : [{ start_time: '09:00', end_time: '' }],
@@ -596,6 +622,18 @@ export default function ServiceFormPage() {
                     payload.append('child_age_groups[' + index + '][children_count]', String(group.children_count || 1));
                     payload.append('child_age_groups[' + index + '][required_worker_count]', String(group.required_worker_count || 1));
                     payload.append('child_age_groups[' + index + '][status]', group.status || 'active');
+                });
+            }
+
+            if (data.options && data.options.length) {
+                data.options.forEach((opt, index) => {
+                    if (opt.id) payload.append(`options[${index}][id]`, String(opt.id));
+                    payload.append(`options[${index}][name_ar]`, opt.name_ar || '');
+                    payload.append(`options[${index}][name_en]`, opt.name_en || '');
+                    payload.append(`options[${index}][unit_price]`, String(opt.unit_price ?? 0));
+                    payload.append(`options[${index}][min_qty]`, String(opt.min_qty ?? 1));
+                    payload.append(`options[${index}][max_qty]`, String(opt.max_qty ?? 10));
+                    payload.append(`options[${index}][status]`, opt.status || 'active');
                 });
             }
 
@@ -1069,12 +1107,135 @@ export default function ServiceFormPage() {
                             )}
                         </FormSection>
 
+                        {/* Sub-Items / Options & Pricing Section */}
+                        {(isOtherService || optionFields.length > 0) && (
+                            <FormSection
+                                icon="sparkles"
+                                title={isArabic ? `${watch('name_ar') || 'الخدمة'} - خيارات الخدمة والأسعار` : `${watch('name_en') || 'Service'} Options & Pricing`}
+                                description={isArabic ? 'إضافة وتخصيص الخيارات والأسعار والكميات المتاحة لهذه الخدمة.' : 'Configure option titles, unit prices, minimum and maximum allowed quantities.'}
+                            >
+                                <div className="space-y-4">
+                                    {optionFields.length === 0 ? (
+                                        <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                                            <p className="text-xs text-gray-500 font-semibold">
+                                                {isArabic ? 'لم يتم إضافة أي خيارات تسعير بعد.' : 'No options added yet.'}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => appendOption({ name_ar: '', name_en: '', unit_price: '', min_qty: 1, max_qty: 10, status: 'active' })}
+                                                className="mt-3 text-xs font-bold text-[#E91E63] hover:bg-[#FDF0F3] px-3 py-1.5 rounded-xl border border-[#E91E63]/30 transition-colors"
+                                            >
+                                                + {isArabic ? 'إضافة خيار جديد' : 'Add Option'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-2xs">
+                                            <table className="w-full text-start text-xs">
+                                                <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 font-bold uppercase tracking-wider">
+                                                    <tr>
+                                                        <th className="p-3 text-start">{isArabic ? 'اسم الخيار (عربي / انجليزي)' : 'Option Name (AR / EN)'}</th>
+                                                        <th className="p-3 text-start w-36">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
+                                                        <th className="p-3 text-center w-24">{isArabic ? 'أقل كمية' : 'Min Qty'}</th>
+                                                        <th className="p-3 text-center w-24">{isArabic ? 'أقصى كمية' : 'Max Qty'}</th>
+                                                        <th className="p-3 text-center w-28">{isArabic ? 'الحالة' : 'Status'}</th>
+                                                        <th className="p-3 text-center w-16">{isArabic ? 'إجراء' : 'Action'}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {optionFields.map((field, index) => (
+                                                        <tr key={field.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="p-3 space-y-1.5">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={isArabic ? 'اسم الخيار بالعربي (مثال: كتب شخص واحد)' : 'Option name AR'}
+                                                                    {...register(`options.${index}.name_ar`)}
+                                                                    dir="rtl"
+                                                                    className={`${INPUT_CLASS} !py-1.5 text-xs font-semibold`}
+                                                                />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={isArabic ? 'اسم الخيار بالانجليزي (مثال: One-seat Sofa)' : 'Option name EN'}
+                                                                    {...register(`options.${index}.name_en`)}
+                                                                    dir="ltr"
+                                                                    className={`${INPUT_CLASS} !py-1.5 text-xs`}
+                                                                />
+                                                            </td>
+                                                            <td className="p-3 align-top">
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        placeholder="0.00"
+                                                                        {...register(`options.${index}.unit_price`)}
+                                                                        className={`${INPUT_CLASS} !py-1.5 !ps-7 text-xs font-bold text-gray-800`}
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-3 align-top">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    {...register(`options.${index}.min_qty`)}
+                                                                    className={`${INPUT_CLASS} !py-1.5 text-xs text-center font-semibold`}
+                                                                />
+                                                            </td>
+                                                            <td className="p-3 align-top">
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    {...register(`options.${index}.max_qty`)}
+                                                                    className={`${INPUT_CLASS} !py-1.5 text-xs text-center font-semibold`}
+                                                                />
+                                                            </td>
+                                                            <td className="p-3 align-top text-center">
+                                                                <select
+                                                                    {...register(`options.${index}.status`)}
+                                                                    className="text-xs font-bold rounded-lg border-gray-200 py-1.5 px-2 bg-gray-50 text-gray-700 focus:ring-[#E91E63]"
+                                                                >
+                                                                    <option value="active">{isArabic ? 'نشط' : 'Active'}</option>
+                                                                    <option value="inactive">{isArabic ? 'غير نشط' : 'Inactive'}</option>
+                                                                </select>
+                                                            </td>
+                                                            <td className="p-3 align-top text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeOption(index)}
+                                                                    className="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-colors"
+                                                                    title={isArabic ? 'حذف' : 'Remove'}
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                            <div className="p-3 bg-gray-50/50 border-t border-gray-200 flex justify-start">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => appendOption({ name_ar: '', name_en: '', unit_price: '', min_qty: 1, max_qty: 10, status: 'active' })}
+                                                    className="text-xs font-bold text-[#E91E63] hover:bg-[#FDF0F3] px-3 py-1.5 rounded-xl border border-[#E91E63]/30 transition-colors flex items-center gap-1.5"
+                                                >
+                                                    <span>+</span>
+                                                    <span>{isArabic ? 'إضافة خيار' : 'Add Option'}</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </FormSection>
+                        )}
+
                         <FormSection icon="sparkles" title={isArabic ? 'الأسعار والزيارات' : 'Prices & Visit Options'}>
-                            <div className="mb-4">
-                                <label className={LABEL_CLASS}>{t('form.base_price')}</label>
-                                <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
-                                <ErrorMsg name="base_price" />
-                            </div>
+                            {(!isOtherService || isDeepCleaning) && (
+                                <div className="mb-4">
+                                    <label className={LABEL_CLASS}>{t('form.base_price')}</label>
+                                    <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
+                                    <ErrorMsg name="base_price" />
+                                </div>
+                            )}
                             <div className="mb-4">
                                 <label className={LABEL_CLASS}>{t('form.pricing_type')}</label>
                                 <SelectField registration={register('pricing_type')} disabled={isPedicureManicure || isOtherService}>
@@ -1252,44 +1413,46 @@ export default function ServiceFormPage() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
-                                <input 
-                                    type="number" 
-                                    {...register('min_workers', {
-                                        onChange: (e) => {
-                                            if (isDeepCleaning) {
-                                                const val = Number(e.target.value);
-                                                if (val > 0) {
-                                                    setValue('max_workers', val, { shouldValidate: true });
+                        {(!isOtherService || isDeepCleaning) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
+                                    <input 
+                                        type="number" 
+                                        {...register('min_workers', {
+                                            onChange: (e) => {
+                                                if (isDeepCleaning) {
+                                                    const val = Number(e.target.value);
+                                                    if (val > 0) {
+                                                        setValue('max_workers', val, { shouldValidate: true });
+                                                    }
                                                 }
                                             }
-                                        }
-                                    })} 
-                                    className={INPUT_CLASS} 
-                                />
-                                <ErrorMsg name="min_workers" />
-                            </div>
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
-                                <input 
-                                    type="number" 
-                                    {...register('max_workers', {
-                                        onChange: (e) => {
-                                            if (isDeepCleaning) {
-                                                const val = Number(e.target.value);
-                                                if (val > 0) {
-                                                    setValue('min_workers', val, { shouldValidate: true });
+                                        })} 
+                                        className={INPUT_CLASS} 
+                                    />
+                                    <ErrorMsg name="min_workers" />
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
+                                    <input 
+                                        type="number" 
+                                        {...register('max_workers', {
+                                            onChange: (e) => {
+                                                if (isDeepCleaning) {
+                                                    const val = Number(e.target.value);
+                                                    if (val > 0) {
+                                                        setValue('min_workers', val, { shouldValidate: true });
+                                                    }
                                                 }
                                             }
-                                        }
-                                    })} 
-                                    className={INPUT_CLASS} 
-                                />
-                                <ErrorMsg name="max_workers" />
+                                        })} 
+                                        className={INPUT_CLASS} 
+                                    />
+                                    <ErrorMsg name="max_workers" />
+                                </div>
                             </div>
-                        </div>
+                        )}
                         {isDeepCleaning && (
                             <p className="text-xs text-[#E91E63] font-bold mt-1">
                                 {isArabic 

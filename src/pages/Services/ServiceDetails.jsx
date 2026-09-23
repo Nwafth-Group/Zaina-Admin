@@ -99,6 +99,9 @@ export default function ServiceDetails() {
                            service?.category?.name_ar?.includes('أطفال') || 
                            service?.category?.name_en?.toLowerCase().includes('babysitter'));
 
+    const hasOptions = !!(service?.options && service.options.length > 0);
+    const isDeepCleaning = service?.service_code === 'DEEP_CLEANING';
+
     const sideMenuItem = (key, label, iconPath, count = null) => {
         const active = activeTab === key;
         return (
@@ -239,13 +242,15 @@ export default function ServiceDetails() {
                                 </div>
                             </div>
 
-                            {/* Base Price display */}
-                            <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4 md:px-6 text-start md:text-end shrink-0 min-w-[180px]">
-                                <p className="text-[11px] font-bold text-[#E91E63] uppercase tracking-wider">{t('form.base_price')}</p>
-                                <p className="text-2xl font-black text-gray-900 mt-0.5">
-                                    {service.base_price} <span className="text-xs font-bold text-gray-500">{service.price_details?.currency || 'EGP'}</span>
-                                </p>
-                            </div>
+                            {/* Base Price display (Hidden for services with sub-options or zero base price) */}
+                            {!hasOptions && Number(service.base_price) > 0 && (
+                                <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4 md:px-6 text-start md:text-end shrink-0 min-w-[180px]">
+                                    <p className="text-[11px] font-bold text-[#E91E63] uppercase tracking-wider">{t('form.base_price')}</p>
+                                    <p className="text-2xl font-black text-gray-900 mt-0.5">
+                                        {service.base_price} <span className="text-xs font-bold text-gray-500">{service.price_details?.currency || 'EGP'}</span>
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Quick Stats Grid */}
@@ -285,6 +290,8 @@ export default function ServiceDetails() {
                         {/* Side Navigation Tabs */}
                         <div className="w-full lg:w-64 bg-white border border-gray-100 rounded-3xl p-3 shrink-0 flex flex-row lg:flex-col gap-1 overflow-x-auto shadow-2xs">
                             {sideMenuItem('profile', t('details.tabs.profile'), 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z')}
+                            {sideMenuItem('schedule', isArabic ? 'المواعيد والسياسات' : 'Schedule & Policies', 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', (service?.schedules?.length || 0) + (service?.rules ? 1 : 0))}
+                            {sideMenuItem('workers', isArabic ? 'العمال المخصصون' : 'Assigned Workers', 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', service?.workers?.length || 0)}
                             {sideMenuItem('bookings', t('details.tabs.bookings'), 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', bookings.length)}
                             {sideMenuItem('reviews', t('details.tabs.reviews'), 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', reviews.length)}
                         </div>
@@ -306,14 +313,24 @@ export default function ServiceDetails() {
                                             <InfoItem label={t('form.service_code')} value={service.service_code} highlight />
                                             <InfoItem label={t('details.type')} value={t(`types.${service.type}`)} />
                                             <InfoItem label={t('details.status')} value={t(`status.${service.status}`)} />
-                                            <InfoItem label={t('form.base_price')} value={`${service.base_price} ${service.price_details?.currency || 'EGP'}`} highlight />
+                                            {!hasOptions && Number(service.base_price) > 0 && (
+                                                <InfoItem label={t('form.base_price')} value={`${service.base_price || 0} ${service.price_details?.currency || 'EGP'}`} highlight />
+                                            )}
+                                            <InfoItem label={isArabic ? 'نوع التسعير' : 'Pricing Type'} value={service.pricing_type === 'per_hour' ? (isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour') : (isArabic ? 'سعر بالخدمة (Per Service)' : 'Per Service')} />
                                             <InfoItem label={isArabic ? 'ساعات العمل' : 'Working Hours'} value={`${service.start_time ? service.start_time.slice(0, 5) : '—'} - ${service.end_time ? service.end_time.slice(0, 5) : '—'}`} />
-                                            <InfoItem label={t('form.default_duration')} value={`${service.default_duration} ${t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}`} />
+                                            <InfoItem label={t('form.default_duration')} value={`${service.default_duration || '—'} ${t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}`} />
                                             
                                             {service.has_duration_range && (
                                                 <InfoItem label={isArabic ? 'نطاق المدة المتاحة' : 'Duration Range'} value={`${service.min_duration} - ${service.max_duration} ${t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}`} />
                                             )}
-                                            <InfoItem label={isArabic ? 'عدد العمال' : 'Workers Count'} value={`${service.min_workers || 1} - ${service.max_workers || 1}`} />
+
+                                            {(!hasOptions || isDeepCleaning) && (
+                                                <InfoItem label={isArabic ? 'عدد العمال' : 'Workers Count'} value={`${service.min_workers || 1} - ${service.max_workers || 1}`} />
+                                            )}
+
+                                            {service.covered_persons_per_worker > 1 && (
+                                                <InfoItem label={isArabic ? 'تغطية الأشخاص / العامل' : 'Persons per Worker'} value={`${service.covered_persons_per_worker} ${isArabic ? 'أشخاص' : 'persons'}`} />
+                                            )}
 
                                             {isBabysitting && (
                                                 <InfoItem label={isArabic ? 'نطاق عدد الأطفال' : 'Children Min-Max'} value={`${service.min_children || 1} - ${service.max_children || 1}`} />
@@ -329,6 +346,96 @@ export default function ServiceDetails() {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* 2. Sub-Item Options & Pricing Section (for Services like Sofa, Tanks, AC, Carpets, etc.) */}
+                                    {service.options && service.options.length > 0 && (
+                                         <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                             <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
+                                                 <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                     <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                                                     </svg>
+                                                     <span>{isArabic ? 'خيارات وأسعار الخدمة الفرعية (Sub-Options & Pricing)' : 'Service Options & Pricing'}</span>
+                                                 </h4>
+                                                 <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-[#FDF0F3] text-[#E91E63] border border-[#E91E63]/20">
+                                                     {service.options.length} {isArabic ? 'خيارات' : 'Options'}
+                                                 </span>
+                                             </div>
+
+                                             <div className="overflow-x-auto border border-gray-100 rounded-2xl shadow-2xs">
+                                                 <table className="w-full text-start text-xs border-collapse">
+                                                     <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
+                                                         <tr>
+                                                             <th className="p-4 text-start">{isArabic ? 'الخيار' : 'Option'}</th>
+                                                             <th className="p-4 text-start">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
+                                                             <th className="p-4 text-center">{isArabic ? 'أقل كمية' : 'Min Qty'}</th>
+                                                             <th className="p-4 text-center">{isArabic ? 'أقصى كمية' : 'Max Qty'}</th>
+                                                             <th className="p-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
+                                                         </tr>
+                                                     </thead>
+                                                     <tbody className="divide-y divide-gray-100">
+                                                         {service.options.map((opt) => (
+                                                             <tr key={opt.id} className="hover:bg-gray-50/60 transition-colors bg-white">
+                                                                 <td className="p-4">
+                                                                     <p className="font-extrabold text-gray-900">{isArabic ? opt.name_ar : opt.name_en}</p>
+                                                                     <p className="text-[11px] text-gray-400 font-semibold">{isArabic ? opt.name_en : opt.name_ar}</p>
+                                                                 </td>
+                                                                 <td className="p-4 font-black text-gray-900 text-sm whitespace-nowrap">
+                                                                     {opt.unit_price} <span className="text-xs font-bold text-gray-500">{service.price_details?.currency || 'EGP'}</span>
+                                                                 </td>
+                                                                 <td className="p-4 text-center font-bold text-gray-700">{opt.min_qty ?? 1}</td>
+                                                                 <td className="p-4 text-center font-bold text-gray-700">{opt.max_qty ?? 10}</td>
+                                                                 <td className="p-4 text-center">
+                                                                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                                         opt.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600'
+                                                                     }`}>
+                                                                         {opt.status === 'active' ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
+                                                                     </span>
+                                                                 </td>
+                                                             </tr>
+                                                         ))}
+                                                     </tbody>
+                                                 </table>
+                                             </div>
+                                         </div>
+                                    )}
+
+                                    {/* 3. Visit Types & Discount Cards */}
+                                    {service.available_visit_types && service.available_visit_types.length > 0 && (
+                                         <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                             <h4 className="text-sm font-extrabold text-gray-900 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
+                                                 <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                                 </svg>
+                                                 <span>{isArabic ? 'أنواع الزيارات والخصومات المتاحة' : 'Visit Types & Discounts'}</span>
+                                             </h4>
+
+                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                 {service.available_visit_types.map((vt, idx) => (
+                                                     <div key={idx} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3 shadow-2xs">
+                                                         <div className="flex items-center gap-3">
+                                                             <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 text-[#E91E63] flex items-center justify-center font-bold">
+                                                                 {vt.type === 'single_visit' ? '1x' : '∞'}
+                                                             </div>
+                                                             <div>
+                                                                 <p className="text-xs font-black text-gray-900">
+                                                                     {vt.type === 'single_visit' ? (isArabic ? 'زيارة واحدة (Single Visit)' : 'Single Visit') : (isArabic ? 'زيارات متعددة / باقة (Multi-Visits)' : 'Multi-Visits / Package')}
+                                                                 </p>
+                                                                 <p className="text-[11px] text-gray-400 font-medium">
+                                                                     {vt.discount > 0 ? (isArabic ? `خصم: ${vt.discount}%` : `Discount: ${vt.discount}%`) : (isArabic ? 'بدون خصم' : 'No discount')}
+                                                                 </p>
+                                                             </div>
+                                                         </div>
+                                                         {vt.discount > 0 && (
+                                                             <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                 -{vt.discount}%
+                                                             </span>
+                                                         )}
+                                                     </div>
+                                                 ))}
+                                             </div>
+                                         </div>
+                                    )}
 
                                     {/* 2. Babysitter Age Group Calculation Rules */}
                                     {isBabysitting && service.child_age_groups && service.child_age_groups.length > 0 && (
@@ -428,6 +535,160 @@ export default function ServiceDetails() {
                                             <p className="text-xs text-gray-400 py-4 text-center italic">{isArabic ? 'لا توجد مناطق تغطية محددة لهذه الخدمة.' : 'No service zones assigned.'}</p>
                                         )}
                                     </div>
+
+                                    {/* 6. Terms & Conditions Card */}
+                                    {(service.terms_ar || service.terms_en) && (
+                                        <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7 space-y-4">
+                                            <h4 className="text-sm font-extrabold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
+                                                 <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                                 </svg>
+                                                 <span>{isArabic ? 'الشروط والأحكام الخاصة بالخدمة' : 'Terms & Conditions'}</span>
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                 {service.terms_ar && (
+                                                     <div className="p-4 bg-gray-50/60 rounded-2xl border border-gray-100 space-y-1.5" dir="rtl">
+                                                         <p className="text-[11px] font-bold text-gray-400 uppercase">الشروط بالعربية</p>
+                                                         <p className="text-xs font-medium text-gray-700 leading-relaxed whitespace-pre-line">{service.terms_ar}</p>
+                                                     </div>
+                                                 )}
+                                                 {service.terms_en && (
+                                                     <div className="p-4 bg-gray-50/60 rounded-2xl border border-gray-100 space-y-1.5" dir="ltr">
+                                                         <p className="text-[11px] font-bold text-gray-400 uppercase">Terms in English</p>
+                                                         <p className="text-xs font-medium text-gray-700 leading-relaxed whitespace-pre-line">{service.terms_en}</p>
+                                                     </div>
+                                                 )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Tab: Schedule & Policies */}
+                            {activeTab === 'schedule' && (
+                                <div className="space-y-6">
+                                    {/* Working Days & Shifts */}
+                                    <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                        <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
+                                            <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>{isArabic ? 'جدول المواعيد وأيام العمل والورديات' : 'Working Schedule & Shifts'}</span>
+                                            </h4>
+                                            {service.schedules?.length > 0 && (
+                                                <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-[#FDF0F3] text-[#E91E63] border border-[#E91E63]/20">
+                                                    {service.schedules.length} {isArabic ? 'ورديات' : 'Shifts'}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {service.schedules?.length ? (
+                                            <div className="overflow-x-auto border border-gray-100 rounded-2xl shadow-2xs">
+                                                <table className="w-full text-start text-xs border-collapse">
+                                                    <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
+                                                        <tr>
+                                                            <th className="p-4 text-start">{isArabic ? 'اليوم' : 'Day'}</th>
+                                                            <th className="p-4 text-start">{isArabic ? 'وقت البدء' : 'Start Time'}</th>
+                                                            <th className="p-4 text-start">{isArabic ? 'وقت الانتهاء' : 'End Time'}</th>
+                                                            <th className="p-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {service.schedules.map((sch, i) => (
+                                                            <tr key={i} className="hover:bg-gray-50/60 transition-colors bg-white">
+                                                                <td className="p-4 font-extrabold text-gray-900 capitalize">{sch.day}</td>
+                                                                <td className="p-4 font-bold text-gray-700">{sch.start_time?.slice(0, 5)}</td>
+                                                                <td className="p-4 font-bold text-gray-700">{sch.end_time?.slice(0, 5)}</td>
+                                                                <td className="p-4 text-center">
+                                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                                        sch.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600'
+                                                                    }`}>
+                                                                        {sch.is_active ? (isArabic ? 'متاح' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 py-6 text-center italic">{isArabic ? 'لا توجد ورديات محددة، تتبع أوقات العمل العامة للخدمة.' : 'No specific shifts defined. Default service working hours apply.'}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Booking, Cancellation & Rescheduling Policies */}
+                                    {service.rules && (
+                                        <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                            <h4 className="text-sm font-extrabold text-gray-900 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                                                </svg>
+                                                <span>{isArabic ? 'سياسات وقواعد الحجز والإلغاء وإعادة الجدولة' : 'Booking, Cancellation & Rescheduling Policies'}</span>
+                                            </h4>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                                <InfoItem label={isArabic ? 'إمكانية الإلغاء' : 'Allow Cancellation'} value={service.rules.allow_cancel ? (isArabic ? 'مسموح' : 'Allowed') : (isArabic ? 'غير مسموح' : 'Not Allowed')} highlight />
+                                                <InfoItem label={isArabic ? 'مهلة الإلغاء المجاني' : 'Free Cancel Window'} value={`${service.rules.free_cancel_cutoff_hours ?? 24} ${isArabic ? 'ساعة قبل الموعد' : 'hours before'}`} />
+                                                <InfoItem label={isArabic ? 'إمكانية إعادة الجدولة' : 'Allow Reschedule'} value={service.rules.allow_reschedule ? (isArabic ? 'مسموح' : 'Allowed') : (isArabic ? 'غير مسموح' : 'Not Allowed')} highlight />
+                                                <InfoItem label={isArabic ? 'مهلة إعادة الجدولة' : 'Reschedule Window'} value={`${service.rules.reschedule_cutoff_hours ?? 12} ${isArabic ? 'ساعة قبل الموعد' : 'hours before'}`} />
+                                                <InfoItem label={isArabic ? 'الحجز في نفس اليوم' : 'Same Day Booking'} value={service.rules.allow_same_day ? (isArabic ? 'متاح' : 'Allowed') : (isArabic ? 'غير متاح' : 'Not Allowed')} />
+                                                <InfoItem label={isArabic ? 'أقصى أيام للحجز المسبق' : 'Max Advance Booking'} value={`${service.rules.max_advance_booking_days ?? 30} ${isArabic ? 'يوم' : 'days'}`} />
+                                                <InfoItem label={isArabic ? 'مهلة الوصول (دقائق)' : 'Arrival Buffer'} value={`${service.rules.arrival_buffer_minutes ?? 15} ${isArabic ? 'دقيقة' : 'min'}`} />
+                                                <InfoItem label={isArabic ? 'فترة السماح للتأخير' : 'Late Arrival Grace'} value={`${service.rules.late_arrival_grace_minutes ?? 15} ${isArabic ? 'دقيقة' : 'min'}`} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Tab: Assigned Workers */}
+                            {activeTab === 'workers' && (
+                                <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                    <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
+                                        <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                            </svg>
+                                            <span>{isArabic ? 'العمال المخصصون لهذه الخدمة' : 'Assigned Workers'}</span>
+                                        </h4>
+                                        {service.workers?.length > 0 && (
+                                            <span className="px-3 py-0.5 rounded-full text-xs font-extrabold bg-[#FDF0F3] text-[#E91E63] border border-[#E91E63]/20">
+                                                {service.workers.length} {isArabic ? 'عمال متاحين' : 'Workers'}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {service.workers?.length ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                            {service.workers.map((w) => (
+                                                <div key={w.id} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/40 hover:bg-white hover:border-[#E91E63]/30 transition-all flex items-center justify-between gap-3 shadow-2xs">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="w-11 h-11 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
+                                                            {w.image ? (
+                                                                <img src={w.image} alt={w.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                </svg>
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-extrabold text-gray-900 truncate">{w.name || w.full_name}</p>
+                                                            <p className="text-[11px] text-gray-400 truncate">{w.nationality || w.gender || '—'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                                        w.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                        {w.status === 'active' ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-gray-400 py-6 text-center italic">{isArabic ? 'لا يوجد عمال مخصصون حالياً لهذه الخدمة.' : 'No workers assigned to this service yet.'}</p>
+                                    )}
                                 </div>
                             )}
 

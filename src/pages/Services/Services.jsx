@@ -88,7 +88,7 @@ export default function Services() {
     });
 
     // Paginate the fetched services client-side (the API returns the full list).
-    const { items: pagedServices, meta, setPage } = usePagedList(services, 10, queryString);
+    const { items: pagedServices, meta, setPage } = usePagedList(services, 15, queryString);
 
     // 2. جلب قائمة الأقسام (Categories) للـ Modal وفلتر القسم
     const { data: categories = [] } = useQuery({

@@ -21,15 +21,15 @@
   input[type="time"]:not(:disabled),
   input[type="date"]:not(:disabled),
   select:not(:disabled) {
-    border: 1px solid #D94A78 !important;
-    background-color: #F8F9FB !important;
-    border-radius: 24px !important;
+    border: 1px solid #D94A78;
+    background-color: #F8F9FB;
+    border-radius: 8px;
   }
 
   textarea:not(:disabled) {
-    border: 1px solid #D94A78 !important;
-    background-color: #F8F9FB !important;
-    border-radius: 24px !important;
+    border: 1px solid #D94A78;
+    background-color: #F8F9FB;
+    border-radius: 8px;
   }
 
   input[type="text"]:disabled,
@@ -42,11 +42,11 @@
   input[type="time"]:disabled,
   input[type="date"]:disabled,
   select:disabled {
-    border-radius: 24px !important;
+    border-radius: 8px;
   }
 
   textarea:disabled {
-    border-radius: 24px !important;
+    border-radius: 8px;
   }
 
   /* Table styling rules - aligned with security-contract (Aqar) theme */

@@ -102,13 +102,13 @@ export default function LoginPage() {
 
                         {/* Notifications */}
                         {errorMessage && (
-                            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-sm text-center font-medium animate-shake">
+                            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-600 rounded-lg text-sm text-center font-medium animate-shake">
                                 {errorMessage}
                             </div>
                         )}
 
                         {successMessage && (
-                            <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm text-center font-medium animate-pulse">
+                            <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-lg text-sm text-center font-medium animate-pulse">
                                 {successMessage}
                             </div>
                         )}
@@ -131,7 +131,7 @@ export default function LoginPage() {
                                         type="email"
                                         placeholder={t('email_placeholder') || 'admin@ziena.com'}
                                         {...register('email')}
-                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-12 bg-[#F8F9FB] border rounded-xl text-[#212121] text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
+                                        className={`w-full ${isRtl ? 'pl-4 pr-12' : 'pl-12 pr-4'} h-12 bg-[#F8F9FB] border rounded-lg text-[#212121] text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
                                             errors.email ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
                                         }`}
                                     />
@@ -158,7 +158,7 @@ export default function LoginPage() {
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder={t('password_placeholder') || '••••••••'}
                                         {...register('password')}
-                                        className={`w-full ${isRtl ? 'pl-11 pr-12' : 'pl-12 pr-11'} h-12 bg-[#F8F9FB] border rounded-xl text-[#212121] text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
+                                        className={`w-full ${isRtl ? 'pl-11 pr-12' : 'pl-12 pr-11'} h-12 bg-[#F8F9FB] border rounded-lg text-[#212121] text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#D94A78] focus:border-[#D94A78] outline-none transition-all duration-200 ${
                                             errors.password ? 'border-red-400 focus:ring-red-400' : 'border-[#D94A78]'
                                         }`}
                                     />
@@ -184,13 +184,13 @@ export default function LoginPage() {
                                     <p className="text-red-500 text-xs mt-1.5 px-2 font-medium">{errors.password.message}</p>
                                 )}
                             </div>
-                            
+                             
                             {/* Submit Button */}
                             <div className="pt-2">
                                 <button 
                                     type="submit" 
                                     disabled={loginMutation.isPending || !!successMessage}
-                                    className="w-full h-12 text-white rounded-xl text-sm font-semibold hover:opacity-90 focus:outline-none transition-all duration-200 disabled:opacity-70 flex justify-center items-center shadow-lg shadow-rose-100 cursor-pointer"
+                                    className="w-full h-12 text-white rounded-lg text-sm font-semibold hover:opacity-90 focus:outline-none transition-all duration-200 disabled:opacity-70 flex justify-center items-center shadow-lg shadow-rose-100 cursor-pointer"
                                     style={{ background: 'linear-gradient(135deg, #F45B8C 0%, #FF8FA3 100%)' }}
                                 >
                                     {loginMutation.isPending ? (
