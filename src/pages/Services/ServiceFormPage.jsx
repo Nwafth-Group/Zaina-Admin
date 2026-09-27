@@ -239,6 +239,7 @@ export default function ServiceFormPage() {
         acceptance_required: yup.boolean(),
 
         workers: yup.array().of(yup.string()),
+        teams: yup.array().of(yup.string()).nullable(),
 
         rules: yup.object().shape({
             allow_cancel: yup.boolean(),
@@ -300,6 +301,7 @@ export default function ServiceFormPage() {
             terms_en: '',
             acceptance_required: false,
             workers: [],
+            teams: [],
             rules: {
                 allow_cancel: false,
                 free_cancel_cutoff_hours: '',
@@ -336,6 +338,19 @@ export default function ServiceFormPage() {
     const isOtherService = !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
     const isDeepCleaning = (watchServiceCode === 'DEEP_CLEANING') || (String(id) === '5') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
     const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
+    const isTeamBasedService = !!fullServiceData?.is_team_based || (Number(id) >= 6 && Number(id) <= 11) || (
+        ['SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH']
+            .includes(watchServiceCode?.toUpperCase())
+    );
+
+    // Fetch Teams list for services 6 to 11
+    const { data: teamsList = [], isLoading: isTeamsLoading } = useQuery({
+        queryKey: ['teams-list-for-service'],
+        queryFn: async () => {
+            const res = await axiosInstance.get('/admin/teams?status=active');
+            return res.data?.data?.items || [];
+        },
+    });
 
     // Filterable Workers Picker (Female-only for Services 1, 3, 4; both genders for Service 2)
     const {
@@ -525,6 +540,7 @@ export default function ServiceFormPage() {
                 pricing_type: serviceIsOther ? 'per_service' : (fullServiceData.pricing_type || 'per_hour'),
                 
                 workers: fullServiceData.workers?.map((w) => String(w.id)) || [],
+                teams: (fullServiceData.teams || []).map((t) => String(t.id)),
                 rules: {
                     allow_cancel: !!fullServiceData.rules?.allow_cancel,
                     free_cancel_cutoff_hours: fullServiceData.rules?.free_cancel_cutoff_hours ?? '',
@@ -663,13 +679,23 @@ export default function ServiceFormPage() {
             payload.append('terms_en', data.terms_en || '');
             payload.append('acceptance_required', data.acceptance_required ? '1' : '0');
 
-            // Workers
-            if (!data.workers || data.workers.length === 0) {
-                payload.append('workers', '');
+            // Teams for Services 6 to 11 OR Workers for Services 1 to 5
+            if (isTeamBasedService) {
+                if (data.teams && data.teams.length > 0) {
+                    data.teams.forEach((tId) => {
+                        payload.append('teams[]', tId);
+                    });
+                } else {
+                    payload.append('teams', '');
+                }
             } else {
-                data.workers.forEach((wId) => {
-                    payload.append('workers[]', wId);
-                });
+                if (!data.workers || data.workers.length === 0) {
+                    payload.append('workers', '');
+                } else {
+                    data.workers.forEach((wId) => {
+                        payload.append('workers[]', wId);
+                    });
+                }
             }
 
             // Rules
@@ -796,7 +822,7 @@ export default function ServiceFormPage() {
         { id: 'durations', label: t('form.tab_durations') },
         { id: 'shifts', label: t('form.tab_shifts') },
         { id: 'rules', label: t('form.tab_rules') },
-        { id: 'workers', label: t('form.tab_workers') },
+        { id: 'workers', label: isTeamBasedService ? (isArabic ? 'فرق العمل المسندة' : 'Assigned Work Teams') : t('form.tab_workers') },
     ];
 
     if (isEditMode && isServiceLoading) {
@@ -1795,67 +1821,132 @@ export default function ServiceFormPage() {
                     </div>
                 )}
 
-                {/* TAB 6: WORKERS ASSIGNMENT */}
+                {/* TAB 6: WORKERS ASSIGNMENT (Services 1-5) OR TEAMS ASSIGNMENT (Services 6-11) */}
                 {activeTab === 'workers' && (
-                    <FormSection
-                        icon="users"
-                        title={t('form.tab_workers')}
-                        description={isArabic ? 'حدد العمال النشطين المؤهلين لتقديم هذه الخدمة.' : 'Select active workers who are qualified to perform this service.'}
-                        action={(watch('workers') || []).length > 0
-                            ? <span className="text-xs font-semibold text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{t('form.workers_selected', { num: (watch('workers') || []).length })}</span>
-                            : null}
-                    >
-                        {/* Worker Search */}
-                        <div className="relative mb-3">
-                            <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </span>
-                            <input
-                                type="text"
-                                value={workerSearchInput}
-                                onChange={(e) => setWorkerSearchInput(e.target.value)}
-                                placeholder={t('form.search_workers')}
-                                className={`${INPUT_CLASS} ps-9`}
-                            />
-                        </div>
+                    isTeamBasedService ? (
+                        <FormSection
+                            icon="users"
+                            title={isArabic ? 'فرق العمل المسندة للخدمة التخصصية' : 'Assigned Work Teams'}
+                            description={isArabic ? 'اختر فرق العمل التي تقدم هذه الخدمة (سيتم ربط عمال الفرق بالخدمة تلقائياً).' : 'Select the work teams that provide this specialized service.'}
+                            action={(watch('teams') || []).length > 0
+                                ? <span className="text-xs font-semibold text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{isArabic ? `${(watch('teams') || []).length} فرق محددة` : `${(watch('teams') || []).length} teams selected`}</span>
+                                : null}
+                        >
+                            <div className="flex flex-col gap-3 border border-gray-100 rounded-xl p-4 max-h-96 overflow-y-auto bg-gray-50/50">
+                                {isTeamsLoading ? (
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('loading')}</div>
+                                ) : teamsList.length === 0 ? (
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{isArabic ? 'لا توجد فرق عمل نشطة حالياً.' : 'No active work teams found.'}</div>
+                                ) : (
+                                    teamsList.map((team) => {
+                                        const isChecked = (watch('teams') || []).includes(String(team.id));
+                                        return (
+                                            <label
+                                                key={team.id}
+                                                className={`flex items-start gap-3.5 p-3.5 border rounded-xl cursor-pointer transition-all ${
+                                                    isChecked
+                                                        ? 'bg-pink-50/50 border-[#E91E63] shadow-xs'
+                                                        : 'bg-white border-gray-100 hover:border-gray-200'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    value={String(team.id)}
+                                                    {...register('teams')}
+                                                    className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63] mt-1"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-bold text-gray-800">
+                                                            {isArabic ? team.name_ar : team.name_en || team.name_ar}
+                                                        </p>
+                                                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                                            {team.code}
+                                                        </span>
+                                                        <span className="text-xs font-bold text-[#E91E63] bg-pink-50 px-2 py-0.5 rounded-full">
+                                                            {team.workers_count || team.workers?.length || 0} {isArabic ? 'عمال' : 'workers'}
+                                                        </span>
+                                                    </div>
+                                                    {team.workers && team.workers.length > 0 && (
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            <span className="font-semibold text-gray-700">{isArabic ? 'أعضاء الفريق: ' : 'Members: '}</span>
+                                                            {team.workers.map((w) => w.name).join('، ')}
+                                                        </p>
+                                                    )}
+                                                    {team.notes && (
+                                                        <p className="text-[11px] text-gray-400 mt-0.5 italic">
+                                                            {team.notes}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        );
+                                    })
+                                )}
+                            </div>
+                            <ErrorMsg name="teams" />
+                        </FormSection>
+                    ) : (
+                        <FormSection
+                            icon="users"
+                            title={t('form.tab_workers')}
+                            description={isArabic ? 'حدد العمال النشطين المؤهلين لتقديم هذه الخدمة.' : 'Select active workers who are qualified to perform this service.'}
+                            action={(watch('workers') || []).length > 0
+                                ? <span className="text-xs font-semibold text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{t('form.workers_selected', { num: (watch('workers') || []).length })}</span>
+                                : null}
+                        >
+                            {/* Worker Search */}
+                            <div className="relative mb-3">
+                                <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </span>
+                                <input
+                                    type="text"
+                                    value={workerSearchInput}
+                                    onChange={(e) => setWorkerSearchInput(e.target.value)}
+                                    placeholder={t('form.search_workers')}
+                                    className={`${INPUT_CLASS} ps-9`}
+                                />
+                            </div>
 
-                        <div ref={workerScrollRef} className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4 max-h-80 overflow-y-auto bg-gray-50/50">
-                            {isWorkersLoading ? (
-                                <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('loading')}</div>
-                            ) : workersList.length === 0 ? (
-                                <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('no_data')}</div>
-                            ) : (
-                                <>
-                                    {workersList.map((worker) => (
-                                        <label key={worker.id} className="flex items-center gap-3 bg-white p-3 border border-gray-100 rounded-lg hover:border-[#E91E63]/30 hover:bg-[#FDF0F3]/10 cursor-pointer transition-colors">
-                                            <input type="checkbox" value={String(worker.id)} {...register('workers')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-gray-700">{worker.name}</p>
-                                                <p className="text-xs text-gray-400 mt-0.5">{worker.nationality} · ★ {worker.rating || '0.00'}</p>
+                            <div ref={workerScrollRef} className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4 max-h-80 overflow-y-auto bg-gray-50/50">
+                                {isWorkersLoading ? (
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('loading')}</div>
+                                ) : workersList.length === 0 ? (
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('no_data')}</div>
+                                ) : (
+                                    <>
+                                        {workersList.map((worker) => (
+                                            <label key={worker.id} className="flex items-center gap-3 bg-white p-3 border border-gray-100 rounded-lg hover:border-[#E91E63]/30 hover:bg-[#FDF0F3]/10 cursor-pointer transition-colors">
+                                                <input type="checkbox" value={String(worker.id)} {...register('workers')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-gray-700">{worker.name}</p>
+                                                    <p className="text-xs text-gray-400 mt-0.5">{worker.nationality} · ★ {worker.rating || '0.00'}</p>
+                                                </div>
+                                            </label>
+                                        ))}
+
+                                        {/* Sentinel */}
+                                        <div ref={workerSentinelRef} aria-hidden="true" className="h-px" />
+                                        {isFetchingMoreWorkers && (
+                                            <div className="flex justify-center items-center py-2 gap-2 text-xs text-gray-500">
+                                                <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                                                {t('loading')}
                                             </div>
-                                        </label>
-                                    ))}
-
-                                    {/* Sentinel */}
-                                    <div ref={workerSentinelRef} aria-hidden="true" className="h-px" />
-                                    {isFetchingMoreWorkers && (
-                                        <div className="flex justify-center items-center py-2 gap-2 text-xs text-gray-500">
-                                            <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                                            {t('loading')}
-                                        </div>
-                                    )}
-                                    {hasMoreWorkers && !isFetchingMoreWorkers && (
-                                        <button type="button" onClick={() => fetchMoreWorkers()} className="text-xs font-semibold text-[#E91E63] hover:text-[#D81B60] py-2 transition-colors">
-                                            {t('form.load_more')}
-                                        </button>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                        <ErrorMsg name="workers" />
-                    </FormSection>
+                                        )}
+                                        {hasMoreWorkers && !isFetchingMoreWorkers && (
+                                            <button type="button" onClick={() => fetchMoreWorkers()} className="text-xs font-semibold text-[#E91E63] hover:text-[#D81B60] py-2 transition-colors">
+                                                {t('form.load_more')}
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                            <ErrorMsg name="workers" />
+                        </FormSection>
+                    )
                 )}
             </form>
         </div>

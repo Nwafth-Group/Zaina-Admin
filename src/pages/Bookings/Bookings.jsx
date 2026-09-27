@@ -360,9 +360,16 @@ export default function Bookings() {
                                         {/* Service / Visit Type */}
                                         <td className="py-3.5 px-4 ">
                                             <p className="font-bold text-gray-800 line-clamp-1">{b.service_name || '—'}</p>
-                                            <p className="text-[11px] text-gray-400 mt-0.5 whitespace-nowrap">
-                                                {t(`visit_types.${b.visit_type}`, b.visit_type)}
-                                            </p>
+                                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                                                    {t(`visit_types.${b.visit_type}`, b.visit_type)}
+                                                </span>
+                                                {b.selected_options && Array.isArray(b.selected_options) && b.selected_options.length > 0 && (
+                                                    <span className="text-[10px] font-bold text-[#E91E63] bg-pink-50 px-1.5 py-0.2 rounded border border-pink-200/60 whitespace-nowrap">
+                                                        +{b.selected_options.length} {isArabic ? 'خيارات' : 'options'}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
     
                                         {/* Price Type */}
@@ -378,9 +385,23 @@ export default function Bookings() {
                                             {b.time_slot && <p className="text-[11px] text-gray-400 mt-0.5 whitespace-nowrap" dir="ltr">{b.time_slot}</p>}
                                         </td>
     
-                                        {/* Workers */}
+                                        {/* Workers / Team */}
                                         <td className="py-3.5 px-4 ">
-                                            <span className="inline-flex items-center justify-center min-w-[24px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">{b.workers_count}</span>
+                                            {b.team ? (
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/70 text-xs font-bold whitespace-nowrap">
+                                                        <svg className="w-3 h-3 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                        {b.team.name || b.team.code}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-500 font-medium">
+                                                        {b.workers_count || 3} {isArabic ? 'عمال' : 'workers'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center min-w-[24px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">{b.workers_count}</span>
+                                            )}
                                         </td>
     
                                         {/* Amount */}

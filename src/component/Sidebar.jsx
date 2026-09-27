@@ -55,6 +55,16 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
             title: isArabic ? 'العمليات' : 'Operations',
             items: [
                 {
+                    to: '/operations',
+                    label: t('sidebar.operations', { defaultValue: isArabic ? 'العمليات' : 'Operations' }),
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                        </svg>
+                    ),
+                    permission: null
+                },
+                {
                     to: '/bookings',
                     label: t('sidebar.bookings'),
                     icon: (
@@ -93,6 +103,16 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
                         </svg>
                     ),
                     permission: 'workers.view'
+                },
+                {
+                    to: '/teams',
+                    label: isArabic ? 'فرق العمل' : 'Work Teams',
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    ),
+                    permission: 'teams.view'
                 },
                 {
                     to: '/reviews',

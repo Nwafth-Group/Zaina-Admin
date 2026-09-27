@@ -150,6 +150,7 @@ export default function Drivers() {
                             <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
                                 <th className="py-3.5 px-4 ">{isArabic ? 'اسم السائق' : 'Driver Name'}</th>
                                 <th className="py-3.5 px-4 ">{isArabic ? 'رقم الجوال' : 'Mobile'}</th>
+                                <th className="py-3.5 px-4 ">{isArabic ? 'المركبة واللوحة' : 'Vehicle & Plate'}</th>
                                 <th className="py-3.5 px-4 ">{isArabic ? 'البريد الإلكتروني' : 'Email'}</th>
                                 <th className="py-3.5 px-4 ">{isArabic ? 'الجنس' : 'Gender'}</th>
                                 <th className="py-3.5 px-4 ">{isArabic ? 'الحالة' : 'Status'}</th>
@@ -159,7 +160,7 @@ export default function Drivers() {
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12  text-gray-400 font-bold">
+                                    <td colSpan="7" className="py-12  text-gray-400 font-bold">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span>{isArabic ? 'جاري التحميل...' : 'Loading...'}</span>
@@ -168,7 +169,7 @@ export default function Drivers() {
                                 </tr>
                             ) : drivers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-12  text-gray-400 font-bold">
+                                    <td colSpan="7" className="py-12  text-gray-400 font-bold">
                                         {isArabic ? 'لا يوجد سائقين مضافين بعد.' : 'No drivers added yet.'}
                                     </td>
                                 </tr>
@@ -187,6 +188,26 @@ export default function Drivers() {
                                         </td>
                                         <td className="py-3 px-4  font-mono font-bold text-gray-700" dir="ltr">
                                             {driver.mobile}
+                                        </td>
+                                        <td className="py-3 px-4 ">
+                                            {driver.vehicle_type || driver.vehicle_plate ? (
+                                                <div className="space-y-0.5">
+                                                    <div className="font-bold text-gray-800 flex items-center gap-1.5">
+                                                        <span>🚐</span>
+                                                        <span>{driver.vehicle_type || (isArabic ? 'حافلة نقل' : 'Vehicle')}</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-500 font-mono flex items-center gap-2">
+                                                        {driver.vehicle_plate && (
+                                                            <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-bold text-gray-700">
+                                                                {driver.vehicle_plate}
+                                                            </span>
+                                                        )}
+                                                        <span>👥 {driver.vehicle_capacity || 5} {isArabic ? 'ركاب' : 'seats'}</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 font-mono">—</span>
+                                            )}
                                         </td>
                                         <td className="py-3 px-4  text-gray-600 font-mono">
                                             {driver.email || '—'}

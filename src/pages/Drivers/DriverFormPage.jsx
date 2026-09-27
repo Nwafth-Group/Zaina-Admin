@@ -19,6 +19,9 @@ export default function DriverFormPage() {
         email: '',
         gender: 'male',
         status: 'active',
+        vehicle_type: '',
+        vehicle_plate: '',
+        vehicle_capacity: 5,
     });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -38,6 +41,9 @@ export default function DriverFormPage() {
                 email: d.email || '',
                 gender: d.gender || 'male',
                 status: d.status || 'active',
+                vehicle_type: d.vehicle_type || '',
+                vehicle_plate: d.vehicle_plate || '',
+                vehicle_capacity: d.vehicle_capacity || 5,
             });
             if (d.image) setImagePreview(d.image);
         }
@@ -70,6 +76,9 @@ export default function DriverFormPage() {
         if (form.email) data.append('email', form.email);
         data.append('gender', form.gender);
         data.append('status', form.status);
+        if (form.vehicle_type) data.append('vehicle_type', form.vehicle_type);
+        if (form.vehicle_plate) data.append('vehicle_plate', form.vehicle_plate);
+        if (form.vehicle_capacity) data.append('vehicle_capacity', form.vehicle_capacity);
         if (imageFile) data.append('image', imageFile);
 
         mutation.mutate(data);
@@ -87,7 +96,7 @@ export default function DriverFormPage() {
                         {isEdit ? (isArabic ? 'تعديل بيانات السائق' : 'Edit Driver') : (isArabic ? 'إضافة سائق جديد' : 'Add New Driver')}
                     </h1>
                     <p className="text-xs text-gray-500 mt-1">
-                        {isArabic ? 'أدخل البيانات الأساسية للسائق والتواصل.' : 'Fill driver personal and contact details.'}
+                        {isArabic ? 'أدخل البيانات الأساسية للسائق والتواصل والمركبة التابعة له.' : 'Fill driver personal, vehicle, and contact details.'}
                     </p>
                 </div>
                 <button
@@ -157,6 +166,60 @@ export default function DriverFormPage() {
                             <option value="active">{isArabic ? 'نشط (متاح للعمل)' : 'Active'}</option>
                             <option value="inactive">{isArabic ? 'معطل' : 'Inactive'}</option>
                         </select>
+                    </div>
+                </div>
+
+                {/* Vehicle Information Section */}
+                <div className="pt-4 border-t border-gray-100">
+                    <h3 className="text-xs font-black text-gray-900 mb-3 flex items-center gap-1.5">
+                        <span>🚐</span>
+                        <span>{isArabic ? 'بيانات المركبة وحافلة النقل' : 'Vehicle & Transport Details'}</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                {isArabic ? 'نوع / طراز المركبة' : 'Vehicle Model / Type'}
+                            </label>
+                            <input
+                                type="text"
+                                value={form.vehicle_type}
+                                onChange={(e) => setForm({ ...form, vehicle_type: e.target.value })}
+                                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
+                                placeholder={isArabic ? 'مثال: Toyota HiAce (فان)' : 'e.g. Toyota HiAce'}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                {isArabic ? 'رقم اللوحة' : 'Plate Number'}
+                            </label>
+                            <input
+                                type="text"
+                                value={form.vehicle_plate}
+                                onChange={(e) => setForm({ ...form, vehicle_plate: e.target.value })}
+                                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono uppercase focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
+                                placeholder={isArabic ? 'مثال: 12-34567 أو ب ل ق 123' : 'e.g. ABC-1234'}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                {isArabic ? 'سعة الركاب (عدد المقاعد) *' : 'Passenger Capacity *'}
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="50"
+                                required
+                                value={form.vehicle_capacity}
+                                onChange={(e) => setForm({ ...form, vehicle_capacity: parseInt(e.target.value, 10) || '' })}
+                                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
+                                placeholder="5"
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">
+                                {isArabic ? 'يُستخدم للتحقق التلقائي عند توزيع فرق العمل.' : 'Used to validate team passenger capacity.'}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

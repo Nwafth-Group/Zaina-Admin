@@ -153,11 +153,15 @@ export default function TransportGroupDetails() {
     };
 
     const generateWhatsAppText = (group) => {
-        let text = `*جدول نقل وسائقي العاملات*\n📅 التاريخ: ${date}\n📍 المنطقة: ${governorate} - ${area}\n⏱️ وقت بدء الخدمات: ${format12Hour(group.start_time)}\n🚀 وقت الانطلاق: ${format12Hour(group.departure_time) || 'غير محدد'}\n🚏 نقطة الانطلاق: ${group.departure_point?.name || 'غير محدودة'}\n👨‍✈️ السائق: ${group.driver?.name || 'غير محدد'}\n\n*بيانات التوصيل والعملاء:*\n`;
+        const vehicleInfo = group.vehicle_type || group.driver?.vehicle_type 
+            ? `\n🚐 المركبة: ${group.vehicle_type || group.driver?.vehicle_type} [${group.vehicle_plate || group.driver?.vehicle_plate || '—'}] (سعة: ${group.vehicle_capacity || group.driver?.vehicle_capacity || 5} ركاب)` 
+            : '';
+        let text = `*جدول نقل وسائقي العاملات*\n📅 التاريخ: ${date}\n📍 المنطقة: ${governorate} - ${area}\n⏱️ وقت بدء الخدمات: ${format12Hour(group.start_time)}\n🚀 وقت الانطلاق: ${format12Hour(group.departure_time) || 'غير محدد'}\n🚏 نقطة الانطلاق: ${group.departure_point?.name || 'غير محدودة'}\n👨‍✈️ السائق: ${group.driver?.name || 'غير محدد'}${vehicleInfo}\n👥 إجمالي الركاب: ${group.total_passengers || group.workers_list?.length}\n\n*بيانات التوصيل والعملاء:*\n`;
 
         group.workers_list.forEach((w, i) => {
             const timeRange = format12HourRange(w.visit_time || w.time_slot || `${w.start_time || ''} - ${w.end_time || ''}`);
-            text += `${i + 1}. العاملة: ${w.name} | العميل: ${w.booking_number} | الخدمة: ${w.service_name} (${timeRange}) | العنوان: ${w.service_address}\n`;
+            const teamBadge = w.team_name ? ` [فريق: ${w.team_name}]` : '';
+            text += `${i + 1}. العاملة: ${w.name}${teamBadge} | العميل: ${w.booking_number} | الخدمة: ${w.service_name} (${timeRange}) | العنوان: ${w.service_address}\n`;
         });
 
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
@@ -253,10 +257,18 @@ export default function TransportGroupDetails() {
                                         {isArabic ? `مجموعة انطلاق فترة الساعة ${format12Hour(group.start_time)}` : `Shift Batch ${format12Hour(group.start_time)}`}
                                     </h3>
                                 </div>
-                                <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-4">
+                                <div className="mt-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-4 gap-y-2">
                                     <span>🚏 {isArabic ? 'نقطة الانطلاق' : 'Departure Point'}: <strong>{group.departure_point?.name || 'غير محددة'}</strong></span>
                                     <span>🚀 {isArabic ? 'وقت الانطلاق' : 'Departure Time'}: <strong className="font-mono">{format12Hour(group.departure_time) || 'غير محدد'}</strong></span>
                                     <span>👨‍✈️ {isArabic ? 'السائق' : 'Driver'}: <strong>{group.driver?.name || 'غير محدد'} {group.driver?.mobile || group.driver?.phone ? `(${group.driver?.mobile || group.driver?.phone})` : ''}</strong></span>
+                                    <span>🚐 {isArabic ? 'المركبة واللوحة' : 'Vehicle & Plate'}: <strong>{group.vehicle_type || group.driver?.vehicle_type || '—'} {group.vehicle_plate || group.driver?.vehicle_plate ? `[${group.vehicle_plate || group.driver?.vehicle_plate}]` : ''}</strong></span>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border font-mono font-bold text-xs bg-gray-50 border-gray-200">
+                                        <span>👥</span>
+                                        <span>{isArabic ? 'الركاب / السعة' : 'Passengers / Cap'}:</span>
+                                        <span className={(group.total_passengers || group.workers_list?.length) > (group.vehicle_capacity || group.driver?.vehicle_capacity || 5) ? 'text-rose-600 font-black' : 'text-emerald-700'}>
+                                            {group.total_passengers || group.workers_list?.length || 0} / {group.vehicle_capacity || group.driver?.vehicle_capacity || 5}
+                                        </span>
+                                    </span>
                                 </div>
                             </div>
 
@@ -316,6 +328,13 @@ export default function TransportGroupDetails() {
                                                         <div>{w.name || w.worker_name}</div>
                                                         {(w.phone || w.mobile || w.worker_phone) && (
                                                             <div className="text-[10px] text-gray-400 font-mono font-normal dir-ltr ">{w.phone || w.mobile || w.worker_phone}</div>
+                                                        )}
+                                                        {w.team_name && (
+                                                            <div className="mt-1">
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
+                                                                    👥 {isArabic ? `فريق: ${w.team_name}` : `Team: ${w.team_name}`}
+                                                                </span>
+                                                            </div>
                                                         )}
                                                     </td>
                                                     <td className="py-2.5 px-3  text-gray-600">{w.address || w.worker_address || '—'}</td>
@@ -426,7 +445,9 @@ export default function TransportGroupDetails() {
                                     >
                                         <option value="">{isArabic ? 'اختر السائق...' : 'Select driver...'}</option>
                                         {drivers.map((d) => (
-                                            <option key={d.id} value={d.id}>{d.name} ({d.mobile})</option>
+                                            <option key={d.id} value={d.id}>
+                                                {d.name} {d.mobile ? `(${d.mobile})` : ''} — 🚐 {d.vehicle_type || (isArabic ? 'حافلة' : 'Van')} {d.vehicle_plate ? `[${d.vehicle_plate}]` : ''} ({isArabic ? `سعة: ${d.vehicle_capacity || 5} ركاب` : `Cap: ${d.vehicle_capacity || 5}`})
+                                            </option>
                                         ))}
                                     </select>
                                 </div>

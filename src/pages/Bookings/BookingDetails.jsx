@@ -65,6 +65,7 @@ export default function BookingDetails() {
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelNote, setCancelNote] = useState('');
     const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [replacingWorker, setReplacingWorker] = useState(null);
     const [rescheduleOpen, setRescheduleOpen] = useState(false);
     const [downloadingContract, setDownloadingContract] = useState(false);
 
@@ -517,18 +518,154 @@ export default function BookingDetails() {
                                                     value={booking.child_age_groups.map(group => isArabic ? group.name_ar : group.name_en).join(', ')}
                                                 />
                                             )}
+                                            {booking.team && (
+                                                <InfoItem
+                                                    label={isArabic ? 'فريق العمل المعين' : 'Assigned Team'}
+                                                    value={`${booking.team.name || booking.team.code} (${booking.team.code})`}
+                                                    highlight
+                                                    icon={<svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+                                                />
+                                            )}
+                                            {booking.selected_options && Array.isArray(booking.selected_options) && booking.selected_options.length > 0 && (
+                                                <InfoItem
+                                                    label={isArabic ? 'خيارات الخدمة' : 'Service Options'}
+                                                    value={`${booking.selected_options.length} ${isArabic ? 'خيارات وبنود محددة' : 'options selected'}`}
+                                                    icon={<svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+                                                />
+                                            )}
                                         </div>
                                     </div>
+
+                                    {/* 2.5 Selected Service Options Breakdown Card */}
+                                    {booking.selected_options && Array.isArray(booking.selected_options) && booking.selected_options.length > 0 && (
+                                        <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                            <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+                                                <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                                    </svg>
+                                                    <span>{isArabic ? 'خيارات وبنود الخدمة المحددة' : 'Selected Service Options & Items'}</span>
+                                                </h4>
+                                                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-pink-50 text-[#E91E63] border border-pink-200">
+                                                    {booking.selected_options.length} {isArabic ? 'خيارات' : 'Options'}
+                                                </span>
+                                            </div>
+
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-start text-xs">
+                                                    <thead>
+                                                        <tr className="border-b border-gray-100 text-gray-400 font-bold uppercase tracking-wider">
+                                                            <th className="py-2.5 px-3 text-start">#</th>
+                                                            <th className="py-2.5 px-3 text-start">{isArabic ? 'اسم البند / الخيار' : 'Item / Option'}</th>
+                                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'الكمية' : 'Quantity'}</th>
+                                                            <th className="py-2.5 px-3 text-end">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
+                                                            <th className="py-2.5 px-3 text-end">{isArabic ? 'الإجمالي' : 'Total'}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-50">
+                                                        {booking.selected_options.map((opt, idx) => {
+                                                            const optName = isArabic ? (opt.name_ar || opt.name || opt.name_en) : (opt.name_en || opt.name || opt.name_ar);
+                                                            const qty = opt.quantity || opt.qty || 1;
+                                                            const unitPrice = parseFloat(opt.unit_price || 0);
+                                                            const totalPrice = parseFloat(opt.total_price || (unitPrice * qty));
+                                                            const currency = booking.price_summary?.currency || 'EGP';
+
+                                                            return (
+                                                                <tr key={opt.id || idx} className="hover:bg-gray-50/60 transition-colors">
+                                                                    <td className="py-3 px-3 font-mono text-gray-400">{idx + 1}</td>
+                                                                    <td className="py-3 px-3 font-extrabold text-gray-800">{optName}</td>
+                                                                    <td className="py-3 px-3 text-center">
+                                                                        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md bg-gray-100 text-gray-700 font-black text-xs">
+                                                                            {qty}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-3 px-3 text-end text-gray-600 font-medium">
+                                                                        {unitPrice.toFixed(2)} {currency}
+                                                                    </td>
+                                                                    <td className="py-3 px-3 text-end font-black text-gray-900">
+                                                                        {totalPrice.toFixed(2)} {currency}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 2.6 Operational Team Card (if assigned to a Team) */}
+                                    {booking.team && (
+                                        <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                            <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+                                                <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                                    </svg>
+                                                    <span>{isArabic ? 'فريق العمل التشغيلي' : 'Operational Team'}</span>
+                                                </h4>
+                                                <div className="flex items-center gap-2">
+                                                    {booking.team.id && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/teams/${booking.team.id}`)}
+                                                            className="text-xs font-bold text-[#E91E63] hover:underline outline-none me-1"
+                                                        >
+                                                            {isArabic ? 'عرض ملف الفريق ←' : 'View Team Profile →'}
+                                                        </button>
+                                                    )}
+                                                    <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
+                                                        {booking.team.code}
+                                                    </span>
+                                                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        {booking.team.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <InfoItem
+                                                    label={isArabic ? 'اسم الفريق' : 'Team Name'}
+                                                    value={isArabic ? (booking.team.name_ar || booking.team.name) : (booking.team.name_en || booking.team.name)}
+                                                    highlight
+                                                    isLink={Boolean(booking.team.id)}
+                                                    onClick={() => navigate(`/teams/${booking.team.id}`)}
+                                                    icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+                                                />
+                                                <InfoItem
+                                                    label={isArabic ? 'كود الفريق' : 'Team Code'}
+                                                    value={booking.team.code}
+                                                    icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>}
+                                                />
+                                                <InfoItem
+                                                    label={isArabic ? 'قوام وتشكيل الفريق' : 'Team Roster'}
+                                                    value={isArabic ? '3 عمال (ذكور حصراً)' : '3 Workers (Male only)'}
+                                                    icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* 3. Assigned Workers Card */}
                                     <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
                                         <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
-                                            <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                                                </svg>
-                                                <span>{isArabic ? 'العاملات المعينات على الحجز' : 'Assigned Workers'}</span>
-                                            </h4>
+                                            <div className="flex items-center gap-3">
+                                                <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                                    </svg>
+                                                    <span>
+                                                        {booking.team
+                                                            ? (isArabic ? 'أعضاء الفريق المعين' : 'Assigned Team Members')
+                                                            : (isArabic ? 'العاملات المعينات على الحجز' : 'Assigned Workers')}
+                                                    </span>
+                                                </h4>
+                                                {booking.team && (
+                                                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2 py-0.5 rounded-lg">
+                                                        {booking.team.name || booking.team.code}
+                                                    </span>
+                                                )}
+                                            </div>
 
                                             {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
                                                 <button
@@ -546,20 +683,38 @@ export default function BookingDetails() {
                                                 {booking.workers.map((w) => (
                                                     <div
                                                         key={w.id}
-                                                        onClick={() => navigate(`/workers/${w.id}`)}
-                                                        className="flex items-center gap-3 p-3.5 bg-gray-50/60 hover:bg-gray-50 border border-gray-100 rounded-2xl transition-all cursor-pointer group shadow-2xs"
+                                                        className="flex items-center justify-between p-3.5 bg-gray-50/60 hover:bg-gray-50 border border-gray-100 rounded-2xl transition-all shadow-2xs group"
                                                     >
-                                                        <div className="w-11 h-11 rounded-full bg-[#FDF0F3] border border-pink-100 text-[#E91E63] flex items-center justify-center font-black text-base shrink-0 group-hover:scale-105 transition-transform">
-                                                            {w.name?.charAt(0) || '?'}
+                                                        <div
+                                                            onClick={() => navigate(`/workers/${w.id}`)}
+                                                            className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                                                        >
+                                                            <div className="w-11 h-11 rounded-full bg-[#FDF0F3] border border-pink-100 text-[#E91E63] flex items-center justify-center font-black text-base shrink-0 group-hover:scale-105 transition-transform">
+                                                                {w.name?.charAt(0) || '?'}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-sm font-extrabold text-gray-900 group-hover:text-[#E91E63] transition-colors truncate">
+                                                                    {w.name}
+                                                                </p>
+                                                                <p className="text-xs font-medium text-gray-400 mt-0.5 truncate">
+                                                                    {w.nationality || '—'} · <span className="text-amber-500 font-bold">⭐ {w.avg_rating || '5.0'}</span>
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-sm font-extrabold text-gray-900 group-hover:text-[#E91E63] transition-colors truncate">
-                                                                {w.name}
-                                                            </p>
-                                                            <p className="text-xs font-medium text-gray-400 mt-0.5 truncate">
-                                                                {w.nationality || '—'} · <span className="text-amber-500 font-bold">⭐ {w.avg_rating || '5.0'}</span>
-                                                            </p>
-                                                        </div>
+
+                                                        {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setReplacingWorker(w);
+                                                                }}
+                                                                className="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-2.5 py-1.5 rounded-xl transition-all shrink-0 ms-2 outline-none cursor-pointer"
+                                                                title={isArabic ? 'استبدال هذا العامل' : 'Replace this worker'}
+                                                            >
+                                                                {isArabic ? 'استبدال' : 'Replace'}
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -740,6 +895,15 @@ export default function BookingDetails() {
                 />
             )}
 
+            {replacingWorker && (
+                <ReplaceWorkerModal
+                    booking={booking}
+                    worker={replacingWorker}
+                    isArabic={isArabic}
+                    onClose={() => setReplacingWorker(null)}
+                />
+            )}
+
             {rescheduleOpen && (
                 <RescheduleBookingModal
                     booking={booking}
@@ -828,7 +992,7 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
-            <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] flex flex-col font-main animate-in zoom-in-95 duration-200">
+            <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-3xl p-7 max-h-[90vh] flex flex-col font-main animate-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                     <h4 className="text-base font-bold text-gray-800">
                         {isArabic ? 'تعيين وتغيير عمال الحجز' : 'Assign & Replace Booking Workers'}
@@ -853,7 +1017,7 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
                                 {isArabic ? 'لا يوجد عمال مؤهلون متاحون لهذا الوقت.' : 'No eligible workers available for this time slot.'}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[240px] overflow-y-auto p-1.5 border border-gray-100 rounded-2xl">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[360px] overflow-y-auto p-2 border border-gray-100 rounded-2xl">
                                 {eligibleWorkers.map((w) => {
                                     const checked = selectedIds.includes(w.id);
                                     return (
@@ -948,6 +1112,189 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function ReplaceWorkerModal({ booking, worker, isArabic, onClose }) {
+    const queryClient = useQueryClient();
+    const [selectedWorkerId, setSelectedWorkerId] = useState(null);
+    const [reason, setReason] = useState('');
+    const [overrideBuffer, setOverrideBuffer] = useState(false);
+
+    const { data: eligibleWorkers = [], isLoading } = useQuery({
+        queryKey: ['eligibleWorkers', booking.id],
+        queryFn: async () => (await axiosInstance.get(`/admin/bookings/${booking.id}/eligible-workers`)).data.data || [],
+        enabled: !!booking.id,
+    });
+
+    const isTeamBooking = !!booking.team_id || (booking.workers && booking.workers.length === 3);
+
+    const candidates = eligibleWorkers.filter(w => {
+        if (w.id === worker.id) return false;
+        if (isTeamBooking && w.gender && w.gender.toLowerCase() !== 'male') return false;
+        return true;
+    });
+
+    const replaceMutation = useMutation({
+        mutationFn: (payload) => axiosInstance.post(`/admin/bookings/${booking.id}/replace-worker`, payload),
+        onSuccess: (response) => {
+            toast.success(response.data?.message || (isArabic ? 'تم استبدال العامل بنجاح وتحديث الجدول التشغيلي' : 'Worker replaced successfully'));
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', booking.id] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            onClose();
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || (isArabic ? 'فشل استبدال العامل.' : 'Failed to replace worker.'));
+        }
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!selectedWorkerId) {
+            toast.error(isArabic ? 'يرجى اختيار العامل البديل.' : 'Please select a replacement worker.');
+            return;
+        }
+        if (!reason.trim()) {
+            toast.error(isArabic ? 'يرجى كتابة سبب الاستبدال.' : 'Please enter the replacement reason.');
+            return;
+        }
+
+        replaceMutation.mutate({
+            old_worker_id: worker.id,
+            new_worker_id: Number(selectedWorkerId),
+            reason: reason.trim(),
+            override_buffer: overrideBuffer,
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
+            <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-3xl p-7 max-h-[90vh] flex flex-col font-main animate-in zoom-in-95 duration-200">
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                    <div>
+                        <h4 className="text-base font-bold text-gray-800">
+                            {isArabic ? 'استبدال عضو في الفريق / الحجز' : 'Replace Worker / Team Member'}
+                        </h4>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            {isArabic ? `العامل الحالي: ${worker.name}` : `Current worker: ${worker.name}`}
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 outline-none">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-1">
+                    {isTeamBooking && (
+                        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-amber-800 text-xs flex items-start gap-2.5">
+                            <span className="text-base leading-none">⚠️</span>
+                            <div>
+                                <p className="font-bold">{isArabic ? 'تحديث تلقائي لقالب الفريق' : 'Automatic Team Roster Update'}</p>
+                                <p className="text-[11px] text-amber-700 mt-0.5">
+                                    {isArabic
+                                        ? 'استبدال هذا العامل سيقوم بنقل العامل الجديد لعضوية الفريق وإخراج العامل الحالي للحفاظ على قوام الفريق (3 عمال ذكور).'
+                                        : 'Replacing this worker will transfer the new worker into this team and remove the current worker, maintaining the team roster (3 male workers).'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                            {isArabic ? 'اختر العامل البديل (المتاحون مع فاصل 60 دقيقة)' : 'Select Replacement Worker (60-min buffer verified)'}
+                        </label>
+
+                        {isLoading ? (
+                            <div className="py-6 flex justify-center">
+                                <svg className="animate-spin h-6 w-6 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                            </div>
+                        ) : candidates.length === 0 ? (
+                            <div className="py-8 text-center border border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs bg-gray-50/50">
+                                {isArabic ? 'لا يوجد عمال بدلاء متاحون يستوفون شروط الخدمة والفاصل الزمني.' : 'No available replacement workers meet the service and schedule buffer criteria.'}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto p-2 border border-gray-100 rounded-2xl">
+                                {candidates.map((w) => {
+                                    const selected = selectedWorkerId === w.id;
+                                    return (
+                                        <div
+                                            key={w.id}
+                                            onClick={() => setSelectedWorkerId(w.id)}
+                                            className={`p-3 border rounded-2xl cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                                                selected
+                                                    ? 'border-[#E91E63] bg-[#FDF0F3]/60 shadow-2xs ring-1 ring-[#E91E63]'
+                                                    : 'border-gray-100 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
+                                                <span className="text-[11px] font-medium text-gray-400 mt-0.5">
+                                                    {w.nationality || '—'} · ⭐ {w.avg_rating || '5.0'}
+                                                    {w.gender && ` (${w.gender === 'male' || w.gender === 'Male' ? (isArabic ? 'ذكر' : 'Male') : (isArabic ? 'أنثى' : 'Female')})`}
+                                                </span>
+                                            </div>
+                                            <input
+                                                type="radio"
+                                                name="replacement_worker"
+                                                checked={selected}
+                                                onChange={() => setSelectedWorkerId(w.id)}
+                                                className="w-4 h-4 text-[#E91E63] border-gray-300 focus:ring-[#E91E63] cursor-pointer"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                            {isArabic ? 'سبب الاستبدال (مطلوب)' : 'Replacement Reason (Required)'} *
+                        </label>
+                        <textarea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            rows="2"
+                            placeholder={isArabic ? 'مثال: إجازة مرضية مفاجئة للعامل الحالي...' : 'e.g. Sudden illness or emergency for current worker...'}
+                            className="w-full px-3.5 py-2.5 border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#E91E63] focus:ring-2 focus:ring-[#E91E63]/10 rounded-xl outline-none text-xs transition-colors resize-none font-medium"
+                        />
+                    </div>
+
+                    <div className="pt-1">
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-600 select-none">
+                            <input
+                                type="checkbox"
+                                checked={overrideBuffer}
+                                onChange={(e) => setOverrideBuffer(e.target.checked)}
+                                className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63]"
+                            />
+                            <span>{isArabic ? 'تجاوز شرط الفاصل الزمني (60 دقيقة) لحالات الطوارئ' : 'Override 60-min transition buffer (emergency only)'}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-xs rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors"
+                    >
+                        {isArabic ? 'إلغاء' : 'Cancel'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={replaceMutation.isPending || isLoading || !selectedWorkerId || !reason.trim()}
+                        className="px-4 py-2 text-xs rounded-xl font-bold text-white bg-[#E91E63] hover:bg-[#d81b60] transition-colors disabled:opacity-50"
+                    >
+                        {replaceMutation.isPending ? (isArabic ? 'جاري الاستبدال...' : 'Replacing...') : (isArabic ? 'تأكيد الاستبدال' : 'Confirm Replacement')}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

@@ -16,6 +16,8 @@ import ServiceFormPage from './pages/Services/ServiceFormPage.jsx';
 import ServiceDetails from './pages/Services/ServiceDetails.jsx';
 import Workers from './pages/Workers/Workers.jsx';
 import WorkerDetails from './pages/Workers/WorkerDetails.jsx';
+import Teams from './pages/Teams/Teams.jsx';
+import TeamDetails from './pages/Teams/TeamDetails.jsx';
 import Employees from './pages/Employees/Employess.jsx';
 import Bookings from './pages/Bookings/Bookings.jsx';
 import BookingDetails from './pages/Bookings/BookingDetails.jsx';
@@ -72,6 +74,10 @@ export const router = createBrowserRouter([
           element: <Operations />,
         },
         {
+          path: 'admin/operations',
+          element: <Operations />,
+        },
+        {
           element: <PermissionRoute permission="users.view" />,
           children: [
             { path: 'clients', element: <Clients /> },
@@ -99,6 +105,13 @@ export const router = createBrowserRouter([
           children: [
             { path: 'workers', element: <Workers /> },
             { path: 'workers/:id', element: <WorkerDetails /> },
+          ],
+        },
+        {
+          element: <PermissionRoute permission="teams.view" />,
+          children: [
+            { path: 'teams', element: <Teams /> },
+            { path: 'teams/:id', element: <TeamDetails /> },
           ],
         },
         {
