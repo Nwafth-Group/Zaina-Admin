@@ -410,20 +410,13 @@ export default function ServiceFormPage() {
             if (!watch('worker_gender_options')?.length) {
                 setValue('worker_gender_options', ['Male']);
             }
-            if (!isDeepCleaning) {
+            if (!isEditMode && !isDeepCleaning) {
                 setValue('base_price', 0);
                 setValue('min_workers', 1);
                 setValue('max_workers', 1);
             }
         }
-    }, [isHospitality, isBabysitting, isPedicureManicure, isOtherService, isDeepCleaning, setValue]);
-
-    const watchMinWorkers = watch('min_workers');
-    useEffect(() => {
-        if (isOtherService && watchMinWorkers) {
-            setValue('max_workers', watchMinWorkers);
-        }
-    }, [isOtherService, watchMinWorkers, setValue]);
+    }, [isHospitality, isBabysitting, isPedicureManicure, isOtherService, isDeepCleaning, isEditMode, setValue]);
 
     // Handle Image Preview
     const imageList = watch('image');
@@ -555,7 +548,7 @@ export default function ServiceFormPage() {
             payload.append('name_en', data.name_en);
             payload.append('description_ar', data.description_ar);
             payload.append('description_en', data.description_en);
-            payload.append('type', data.type);
+            payload.append('type', data.type || fullServiceData?.type || 'hourly');
             payload.append('status', data.status);
             if (data.service_code) payload.append('service_code', data.service_code);
 
@@ -967,7 +960,7 @@ export default function ServiceFormPage() {
                             </div>
                             <div>
                                 <label className={LABEL_CLASS}>{t('form.type')}</label>
-                                <SelectField registration={register('type')}>
+                                <SelectField registration={register('type')} disabled={isEditMode}>
                                     <option value="hourly">{t('types.hourly')}</option>
                                     <option value="other">{t('types.other')}</option>
                                 </SelectField>
@@ -1107,8 +1100,8 @@ export default function ServiceFormPage() {
                             )}
                         </FormSection>
 
-                        {/* Sub-Items / Options & Pricing Section */}
-                        {(isOtherService || optionFields.length > 0) && (
+                        {/* Sub-Items / Options & Pricing Section (Excluded for Deep Cleaning) */}
+                        {!isDeepCleaning && (isOtherService || optionFields.length > 0) && (
                             <FormSection
                                 icon="sparkles"
                                 title={isArabic ? `${watch('name_ar') || 'الخدمة'} - خيارات الخدمة والأسعار` : `${watch('name_en') || 'Service'} Options & Pricing`}
@@ -1229,18 +1222,16 @@ export default function ServiceFormPage() {
                         )}
 
                         <FormSection icon="sparkles" title={isArabic ? 'الأسعار والزيارات' : 'Prices & Visit Options'}>
-                            {(!isOtherService || isDeepCleaning) && (
-                                <div className="mb-4">
-                                    <label className={LABEL_CLASS}>{t('form.base_price')}</label>
-                                    <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
-                                    <ErrorMsg name="base_price" />
-                                </div>
-                            )}
+                            <div className="mb-4">
+                                <label className={LABEL_CLASS}>{t('form.base_price')}</label>
+                                <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
+                                <ErrorMsg name="base_price" />
+                            </div>
                             <div className="mb-4">
                                 <label className={LABEL_CLASS}>{t('form.pricing_type')}</label>
-                                <SelectField registration={register('pricing_type')} disabled={isPedicureManicure || isOtherService}>
+                                <SelectField registration={register('pricing_type')} disabled={isPedicureManicure}>
                                     <option value="per_service">{isArabic ? 'سعر بالخدمة / الزيارة (Per Service)' : 'Per Service / Visit'}</option>
-                                    {(!isPedicureManicure && !isOtherService) && <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>}
+                                    {!isPedicureManicure && <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>}
                                 </SelectField>
                                 <ErrorMsg name="pricing_type" />
                             </div>
@@ -1250,7 +1241,7 @@ export default function ServiceFormPage() {
                                     <label className={LABEL_CLASS}>{t('form.visit_types')}</label>
                                     <span className="text-[10px] text-gray-400 font-semibold">{isArabic ? 'يجب اختيار نوع واحد على الأقل' : 'Select at least one'}</span>
                                 </div>
-                                <div className={`grid grid-cols-1 ${(!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService) ? 'sm:grid-cols-2' : ''} gap-4`}>
+                                <div className={`grid grid-cols-1 ${(!isHospitality && !isBabysitting && !isPedicureManicure) ? 'sm:grid-cols-2' : ''} gap-4`}>
                                     
                                     {/* Visit type 1: Single Visit Card */}
                                     <div 
@@ -1299,7 +1290,7 @@ export default function ServiceFormPage() {
                                         )}
                                     </div>
 
-                                    {!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService && (
+                                    {!isHospitality && !isBabysitting && !isPedicureManicure && (
                                         <div 
                                             onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
                                             className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
@@ -1413,51 +1404,49 @@ export default function ServiceFormPage() {
                             </div>
                         )}
 
-                        {(!isOtherService || isDeepCleaning) && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
-                                    <input 
-                                        type="number" 
-                                        {...register('min_workers', {
-                                            onChange: (e) => {
-                                                if (isDeepCleaning) {
-                                                    const val = Number(e.target.value);
-                                                    if (val > 0) {
-                                                        setValue('max_workers', val, { shouldValidate: true });
-                                                    }
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                            <div>
+                                <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
+                                <input 
+                                    type="number" 
+                                    {...register('min_workers', {
+                                        onChange: (e) => {
+                                            if (isDeepCleaning || isOtherService) {
+                                                const val = Number(e.target.value);
+                                                if (val > 0) {
+                                                    setValue('max_workers', val, { shouldValidate: true });
                                                 }
                                             }
-                                        })} 
-                                        className={INPUT_CLASS} 
-                                    />
-                                    <ErrorMsg name="min_workers" />
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
-                                    <input 
-                                        type="number" 
-                                        {...register('max_workers', {
-                                            onChange: (e) => {
-                                                if (isDeepCleaning) {
-                                                    const val = Number(e.target.value);
-                                                    if (val > 0) {
-                                                        setValue('min_workers', val, { shouldValidate: true });
-                                                    }
-                                                }
-                                            }
-                                        })} 
-                                        className={INPUT_CLASS} 
-                                    />
-                                    <ErrorMsg name="max_workers" />
-                                </div>
+                                        }
+                                    })} 
+                                    className={INPUT_CLASS} 
+                                />
+                                <ErrorMsg name="min_workers" />
                             </div>
-                        )}
-                        {isDeepCleaning && (
+                            <div>
+                                <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
+                                <input 
+                                    type="number" 
+                                    {...register('max_workers', {
+                                        onChange: (e) => {
+                                            if (isDeepCleaning || isOtherService) {
+                                                const val = Number(e.target.value);
+                                                if (val > 0) {
+                                                    setValue('min_workers', val, { shouldValidate: true });
+                                                }
+                                            }
+                                        }
+                                    })} 
+                                    className={INPUT_CLASS} 
+                                />
+                                <ErrorMsg name="max_workers" />
+                            </div>
+                        </div>
+                        {(isDeepCleaning || isOtherService) && (
                             <p className="text-xs text-[#E91E63] font-bold mt-1">
                                 {isArabic 
-                                    ? '💡 لخدمة النظافة العميقة، يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
-                                    : '💡 For Deep Cleaning Service, Minimum and Maximum workers must always be the same number.'}
+                                    ? '💡 يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
+                                    : '💡 Minimum and Maximum workers must always be the same number.'}
                             </p>
                         )}
 
@@ -1628,11 +1617,11 @@ export default function ServiceFormPage() {
 
                 {/* TAB 4: WORKING DAYS & SHIFTS */}
                 {activeTab === 'shifts' && (
-                    <div className={(isHospitality || isBabysitting || isPedicureManicure || isOtherService) ? "w-full space-y-6" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
+                    <div className={(isHospitality || isBabysitting || isPedicureManicure) ? "w-full space-y-6" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
                         
                         {/* Working Days Select */}
                         <FormSection icon="calendar" title={t('form.working_days')} description={isArabic ? 'اختر الأيام المتاحة لتقديم الخدمة.' : 'Select days of the week when this service is active.'}>
-                            <div className={`grid ${(!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService) ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'} gap-2.5`}>
+                            <div className={`grid ${(!isHospitality && !isBabysitting && !isPedicureManicure) ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'} gap-2.5`}>
                                 {WEEK_DAYS.map((day) => (
                                     <label key={day} className="flex items-center gap-2 p-2.5 border border-gray-100 bg-gray-50/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
                                         <input type="checkbox" value={day} {...register('working_days')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
@@ -1643,7 +1632,7 @@ export default function ServiceFormPage() {
                         </FormSection>
 
                         {/* Shift Start/End Times List Builder */}
-                        {!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService && (
+                        {!isHospitality && !isBabysitting && !isPedicureManicure && (
                             <FormSection
                                 icon="clock"
                                 title={t('form.shifts')}
