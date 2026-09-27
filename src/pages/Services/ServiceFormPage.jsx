@@ -435,6 +435,7 @@ export default function ServiceFormPage() {
         if (isEditMode && fullServiceData) {
             const singleVisit = (fullServiceData.available_visit_types || []).find(vt => vt.type === 'single_visit');
             const threeDays = (fullServiceData.available_visit_types || []).find(vt => vt.type === '3_days_per_week');
+            const serviceIsOther = (fullServiceData.type === 'other') || (Number(id) >= 6);
 
             // Map working days from schedules or available_days
             let workingDaysSet = [];
@@ -483,11 +484,11 @@ export default function ServiceFormPage() {
                 status: fullServiceData.status || 'active',
                 service_code: fullServiceData.service_code || '',
                 
-                base_price: fullServiceData.base_price || '',
+                base_price: (serviceIsOther && fullServiceData.service_code !== 'DEEP_CLEANING') ? 0 : (fullServiceData.base_price || ''),
                 
-                single_visit_checked: !!singleVisit,
+                single_visit_checked: serviceIsOther ? true : !!singleVisit,
                 single_visit_discount: singleVisit ? singleVisit.discount : 0,
-                three_days_checked: !!threeDays,
+                three_days_checked: serviceIsOther ? false : !!threeDays,
                 three_days_discount: threeDays ? threeDays.discount : 0,
                 
                 
@@ -521,7 +522,7 @@ export default function ServiceFormPage() {
                 terms_en: fullServiceData.terms_en || '',
                 acceptance_required: !!fullServiceData.acceptance_required,
                 worker_gender_options: fullServiceData.worker_gender_options || ['Female'],
-                pricing_type: fullServiceData.pricing_type || 'per_hour',
+                pricing_type: serviceIsOther ? 'per_service' : (fullServiceData.pricing_type || 'per_hour'),
                 
                 workers: fullServiceData.workers?.map((w) => String(w.id)) || [],
                 rules: {
@@ -560,20 +561,22 @@ export default function ServiceFormPage() {
                 payload.append('image', data.image[0]);
             }
 
-            payload.append('base_price', data.base_price);
-            if (isSecondOrThirdService && data.pricing_type) {
+            payload.append('base_price', (isOtherService && !isDeepCleaning) ? '0' : (data.base_price ?? 0));
+            if (isOtherService) {
+                payload.append('pricing_type', 'per_service');
+            } else if (isSecondOrThirdService && data.pricing_type) {
                 payload.append('pricing_type', data.pricing_type);
             }
 
             // Visit Types
             let vtIndex = 0;
-            if (data.single_visit_checked) {
+            if (data.single_visit_checked || isOtherService) {
                 payload.append(`available_visit_types[${vtIndex}][type]`, 'single_visit');
                 const discVal = (data.single_visit_discount === '' || data.single_visit_discount == null) ? 0 : data.single_visit_discount;
                 payload.append(`available_visit_types[${vtIndex}][discount]`, String(discVal));
                 vtIndex++;
             }
-            if (!isHospitality && !isBabysitting && !isPedicureManicure && data.three_days_checked) {
+            if (!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService && data.three_days_checked) {
                 payload.append(`available_visit_types[${vtIndex}][type]`, '3_days_per_week');
                 const discVal = (data.three_days_discount === '' || data.three_days_discount == null) ? 0 : data.three_days_discount;
                 payload.append(`available_visit_types[${vtIndex}][discount]`, String(discVal));
@@ -1222,16 +1225,18 @@ export default function ServiceFormPage() {
                         )}
 
                         <FormSection icon="sparkles" title={isArabic ? 'الأسعار والزيارات' : 'Prices & Visit Options'}>
-                            <div className="mb-4">
-                                <label className={LABEL_CLASS}>{t('form.base_price')}</label>
-                                <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
-                                <ErrorMsg name="base_price" />
-                            </div>
+                            {(!isOtherService || isDeepCleaning) && (
+                                <div className="mb-4">
+                                    <label className={LABEL_CLASS}>{t('form.base_price')}</label>
+                                    <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
+                                    <ErrorMsg name="base_price" />
+                                </div>
+                            )}
                             <div className="mb-4">
                                 <label className={LABEL_CLASS}>{t('form.pricing_type')}</label>
-                                <SelectField registration={register('pricing_type')} disabled={isPedicureManicure}>
+                                <SelectField registration={register('pricing_type')} disabled={isPedicureManicure || isOtherService}>
                                     <option value="per_service">{isArabic ? 'سعر بالخدمة / الزيارة (Per Service)' : 'Per Service / Visit'}</option>
-                                    {!isPedicureManicure && <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>}
+                                    {(!isPedicureManicure && !isOtherService) && <option value="per_hour">{isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour'}</option>}
                                 </SelectField>
                                 <ErrorMsg name="pricing_type" />
                             </div>
@@ -1241,7 +1246,7 @@ export default function ServiceFormPage() {
                                     <label className={LABEL_CLASS}>{t('form.visit_types')}</label>
                                     <span className="text-[10px] text-gray-400 font-semibold">{isArabic ? 'يجب اختيار نوع واحد على الأقل' : 'Select at least one'}</span>
                                 </div>
-                                <div className={`grid grid-cols-1 ${(!isHospitality && !isBabysitting && !isPedicureManicure) ? 'sm:grid-cols-2' : ''} gap-4`}>
+                                <div className={`grid grid-cols-1 ${(!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService) ? 'sm:grid-cols-2' : ''} gap-4`}>
                                     
                                     {/* Visit type 1: Single Visit Card */}
                                     <div 
@@ -1290,7 +1295,7 @@ export default function ServiceFormPage() {
                                         )}
                                     </div>
 
-                                    {!isHospitality && !isBabysitting && !isPedicureManicure && (
+                                    {!isHospitality && !isBabysitting && !isPedicureManicure && !isOtherService && (
                                         <div 
                                             onClick={() => setValue('three_days_checked', !watchThreeDaysChecked, { shouldValidate: true })}
                                             className={`relative cursor-pointer border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all duration-300 ${
