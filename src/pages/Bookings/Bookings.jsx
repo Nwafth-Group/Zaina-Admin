@@ -230,14 +230,64 @@ export default function Bookings() {
                 </p>
             </div>
 
-            {/* Summary Metric Tab Cards (Matching Drivers Layout & Colors) */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {/* Summary Metric Tab Cards (Unified Modern Design) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
                 {[
-                    { value: '', labelKey: 'tabs.all', icon: '📅', color: 'bg-[#FDF0F3] border-[#fbdbe3]' },
-                    { value: 'Upcoming', labelKey: 'status.Upcoming', icon: '🔹', color: 'bg-blue-50 border-blue-200' },
-                    { value: 'inService', labelKey: 'status.inService', icon: '⏳', color: 'bg-amber-50 border-amber-200' },
-                    { value: 'completed', labelKey: 'status.completed', icon: '✅', color: 'bg-emerald-50 border-emerald-200' },
-                    { value: 'cancelled', labelKey: 'status.cancelled', icon: '❌', color: 'bg-rose-50 border-rose-200' },
+                    {
+                        value: '',
+                        label: isArabic ? 'جميع الحجوزات' : 'All Bookings',
+                        sub: isArabic ? 'كافة السجلات' : 'All records',
+                        gradient: 'from-pink-500 to-rose-600',
+                        icon: (
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                            </svg>
+                        ),
+                    },
+                    {
+                        value: 'Upcoming',
+                        label: isArabic ? 'الحجوزات القادمة' : 'Upcoming Bookings',
+                        sub: isArabic ? 'مجدولة بانتظار الموعد' : 'Scheduled ahead',
+                        gradient: 'from-blue-500 to-indigo-600',
+                        icon: (
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                        ),
+                    },
+                    {
+                        value: 'inService',
+                        label: isArabic ? 'قيد التنفيذ' : 'In Service',
+                        sub: isArabic ? 'فرق وعمالة بالموقع' : 'Teams on-site',
+                        gradient: 'from-amber-400 to-amber-600',
+                        icon: (
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                            </svg>
+                        ),
+                    },
+                    {
+                        value: 'completed',
+                        label: isArabic ? 'المكتملة بنجاح' : 'Completed',
+                        sub: isArabic ? 'خدمات منجزة' : 'Finished orders',
+                        gradient: 'from-emerald-400 to-teal-600',
+                        icon: (
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        ),
+                    },
+                    {
+                        value: 'cancelled',
+                        label: isArabic ? 'الحجوزات الملغية' : 'Cancelled',
+                        sub: isArabic ? 'طلبات ملغاة' : 'Cancelled orders',
+                        gradient: 'from-rose-500 to-red-600',
+                        icon: (
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        ),
+                    },
                 ].map((card) => {
                     const isActive = filters.status === card.value;
                     const countVal = counts[card.value || 'all'] ?? 0;
@@ -247,17 +297,26 @@ export default function Bookings() {
                             key={card.value || 'all'}
                             type="button"
                             onClick={() => selectStatus(card.value)}
-                            className={`p-4 rounded-xl border  transition-all flex items-center justify-between outline-none ${
+                            className={`bg-white p-3.5 sm:p-4.5 rounded-2xl border text-start transition-all duration-200 flex items-center justify-between gap-3 group cursor-pointer outline-none ${
                                 isActive
-                                    ? `${card.color} ring-2 ring-[#E91E63]/30 shadow-sm`
-                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#E91E63] ring-2 ring-[#E91E63]/20 shadow-md'
+                                    : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
                             }`}
                         >
-                            <div>
-                                <p className="text-xs font-bold text-gray-500">{t(card.labelKey)}</p>
-                                <p className="text-2xl font-black text-gray-900 mt-1">{countVal}</p>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs font-extrabold text-gray-400 uppercase tracking-wider truncate">
+                                    {card.label}
+                                </p>
+                                <p className="text-2xl font-black text-gray-900 mt-1 tracking-tight">
+                                    {countVal}
+                                </p>
+                                <p className="text-[11px] font-bold text-gray-400 mt-0.5 truncate">
+                                    {card.sub}
+                                </p>
                             </div>
-                            <div className="text-2xl">{card.icon}</div>
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform shrink-0`}>
+                                {card.icon}
+                            </div>
                         </button>
                     );
                 })}

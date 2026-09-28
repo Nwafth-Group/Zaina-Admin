@@ -298,7 +298,7 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed, companyData }
             )}
 
             <aside className={`
-                fixed inset-y-0 ltr:left-0 rtl:right-0 z-30
+                fixed inset-y-0 ltr:left-0 rtl:right-0 z-50
                 bg-white shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] flex flex-col h-screen 
                 border-r rtl:border-l rtl:border-r-0 border-gray-100/50 
                 transition-all duration-300 ease-in-out

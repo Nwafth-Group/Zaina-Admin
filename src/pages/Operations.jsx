@@ -365,30 +365,30 @@ export default function Operations() {
             </div>
 
             {/* Premium Metric KPI Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {metricCards.map((card) => (
                     <button
                         key={card.key}
                         type="button"
                         onClick={card.onClick}
-                        className={`bg-white p-5 rounded-2xl border text-start transition-all duration-200 flex items-center justify-between group cursor-pointer ${
+                        className={`bg-white p-3.5 sm:p-4.5 rounded-2xl border text-start transition-all duration-200 flex items-center justify-between gap-3 group cursor-pointer outline-none ${
                             card.active
                                 ? 'border-[#E91E63] ring-2 ring-[#E91E63]/20 shadow-md'
-                                : 'border-gray-200 shadow-2xs hover:shadow-md hover:border-gray-300'
+                                : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
                         }`}
                     >
-                        <div>
-                            <p className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">
+                        <div className="min-w-0 flex-1">
+                            <p className="text-xs font-extrabold text-gray-400 uppercase tracking-wider truncate">
                                 {card.label}
                             </p>
                             <p className="text-2xl font-black text-gray-900 mt-1 tracking-tight">
                                 {card.count}
                             </p>
-                            <p className="text-[11px] font-bold text-gray-400 mt-0.5">
+                            <p className="text-[11px] font-bold text-gray-400 mt-0.5 truncate">
                                 {card.sub}
                             </p>
                         </div>
-                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform shrink-0`}>
                             {card.icon}
                         </div>
                     </button>
