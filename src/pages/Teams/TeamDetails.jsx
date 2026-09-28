@@ -215,7 +215,7 @@ export default function TeamDetails() {
                     icon={<span className="text-xl">👥</span>}
                     bg="bg-indigo-50"
                     label={isArabic ? 'قوام الفريق (ذكور)' : 'Team Members (Male)'}
-                    value={`${workers.length} / 3`}
+                    value={isArabic ? `${workers.length} عمال` : `${workers.length} Members`}
                     accent="text-indigo-600"
                 />
                 <StatCard
@@ -269,12 +269,12 @@ export default function TeamDetails() {
                     <div className="bg-indigo-50/70 border border-indigo-100 rounded-3xl p-5 text-xs text-indigo-900 space-y-2">
                         <div className="flex items-center gap-2 font-bold text-indigo-950">
                             <span>📌</span>
-                            <span>{isArabic ? 'قواعد تشغيل الفرق (V.16)' : 'Team Operational Rules'}</span>
+                            <span>{isArabic ? 'تشغيل الفرق' : 'Team Operations'}</span>
                         </div>
                         <p className="text-[11px] text-indigo-800 leading-relaxed">
                             {isArabic
-                                ? 'قالب الفريق التشغيلي يتكون من 3 عمال ذكور حصراً مع إمكانية إسناد الفريق لعدة خدمات تخصصية (تنظيف كنب، خزانات، مكيفات، سجاد، إلخ).'
-                                : 'Daily operational team consists strictly of 3 male workers with multi-service capability across specialized cleaning services (sofas, water tanks, ACs, carpets, etc.).'}
+                                ? 'فريق العمل التشغيلي يتكون من عمال ذكور مع إمكانية إسناد الفريق لعدة خدمات تخصصية (تنظيف كنب، خزانات، مكيفات، سجاد، إلخ).'
+                                : 'Daily operational team consists of male workers with multi-service capability across specialized cleaning services (sofas, water tanks, ACs, carpets, etc.).'}
                         </p>
                     </div>
                 </div>
@@ -341,7 +341,7 @@ export default function TeamDetails() {
                                         <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                                         </svg>
-                                        <span>{isArabic ? 'أعضاء الفريق (3 عمال ذكور)' : 'Team Members (3 Male Workers)'}</span>
+                                        <span>{isArabic ? `أعضاء الفريق (${workers.length} عمال ذكور)` : `Team Members (${workers.length} Male Workers)`}</span>
                                     </h4>
                                     <button
                                         type="button"

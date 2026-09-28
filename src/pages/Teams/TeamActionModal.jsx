@@ -68,9 +68,8 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
         worker_ids: yup
             .array()
             .of(yup.number())
-            .min(3, isArabic ? 'يجب اختيار 3 عمال ذكور بالضبط لتكوين الفريق' : 'Must select exactly 3 male workers')
-            .max(3, isArabic ? 'لا يمكن اختيار أكثر من 3 عمال' : 'Cannot select more than 3 workers')
-            .required(isArabic ? 'يجب اختيار 3 عمال ذكور' : '3 male workers are required'),
+            .min(1, isArabic ? 'يجب اختيار عامل واحد على الأقل لتكوين الفريق' : 'Must select at least 1 male worker')
+            .required(isArabic ? 'يجب اختيار عمال الفريق' : 'Team workers are required'),
         service_ids: yup.array().of(yup.number()).nullable(),
     });
 
@@ -127,10 +126,6 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
         if (selectedWorkerIds.includes(idNum)) {
             setValue('worker_ids', selectedWorkerIds.filter((id) => id !== idNum), { shouldValidate: true });
         } else {
-            if (selectedWorkerIds.length >= 3) {
-                toast.error(isArabic ? 'يتكون الفريق من 3 عمال ذكور فقط.' : 'A team can only contain 3 male workers.');
-                return;
-            }
             setValue('worker_ids', [...selectedWorkerIds, idNum], { shouldValidate: true });
         }
     };
@@ -301,13 +296,13 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
                 }
                 action={
                     <span className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
-                        selectedWorkerIds.length === 3
+                        selectedWorkerIds.length > 0
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-[#E91E63]/10 text-[#E91E63]'
                     }`}>
-                        {selectedWorkerIds.length === 3
-                            ? (isArabic ? '✅ تم اختيار 3 عمال' : '✅ 3 Workers Selected')
-                            : (isArabic ? `${selectedWorkerIds.length} / 3 عمال ذكور` : `${selectedWorkerIds.length} / 3 male workers`)}
+                        {selectedWorkerIds.length > 0
+                            ? (isArabic ? `✅ تم اختيار ${selectedWorkerIds.length} ${selectedWorkerIds.length === 1 ? 'عامل' : 'عمال'}` : `✅ ${selectedWorkerIds.length} Worker${selectedWorkerIds.length > 1 ? 's' : ''} Selected`)
+                            : (isArabic ? 'اختر عمال الفريق (1 أو أكثر)' : 'Select workers (1 or more)')}
                     </span>
                 }
             >
@@ -344,7 +339,6 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {filteredWorkers.map((worker) => {
                                 const isSelected = selectedWorkerIds.includes(worker.id);
-                                const isLimitReached = !isSelected && selectedWorkerIds.length >= 3;
                                 return (
                                     <div
                                         key={worker.id}
@@ -352,8 +346,6 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
                                         className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                                             isSelected
                                                 ? 'bg-pink-50/70 border-[#E91E63] shadow-xs ring-1 ring-[#E91E63]/30'
-                                                : isLimitReached
-                                                ? 'bg-white/60 border-gray-200/50 opacity-60 hover:opacity-100'
                                                 : 'bg-white border-gray-200/80 hover:border-gray-300'
                                         }`}
                                     >
