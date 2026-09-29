@@ -642,15 +642,32 @@ export default function Operations() {
                                                     <td className="py-3.5 px-4">
                                                         {b.transport ? (
                                                             <div className="space-y-0.5">
-                                                                <div className="font-bold text-gray-800">
-                                                                    {b.transport.driver_name || (isArabic ? 'سائق غير محدد' : 'No driver')}
+                                                                <div className="font-bold text-gray-800 flex items-center gap-1">
+                                                                    <span>🚐</span>
+                                                                    <span>{b.transport.driver_name || (isArabic ? 'سائق غير محدد' : 'No driver')}</span>
                                                                 </div>
                                                                 <div className="text-[10px] text-gray-500 font-mono">
                                                                     {b.transport.vehicle_type || 'Van'} [{b.transport.vehicle_plate || '—'}]
                                                                 </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => navigate(`/transport-dispatch/details?date=${selectedDate}&shift=${encodeURIComponent(b.planned_start_time?.substring(0, 5) || '08:00')}`)}
+                                                                    className="text-[10px] text-[#E91E63] hover:underline font-bold block mt-0.5 cursor-pointer"
+                                                                >
+                                                                    {isArabic ? 'عرض الترحيل' : 'View Dispatch'}
+                                                                </button>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-400 font-mono text-[11px]">—</span>
+                                                            <div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => navigate(`/transport-dispatch/details?date=${selectedDate}&shift=${encodeURIComponent(b.planned_start_time?.substring(0, 5) || '08:00')}`)}
+                                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-50 text-[#E91E63] hover:bg-pink-100 border border-pink-200 text-[10px] font-bold transition cursor-pointer"
+                                                                >
+                                                                    <span>+</span>
+                                                                    <span>{isArabic ? 'تعيين سائق' : 'Assign Driver'}</span>
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </td>
 
