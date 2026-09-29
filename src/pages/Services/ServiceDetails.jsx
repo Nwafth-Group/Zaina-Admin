@@ -318,10 +318,10 @@ export default function ServiceDetails() {
                                             )}
                                             <InfoItem label={isArabic ? 'نوع التسعير' : 'Pricing Type'} value={service.pricing_type === 'per_hour' ? (isArabic ? 'سعر بالساعة (Per Hour)' : 'Per Hour') : (isArabic ? 'سعر بالخدمة (Per Service)' : 'Per Service')} />
                                             <InfoItem label={isArabic ? 'ساعات العمل' : 'Working Hours'} value={`${service.start_time ? service.start_time.slice(0, 5) : '—'} - ${service.end_time ? service.end_time.slice(0, 5) : '—'}`} />
-                                            <InfoItem label={t('form.default_duration')} value={`${service.default_duration || '—'} ${t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}`} />
+                                            <InfoItem label={t('form.default_duration')} value={`${service.default_duration || '—'} ${t('form.hours')}`} />
                                             
                                             {service.has_duration_range && (
-                                                <InfoItem label={isArabic ? 'نطاق المدة المتاحة' : 'Duration Range'} value={`${service.min_duration} - ${service.max_duration} ${t(`form.${(service.duration_unit || 'Hours').toLowerCase()}`)}`} />
+                                                <InfoItem label={isArabic ? 'نطاق المدة المتاحة' : 'Duration Range'} value={`${service.min_duration} - ${service.max_duration} ${t('form.hours')}`} />
                                             )}
 
                                             {(!hasOptions || isDeepCleaning) && (

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 import RescheduleBookingModal from './RescheduleBookingModal';
+import AssignTeamModal from './AssignTeamModal';
 import { hasPermission } from '../../utils/permissions.js';
 
 const STATUS_STYLES = {
@@ -65,6 +66,7 @@ export default function BookingDetails() {
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelNote, setCancelNote] = useState('');
     const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [assignTeamModalOpen, setAssignTeamModalOpen] = useState(false);
     const [replacingWorker, setReplacingWorker] = useState(null);
     const [rescheduleOpen, setRescheduleOpen] = useState(false);
     const [downloadingContract, setDownloadingContract] = useState(false);
@@ -119,6 +121,7 @@ export default function BookingDetails() {
     const isWorkingStatus = status === 'Upcoming' || status === 'inService';
     const isTerminal = status === 'completed' || status === 'cancelled';
     const canModifyWorkersOrSchedule = status === 'Upcoming' || status === 'Pending Assignment';
+    const isTeamService = Boolean(booking?.service?.is_team_based || (booking?.service_id >= 6 && booking?.service_id <= 11) || booking?.team_id || booking?.team);
     const busy = statusMutation.isPending;
 
     const getCairoDate = () => {
@@ -217,12 +220,26 @@ export default function BookingDetails() {
                             <span>{isArabic ? 'تنزيل عقد الحجز PDF' : 'Download Contract PDF'}</span>
                         </button>
 
-                        {/* Assign Workers Button */}
-                        {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
+                        {/* Assign / Reassign Team Button (For Team Services) */}
+                        {isTeamService && canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
+                            <button
+                                type="button"
+                                onClick={() => setAssignTeamModalOpen(true)}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 h-10 rounded-xl text-xs font-bold shadow-md active:scale-95 transition-all flex items-center gap-2 outline-none cursor-pointer"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                </svg>
+                                <span>{booking.team ? (isArabic ? 'إعادة تعيين الفريق' : 'Reassign Team') : (isArabic ? 'تعيين فريق عمل' : 'Assign Team')}</span>
+                            </button>
+                        )}
+
+                        {/* Assign Workers Button (For Non-Team Services) */}
+                        {!isTeamService && canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
                             <button
                                 type="button"
                                 onClick={() => setAssignModalOpen(true)}
-                                className="bg-[#E91E63] hover:bg-[#d81b60] text-white px-4 h-10 rounded-xl text-xs font-bold shadow-md active:scale-95 transition-all flex items-center gap-2 outline-none"
+                                className="bg-[#E91E63] hover:bg-[#d81b60] text-white px-4 h-10 rounded-xl text-xs font-bold shadow-md active:scale-95 transition-all flex items-center gap-2 outline-none cursor-pointer"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -605,6 +622,18 @@ export default function BookingDetails() {
                                                     <span>{isArabic ? 'فريق العمل التشغيلي' : 'Operational Team'}</span>
                                                 </h4>
                                                 <div className="flex items-center gap-2">
+                                                    {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAssignTeamModalOpen(true)}
+                                                            className="text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2.5 py-1 rounded-xl transition-all outline-none cursor-pointer flex items-center gap-1.5 me-1"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                                            </svg>
+                                                            <span>{isArabic ? 'إعادة تعيين الفريق' : 'Reassign Team'}</span>
+                                                        </button>
+                                                    )}
                                                     {booking.team.id && (
                                                         <button
                                                             type="button"
@@ -646,6 +675,48 @@ export default function BookingDetails() {
                                         </div>
                                     )}
 
+                                    {/* 2.6 Unassigned Team Banner Card (When team service has no team assigned) */}
+                                    {isTeamService && !booking.team && (
+                                        <div className="bg-gradient-to-r from-amber-50 to-orange-50/40 border border-amber-200/80 rounded-3xl p-6 md:p-7 shadow-2xs">
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0 shadow-2xs">
+                                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <h4 className="text-sm font-black text-amber-900">
+                                                                {isArabic ? 'بانتظار تعيين فريق عمل تشغيلي' : 'Pending Operational Team Assignment'}
+                                                            </h4>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 border border-amber-300">
+                                                                {isArabic ? 'لم يعين فريق بعد' : 'No Team Assigned'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-amber-700 mt-1 font-medium leading-relaxed">
+                                                            {isArabic
+                                                                ? 'تم حجز هذا الطلب لخدمة فرق عمل دون اختيار فريق مسبقاً. يرجى اختيار وتعيين فريق عمل مناسب لتأكيد التجهيز.'
+                                                                : 'This team-based service was booked without a pre-assigned team. Please assign an available operational team.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAssignTeamModalOpen(true)}
+                                                        className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 shrink-0 outline-none cursor-pointer"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                                        </svg>
+                                                        <span>{isArabic ? 'تعيين فريق عمل الآن' : 'Assign Team Now'}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* 3. Assigned Workers Card */}
                                     <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
                                         <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
@@ -668,13 +739,25 @@ export default function BookingDetails() {
                                             </div>
 
                                             {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAssignModalOpen(true)}
-                                                    className="text-xs font-bold text-[#E91E63] hover:underline outline-none"
-                                                >
-                                                    {isArabic ? 'إدارة / تعيين العاملات →' : 'Manage Workers →'}
-                                                </button>
+                                                isTeamService ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAssignTeamModalOpen(true)}
+                                                        className="text-xs font-bold text-indigo-600 hover:underline outline-none cursor-pointer"
+                                                    >
+                                                        {booking.team
+                                                            ? (isArabic ? 'إعادة تعيين الفريق →' : 'Reassign Team →')
+                                                            : (isArabic ? 'تعيين فريق عمل →' : 'Assign Team →')}
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAssignModalOpen(true)}
+                                                        className="text-xs font-bold text-[#E91E63] hover:underline outline-none"
+                                                    >
+                                                        {isArabic ? 'إدارة / تعيين العاملات →' : 'Manage Workers →'}
+                                                    </button>
+                                                )
                                             )}
                                         </div>
 
@@ -720,7 +803,9 @@ export default function BookingDetails() {
                                             </div>
                                         ) : (
                                             <div className="py-8 text-center border border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs bg-gray-50/50">
-                                                {isArabic ? 'لم يتم تعيين عاملات حتى الآن.' : 'No workers assigned yet.'}
+                                                {isTeamService
+                                                    ? (isArabic ? 'لم يتم تعيين فريق عمل بعد. سيتم ربط العمالة تلقائياً بمجرد تعيين الفريق.' : 'No team assigned yet. Team workers will be linked upon team assignment.')
+                                                    : (isArabic ? 'لم يتم تعيين عاملات حتى الآن.' : 'No workers assigned yet.')}
                                             </div>
                                         )}
                                     </div>
@@ -892,6 +977,14 @@ export default function BookingDetails() {
                     isArabic={isArabic}
                     t={t}
                     onClose={() => setAssignModalOpen(false)}
+                />
+            )}
+
+            {assignTeamModalOpen && (
+                <AssignTeamModal
+                    booking={booking}
+                    isArabic={isArabic}
+                    onClose={() => setAssignTeamModalOpen(false)}
                 />
             )}
 
@@ -1128,7 +1221,12 @@ function ReplaceWorkerModal({ booking, worker, isArabic, onClose }) {
         enabled: !!booking.id,
     });
 
-    const isTeamBooking = !!booking.team_id || (booking.workers && booking.workers.length === 3);
+    const isTeamBooking = Boolean(
+        booking.team_id ||
+        booking.team ||
+        booking.service?.is_team_based ||
+        (booking.service_id >= 6 && booking.service_id <= 11)
+    );
 
     const candidates = eligibleWorkers.filter(w => {
         if (w.id === worker.id) return false;

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { INPUT_CLASS, LABEL_CLASS, SelectField, OptionCards, FormSection } from '../../components/form/FormKit';
@@ -21,7 +21,7 @@ const calculateEndTime = (startTimeStr, durationHours) => {
         const endH = Math.floor(totalMinutes / 60) % 24;
         const endM = totalMinutes % 60;
         return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
-    } catch (e) {
+    } catch {
         return '';
     }
 };
@@ -137,7 +137,6 @@ export default function ServiceFormPage() {
                 if (isHospitality && (value < '08:00' || value > '20:00')) return false;
                 return true;
             }),
-        duration_unit: yup.string().required(t('validation.required')),
         default_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
         
         min_duration: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().when('has_duration_range', {
@@ -236,7 +235,6 @@ export default function ServiceFormPage() {
 
         terms_ar: yup.string().nullable().max(5000),
         terms_en: yup.string().nullable().max(5000),
-        acceptance_required: yup.boolean(),
 
         workers: yup.array().of(yup.string()),
         teams: yup.array().of(yup.string()).nullable(),
@@ -283,7 +281,6 @@ export default function ServiceFormPage() {
             base_price: '',
             start_time: '',
             end_time: '',
-            duration_unit: 'Hours',
             default_duration: 4,
             has_duration_range: false,
             min_duration: 4,
@@ -299,7 +296,6 @@ export default function ServiceFormPage() {
             features: [],
             terms_ar: '',
             terms_en: '',
-            acceptance_required: false,
             workers: [],
             teams: [],
             rules: {
@@ -408,18 +404,15 @@ export default function ServiceFormPage() {
         if (isHospitality) {
             setValue('single_visit_checked', true);
             setValue('three_days_checked', false);
-            setValue('duration_unit', 'Hours');
             setValue('has_duration_range', true);
         } else if (isPedicureManicure) {
             setValue('single_visit_checked', true);
             setValue('three_days_checked', false);
-            setValue('duration_unit', 'Hours');
             setValue('has_duration_range', false);
             setValue('default_duration', 2);
         } else if (isOtherService) {
             setValue('single_visit_checked', true);
             setValue('three_days_checked', false);
-            setValue('duration_unit', 'Hours');
             setValue('has_duration_range', false);
             setValue('pricing_type', 'per_service');
             if (!watch('worker_gender_options')?.length) {
@@ -509,7 +502,6 @@ export default function ServiceFormPage() {
                 
                 start_time: fullServiceData.start_time ? fullServiceData.start_time.slice(0, 5) : '',
                 end_time: fullServiceData.end_time ? fullServiceData.end_time.slice(0, 5) : '',
-                duration_unit: fullServiceData.duration_unit || 'Hours',
                 default_duration: fullServiceData.default_duration || 1,
                 has_duration_range: (String(id) === '2' || String(id) === '3') ? true : !!fullServiceData.has_duration_range,
                 min_duration: fullServiceData.min_duration || '',
@@ -535,7 +527,6 @@ export default function ServiceFormPage() {
                 features: (fullServiceData.features || []).map((f) => ({ ar: f.ar || '', en: f.en || '' })),
                 terms_ar: fullServiceData.terms_ar || '',
                 terms_en: fullServiceData.terms_en || '',
-                acceptance_required: !!fullServiceData.acceptance_required,
                 worker_gender_options: fullServiceData.worker_gender_options || ['Female'],
                 pricing_type: serviceIsOther ? 'per_service' : (fullServiceData.pricing_type || 'per_hour'),
                 
@@ -607,7 +598,6 @@ export default function ServiceFormPage() {
             // Start & End Windows
             if (data.start_time) payload.append('start_time', data.start_time);
             if (data.end_time) payload.append('end_time', data.end_time);
-            payload.append('duration_unit', 'Hours');
             payload.append('default_duration', data.default_duration);
             const isForcedRange = String(id) === '2' || String(id) === '3';
             const hasRange = isForcedRange || data.has_duration_range;
@@ -677,7 +667,6 @@ export default function ServiceFormPage() {
             // Terms
             payload.append('terms_ar', data.terms_ar || '');
             payload.append('terms_en', data.terms_en || '');
-            payload.append('acceptance_required', data.acceptance_required ? '1' : '0');
 
             // Teams for Services 6 to 11 OR Workers for Services 1 to 5
             if (isTeamBasedService) {
@@ -1392,18 +1381,10 @@ export default function ServiceFormPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.default_duration')}</label>
-                                <input type="number" {...register('default_duration')} className={`${INPUT_CLASS} ${errors.default_duration ? 'border-red-500' : ''}`} />
-                                <ErrorMsg name="default_duration" />
-                            </div>
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.duration_unit')}</label>
-                                <SelectField registration={register('duration_unit')} disabled={true}>
-                                    <option value="Hours">{t('form.hours')}</option>
-                                </SelectField>
-                            </div>
+                        <div>
+                            <label className={LABEL_CLASS}>{t('form.default_duration')} ({t('form.hours')})</label>
+                            <input type="number" {...register('default_duration')} className={`${INPUT_CLASS} ${errors.default_duration ? 'border-red-500' : ''}`} />
+                            <ErrorMsg name="default_duration" />
                         </div>
 
                         {!isPedicureManicure && !isOtherService && (
