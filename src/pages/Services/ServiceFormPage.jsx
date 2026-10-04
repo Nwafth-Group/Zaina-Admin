@@ -168,18 +168,29 @@ export default function ServiceFormPage() {
             otherwise: (s) => s.nullable(),
         }),
 
-        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
-        max_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1)
-            .test('max_workers_hosp', isArabic ? 'الحد الأقصى لعدد العمالة هو 12 للضيافة' : 'Maximum workers must be at most 12 for Hospitality Services', function(value) {
-                const categoryId = this.parent.category_id;
-                const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
-                const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
-                if (isHospitality && value > 12) return false;
-                return true;
-            })
-            .test('max_workers_greater', 'Max workers must be >= Min workers', function(value) {
-                const { min_workers } = this.parent;
-                return value >= min_workers;
+        is_team_based: yup.boolean().nullable(),
+        min_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value))
+            .when('is_team_based', {
+                is: true,
+                then: (s) => s.nullable(),
+                otherwise: (s) => s.required(t('validation.required')).min(1),
+            }),
+        max_workers: yup.number().transform((value) => (isNaN(value) ? undefined : value))
+            .when('is_team_based', {
+                is: true,
+                then: (s) => s.nullable(),
+                otherwise: (s) => s.required(t('validation.required')).min(1)
+                    .test('max_workers_hosp', isArabic ? 'الحد الأقصى لعدد العمالة هو 12 للضيافة' : 'Maximum workers must be at most 12 for Hospitality Services', function(value) {
+                        const categoryId = this.parent.category_id;
+                        const selectedCat = categories?.find(c => String(c.id) === String(categoryId));
+                        const isHospitality = selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
+                        if (isHospitality && value > 12) return false;
+                        return true;
+                    })
+                    .test('max_workers_greater', 'Max workers must be >= Min workers', function(value) {
+                        const { min_workers } = this.parent;
+                        return !min_workers || value >= min_workers;
+                    }),
             }),
         covered_persons_per_worker: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(1),
         min_children: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable()
@@ -272,6 +283,7 @@ export default function ServiceFormPage() {
         defaultValues: {
             status: 'active',
             type: 'hourly',
+            is_team_based: false,
             worker_gender_options: ['Female'],
             pricing_type: 'per_hour',
             single_visit_checked: false,
@@ -334,10 +346,13 @@ export default function ServiceFormPage() {
     const isOtherService = !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
     const isDeepCleaning = (watchServiceCode === 'DEEP_CLEANING') || (String(id) === '5') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
     const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
-    const isTeamBasedService = !!fullServiceData?.is_team_based || (Number(id) >= 6 && Number(id) <= 11) || (
-        ['SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH']
-            .includes(watchServiceCode?.toUpperCase())
-    );
+    const isSpecializedService = (Number(id) >= 6 && Number(id) <= 11) || (
+        isOtherService && !isDeepCleaning
+    ) || [
+        'SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH'
+    ].includes(watchServiceCode?.toUpperCase());
+    const watchIsTeamBased = watch('is_team_based');
+    const isTeamBasedService = isSpecializedService ? !!watchIsTeamBased : false;
 
     // Fetch Teams list for services 6 to 11
     const { data: teamsList = [], isLoading: isTeamsLoading } = useQuery({
@@ -348,7 +363,7 @@ export default function ServiceFormPage() {
         },
     });
 
-    // Filterable Workers Picker (Female-only for Services 1, 3, 4; both genders for Service 2)
+    // Filterable Workers Picker (Female-only for Services 1, 3, 4; both genders for Service 2; configurable for specialized)
     const {
         data: workersData,
         isLoading: isWorkersLoading,
@@ -356,7 +371,7 @@ export default function ServiceFormPage() {
         hasNextPage: hasMoreWorkers,
         isFetchingNextPage: isFetchingMoreWorkers,
     } = useInfiniteQuery({
-        queryKey: ['page-workers', workerSearch, id, isHospitality, isPedicureManicure, isOtherService],
+        queryKey: ['page-workers', workerSearch, id, isHospitality, isPedicureManicure, isOtherService, isSpecializedService, watchIsTeamBased],
         queryFn: async ({ pageParam = 1 }) => {
             const params = new URLSearchParams({ 
                 page: String(pageParam), 
@@ -369,8 +384,11 @@ export default function ServiceFormPage() {
             }
             if (isPedicureManicure || isBabysitting || watchServiceCode === 'DOMESTIC_HELPER_HOURLY') {
                 params.append('gender', 'Female');
-            } else if (isOtherService) {
-                params.append('gender', 'Male');
+            } else if (isSpecializedService || isOtherService) {
+                const genders = watch('worker_gender_options') || [];
+                if (genders.length === 1) {
+                    params.append('gender', genders[0]);
+                }
             } else if (!isHospitality) {
                 params.append('gender', 'Female');
             }
@@ -458,12 +476,12 @@ export default function ServiceFormPage() {
 
             // Map shift times from available_shifts or schedules
             let shifts = [];
-            if (fullServiceData.available_shifts && fullServiceData.available_shifts.length > 0) {
+            if (Array.isArray(fullServiceData.available_shifts)) {
                 shifts = fullServiceData.available_shifts.map(sh => ({
                     start_time: sh.start_time?.slice(0, 5) || '',
                     end_time: sh.end_time?.slice(0, 5) || ''
                 }));
-            } else {
+            } else if (fullServiceData.schedules && fullServiceData.schedules.length > 0) {
                 const shiftTimes = {};
                 (fullServiceData.schedules || []).forEach((sch) => {
                     if (sch.is_active && sch.start_time) {
@@ -472,7 +490,10 @@ export default function ServiceFormPage() {
                         shiftTimes[sTime] = eTime;
                     }
                 });
-                shifts = Object.keys(shiftTimes).map((sTime) => ({ start_time: sTime, end_time: shiftTimes[sTime] }));
+                const mapped = Object.keys(shiftTimes).map((sTime) => ({ start_time: sTime, end_time: shiftTimes[sTime] }));
+                if (mapped.length > 1 || (mapped.length === 1 && (mapped[0].start_time !== '08:00' || mapped[0].end_time !== '20:00'))) {
+                    shifts = mapped;
+                }
             }
 
             const rawZoneIds = (fullServiceData.service_zone_ids && fullServiceData.service_zone_ids.length > 0)
@@ -508,6 +529,9 @@ export default function ServiceFormPage() {
                 max_duration: fullServiceData.max_duration || '',
                 min_workers: fullServiceData.min_workers || 1,
                 max_workers: fullServiceData.max_workers || 1,
+                is_team_based: fullServiceData.is_team_based !== undefined && fullServiceData.is_team_based !== null 
+                    ? Boolean(fullServiceData.is_team_based) 
+                    : ((Number(id) >= 6 && Number(id) <= 11) || (serviceIsOther && fullServiceData.service_code !== 'DEEP_CLEANING')),
                 min_children: fullServiceData.min_children || '',
                 max_children: fullServiceData.max_children || '',
                 child_age_groups: fullServiceData.child_age_groups || [],
@@ -606,8 +630,15 @@ export default function ServiceFormPage() {
                 if (data.min_duration) payload.append('min_duration', data.min_duration);
                 if (data.max_duration) payload.append('max_duration', data.max_duration);
             }
-            payload.append('min_workers', data.min_workers || 1);
-            payload.append('max_workers', data.max_workers || 1);
+            if (isSpecializedService) {
+                payload.append('is_team_based', isTeamBasedService ? '1' : '0');
+            } else {
+                payload.append('is_team_based', '0');
+            }
+            if (!isTeamBasedService) {
+                payload.append('min_workers', data.min_workers || 1);
+                payload.append('max_workers', data.max_workers || data.min_workers || 1);
+            }
             if (data.min_children !== undefined && data.min_children !== null && data.min_children !== '') {
                 payload.append('min_children', String(data.min_children));
             }
@@ -729,6 +760,8 @@ export default function ServiceFormPage() {
                 shifts: 'shifts',
                 rules: 'rules',
                 workers: 'workers',
+                teams: 'workers',
+                is_team_based: 'durations',
             };
 
             if (validationErrors) {
@@ -772,6 +805,8 @@ export default function ServiceFormPage() {
             shifts: 'shifts',
             rules: 'rules',
             workers: 'workers',
+            teams: 'workers',
+            is_team_based: 'durations',
         };
 
         if (formErrors[firstErrorKey]) {
@@ -885,7 +920,7 @@ export default function ServiceFormPage() {
                                    (tab.id === 'durations' && (errors.default_duration || errors.min_duration || errors.max_duration || errors.min_workers || errors.max_workers || errors.covered_persons_per_worker || errors.min_children || errors.max_children || errors.child_age_groups)) ||
                                    (tab.id === 'shifts' && (errors.working_days || errors.shifts)) ||
                                    (tab.id === 'rules' && (errors.rules || errors.terms_ar || errors.terms_en)) ||
-                                   (tab.id === 'workers' && errors.workers);
+                                   (tab.id === 'workers' && (errors.workers || errors.teams));
                     return (
                         <button
                             key={tab.id}
@@ -1416,50 +1451,127 @@ export default function ServiceFormPage() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
-                                <input 
-                                    type="number" 
-                                    {...register('min_workers', {
-                                        onChange: (e) => {
-                                            if (isDeepCleaning || isOtherService) {
-                                                const val = Number(e.target.value);
-                                                if (val > 0) {
-                                                    setValue('max_workers', val, { shouldValidate: true });
-                                                }
-                                            }
-                                        }
-                                    })} 
-                                    className={INPUT_CLASS} 
-                                />
-                                <ErrorMsg name="min_workers" />
+                        {/* Assignment Model Selector (Teams vs Workers) for Specialized Services (6 to 11) */}
+                        {isSpecializedService && (
+                            <div className="p-5 border border-pink-100 rounded-2xl bg-[#FDF0F3]/40 space-y-3 pt-3 border-t border-gray-100">
+                                <label className="block text-sm font-bold text-gray-800">
+                                    {isArabic ? 'طريقة تعيين مقدمي الخدمة (فرق عمل أم عمالة)' : 'Service Resource Model (Teams vs. Workers)'}
+                                </label>
+                                <p className="text-xs text-gray-500">
+                                    {isArabic 
+                                        ? 'حدد ما إذا كانت الخدمة تعتمد على فرق عمل متكاملة أو عمالة فردية محددة.' 
+                                        : 'Choose whether this service is executed by teams or individual workers.'}
+                                </p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setValue('is_team_based', true, { shouldValidate: true });
+                                        }}
+                                        className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-start transition-all cursor-pointer ${
+                                            watchIsTeamBased
+                                                ? 'border-[#E91E63] bg-white shadow-sm ring-2 ring-[#E91E63]/10'
+                                                : 'border-gray-200 bg-white/60 hover:bg-white hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                            watchIsTeamBased ? 'border-[#E91E63]' : 'border-gray-300'
+                                        }`}>
+                                            {watchIsTeamBased && <div className="w-2.5 h-2.5 rounded-full bg-[#E91E63]" />}
+                                        </div>
+                                        <div>
+                                            <span className="block text-sm font-bold text-gray-800">
+                                                {isArabic ? 'فرق عمل (Teams)' : 'Work Teams'}
+                                            </span>
+                                            <span className="block text-xs text-gray-400 mt-0.5">
+                                                {isArabic ? 'إسناد فرق عمل متكاملة لهذه الخدمة' : 'Assign full teams to this service'}
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setValue('is_team_based', false, { shouldValidate: true });
+                                            const currentMin = watch('min_workers');
+                                            const val = (currentMin && Number(currentMin) > 0) ? Number(currentMin) : 1;
+                                            setValue('min_workers', val, { shouldValidate: true });
+                                            setValue('max_workers', val, { shouldValidate: true });
+                                        }}
+                                        className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-start transition-all cursor-pointer ${
+                                            !watchIsTeamBased
+                                                ? 'border-[#E91E63] bg-white shadow-sm ring-2 ring-[#E91E63]/10'
+                                                : 'border-gray-200 bg-white/60 hover:bg-white hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                            !watchIsTeamBased ? 'border-[#E91E63]' : 'border-gray-300'
+                                        }`}>
+                                            {!watchIsTeamBased && <div className="w-2.5 h-2.5 rounded-full bg-[#E91E63]" />}
+                                        </div>
+                                        <div>
+                                            <span className="block text-sm font-bold text-gray-800">
+                                                {isArabic ? 'عمال أفراد (Workers)' : 'Individual Workers'}
+                                            </span>
+                                            <span className="block text-xs text-gray-400 mt-0.5">
+                                                {isArabic ? 'إسناد عمال محددين مع تحديد عدد العمال' : 'Assign specific workers with count'}
+                                            </span>
+                                        </div>
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
-                                <input 
-                                    type="number" 
-                                    {...register('max_workers', {
-                                        onChange: (e) => {
-                                            if (isDeepCleaning || isOtherService) {
-                                                const val = Number(e.target.value);
-                                                if (val > 0) {
-                                                    setValue('min_workers', val, { shouldValidate: true });
+                        )}
+
+                        {/* Workers count (min/max): only shown when NOT team-based */}
+                        {!watchIsTeamBased && (
+                            <div className="space-y-2 pt-3 border-t border-gray-100">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.min_workers')}</label>
+                                        <input 
+                                            type="number" 
+                                            {...register('min_workers', {
+                                                onChange: (e) => {
+                                                    if (isDeepCleaning || isOtherService || isSpecializedService) {
+                                                        const val = Number(e.target.value);
+                                                        if (val > 0) {
+                                                            setValue('max_workers', val, { shouldValidate: true });
+                                                        }
+                                                    }
                                                 }
-                                            }
-                                        }
-                                    })} 
-                                    className={INPUT_CLASS} 
-                                />
-                                <ErrorMsg name="max_workers" />
+                                            })} 
+                                            className={INPUT_CLASS} 
+                                        />
+                                        <ErrorMsg name="min_workers" />
+                                    </div>
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.max_workers')}</label>
+                                        <input 
+                                            type="number" 
+                                            {...register('max_workers', {
+                                                onChange: (e) => {
+                                                    if (isDeepCleaning || isOtherService || isSpecializedService) {
+                                                        const val = Number(e.target.value);
+                                                        if (val > 0) {
+                                                            setValue('min_workers', val, { shouldValidate: true });
+                                                        }
+                                                    }
+                                                }
+                                            })} 
+                                            className={INPUT_CLASS} 
+                                        />
+                                        <ErrorMsg name="max_workers" />
+                                    </div>
+                                </div>
+                                {(isDeepCleaning || isOtherService || isSpecializedService) && (
+                                    <p className="text-xs text-[#E91E63] font-bold mt-1">
+                                        {isArabic 
+                                            ? '💡 يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
+                                            : '💡 Minimum and Maximum workers must always be the same number.'}
+                                    </p>
+                                )}
                             </div>
-                        </div>
-                        {(isDeepCleaning || isOtherService) && (
-                            <p className="text-xs text-[#E91E63] font-bold mt-1">
-                                {isArabic 
-                                    ? '💡 يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
-                                    : '💡 Minimum and Maximum workers must always be the same number.'}
-                            </p>
                         )}
 
                         {/* Person-Based Worker Calculation Rule (Pedicure & Manicure / Other Services Only) */}
