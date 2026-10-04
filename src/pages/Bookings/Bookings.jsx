@@ -166,9 +166,9 @@ export default function Bookings() {
         },
     });
 
-    // `status` is handled by the tab bar, so it's excluded from the drawer badge.
+    // Active drawer filter count
     const activeFilterCount =
-        (filters.payment_status ? 1 : 0) +
+        (filters.status ? 1 : 0) +
         (filters.service_zone_id ? 1 : 0) +
         (filters.date_from ? 1 : 0) +
         (filters.date_to ? 1 : 0) +
@@ -544,16 +544,21 @@ export default function Bookings() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {/* Booking Status Filter */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.payment_label')}</label>
-                            <select value={draftFilters.payment_status} onChange={(e) => updateDraft('payment_status', e.target.value)} className={`${selectClass} w-full`}>
-                                <option value="">{t('filters.all_payments')}</option>
-                                <option value="paid">{t('payment.paid')}</option>
-                                <option value="refunded">{t('payment.refunded')}</option>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('filters.status_label')}</label>
+                            <select 
+                                value={draftFilters.status} 
+                                onChange={(e) => updateDraft('status', e.target.value)} 
+                                className={`${selectClass} w-full`}
+                            >
+                                <option value="">{t('filters.all_statuses')}</option>
+                                <option value="Upcoming">{t('status.Upcoming')}</option>
+                                <option value="inService">{t('status.inService')}</option>
+                                <option value="completed">{t('status.completed')}</option>
+                                <option value="cancelled">{t('status.cancelled')}</option>
                             </select>
                         </div>
-
-
 
                         {/* Location — Geo-Fenced Service Zone */}
                         <div>

@@ -121,7 +121,7 @@ export default function BookingDetails() {
     const isWorkingStatus = status === 'Upcoming' || status === 'inService';
     const isTerminal = status === 'completed' || status === 'cancelled';
     const canModifyWorkersOrSchedule = status === 'Upcoming' || status === 'Pending Assignment';
-    const isTeamService = Boolean(booking?.service?.is_team_based || (booking?.service_id >= 6 && booking?.service_id <= 11) || booking?.team_id || booking?.team);
+    const isTeamService = Boolean(booking?.is_team_based || booking?.service?.is_team_based || booking?.team_id || booking?.team);
     const busy = statusMutation.isPending;
 
     const getCairoDate = () => {
@@ -1224,8 +1224,8 @@ function ReplaceWorkerModal({ booking, worker, isArabic, onClose }) {
     const isTeamBooking = Boolean(
         booking.team_id ||
         booking.team ||
-        booking.service?.is_team_based ||
-        (booking.service_id >= 6 && booking.service_id <= 11)
+        booking.is_team_based ||
+        booking.service?.is_team_based
     );
 
     const candidates = eligibleWorkers.filter(w => {
