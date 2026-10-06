@@ -73,7 +73,7 @@ export default function ServiceDetails() {
     });
 
     const toggleMutation = useMutation({
-        mutationFn: async () => axiosInstance.patch(`/admin/services/${serviceId}/toggle-status`),
+        mutationFn: async () => axiosInstance.post(`/admin/services/${serviceId}/toggle-status`),
         onSuccess: (res) => {
             toast.success(res.data?.message || (isArabic ? 'تم تغيير حالة الخدمة بنجاح' : 'Service status updated successfully'));
             queryClient.invalidateQueries({ queryKey: ['service-details', serviceId] });

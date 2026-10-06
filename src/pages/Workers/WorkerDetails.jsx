@@ -88,7 +88,7 @@ export default function WorkerDetails() {
     });
 
     const toggleStatusMutation = useMutation({
-        mutationFn: async () => axiosInstance.patch(`/admin/workers/${workerId}/toggle-status`),
+        mutationFn: async () => axiosInstance.post(`/admin/workers/${workerId}/toggle-status`),
         onSuccess: (res) => {
             toast.success(res.data?.message || (isArabic ? 'تم تحديث حالة العامل بنجاح' : 'Worker status updated successfully'));
             queryClient.invalidateQueries({ queryKey: ['worker-details', workerId] });
