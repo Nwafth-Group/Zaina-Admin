@@ -131,7 +131,10 @@ export default function Operations() {
     // Mutation: Start Service
     const startServiceMutation = useMutation({
         mutationFn: async ({ bookingId, actual_start_time }) => {
-            return (await axiosInstance.post(`/admin/operations/bookings/${bookingId}/start`, { actual_start_time })).data;
+            return (await axiosInstance.post(`/admin/operations/bookings/${bookingId}/start`, {
+                actual_start_time,
+                date: selectedDate,
+            })).data;
         },
         onSuccess: (res) => {
             toast.success(res?.message || (isArabic ? 'تم تسجيل بدء الخدمة بنجاح' : 'Service started successfully'));
@@ -146,7 +149,10 @@ export default function Operations() {
     // Mutation: Complete Service
     const completeServiceMutation = useMutation({
         mutationFn: async ({ bookingId, actual_end_time }) => {
-            return (await axiosInstance.post(`/admin/operations/bookings/${bookingId}/complete`, { actual_end_time })).data;
+            return (await axiosInstance.post(`/admin/operations/bookings/${bookingId}/complete`, {
+                actual_end_time,
+                date: selectedDate,
+            })).data;
         },
         onSuccess: (res) => {
             toast.success(res?.message || (isArabic ? 'تم إنهاء الخدمة بنجاح' : 'Service completed successfully'));
@@ -588,7 +594,14 @@ export default function Operations() {
                                                     </td>
 
                                                     <td className="py-3.5 px-4">
-                                                        <div className="font-bold text-gray-800">{b.service?.name}</div>
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="font-bold text-gray-800">{b.service?.name}</span>
+                                                            {b.visit_label && (
+                                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold">
+                                                                    {b.visit_label}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[11px] text-gray-500 truncate max-w-[170px]" title={b.customer?.address}>
                                                             {b.customer?.address || (isArabic ? 'موقع العميل' : 'Customer address')}
                                                         </div>
@@ -1124,8 +1137,8 @@ export default function Operations() {
 
                         <p className="text-xs text-gray-500">
                             {isArabic
-                                ? `تسجيل وقت البدء الفعلي للحجز #${startModalBooking.booking_ref}. ستتحول الحالة تلقائياً إلى "قيد التنفيذ".`
-                                : `Record actual start time for booking #${startModalBooking.booking_ref}. Status will change to "In Service".`}
+                                ? `تسجيل وقت البدء الفعلي للحجز #${startModalBooking.booking_ref}${startModalBooking.visit_label ? ` (${startModalBooking.visit_label})` : ''}. ستتحول الحالة تلقائياً إلى "قيد التنفيذ".`
+                                : `Record actual start time for booking #${startModalBooking.booking_ref}${startModalBooking.visit_label ? ` (${startModalBooking.visit_label})` : ''}. Status will change to "In Service".`}
                         </p>
 
                         <div>
@@ -1174,7 +1187,7 @@ export default function Operations() {
                         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                             <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                                <span>{isArabic ? 'تسجيل إنهاء الخدمة وإعادة فحص الانتقال' : 'Complete Service Execution'}</span>
+                                <span>{isArabic ? `تسجيل إنهاء الخدمة${completeModalBooking.visit_label ? ` (${completeModalBooking.visit_label})` : ''}` : `Complete Service Execution${completeModalBooking.visit_label ? ` (${completeModalBooking.visit_label})` : ''}`}</span>
                             </h3>
                             <button onClick={() => setCompleteModalBooking(null)} className="text-gray-400 hover:text-gray-600 font-bold">✕</button>
                         </div>
