@@ -825,7 +825,14 @@ export default function BookingDetails() {
                                                     <div key={idx} className="flex justify-between items-center p-3.5 border border-gray-100 bg-gray-50/50 rounded-2xl hover:bg-gray-50 transition-colors">
                                                         <div>
                                                             <p className="text-sm font-bold text-gray-800">{v.visit_date} ({isArabic ? translateDay(v.visit_day) : v.visit_day})</p>
-                                                            <p className="text-xs font-medium text-gray-400 mt-0.5">{v.start_time} - {v.end_time} ({v.duration} {isArabic ? 'ساعة' : 'hours'})</p>
+                                                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                                                <span className="text-xs font-medium text-gray-400">{v.start_time} - {v.end_time} ({v.duration} {isArabic ? 'ساعة' : 'hours'})</span>
+                                                                {(v.actual_start_time || v.actual_end_time) && (
+                                                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100" dir="ltr">
+                                                                        {v.actual_start_time || '—'} → {v.actual_end_time || '...'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${STATUS_STYLES[v.visit_status] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                                             {t(`status.${v.visit_status}`, v.visit_status)}

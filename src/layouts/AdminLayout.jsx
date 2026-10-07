@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import axiosInstance from '../api/axios.js';
 import LanguageSwitcher from '../component/LanguageSwitcher.jsx';
 import Sidebar from '../component/Sidebar.jsx';
@@ -82,16 +83,93 @@ const AdminLayout = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
+  const queryClient = useQueryClient();
+
+  const lastNotifIdRef = useRef(null);
+  const isFirstLoadRef = useRef(true);
+
   const { data: adminNotifications = [], refetch: refetchNotifications } = useQuery({
     queryKey: ['admin-notifications'],
     queryFn: async () => {
       try {
-        return (await axiosInstance.get('/admin/me/notifications')).data.data || [];
+        const res = await axiosInstance.get('/admin/me/notifications');
+        const list = res.data.data || [];
+
+        if (list.length > 0) {
+          const latest = list[0];
+          if (isFirstLoadRef.current) {
+            lastNotifIdRef.current = latest.id;
+            isFirstLoadRef.current = false;
+          } else if (lastNotifIdRef.current && lastNotifIdRef.current !== latest.id && !latest.read_at) {
+            lastNotifIdRef.current = latest.id;
+
+            // Trigger Real-Time Toast Alert
+            const details = latest.data || {};
+            const title = details.title || (isArabic ? 'إشعار جديد' : 'New Notification');
+            const message = details.message || details.body || details.description || '';
+
+            toast(
+              (t) => (
+                <div
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    setIsNotifOpen(true);
+                  }}
+                  className="flex items-start gap-3 w-full cursor-pointer select-none bg-white"
+                  style={{
+                    direction: isArabic ? 'rtl' : 'ltr',
+                    textAlign: isArabic ? 'right' : 'left',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-gray-900 leading-snug">
+                      {title}
+                    </p>
+                    {message && (
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+                        {message}
+                      </p>
+                    )}
+                    <span className="text-[11px] text-[#D94A78] font-semibold mt-1.5 inline-block">
+                      {isArabic ? 'انقر لعرض الإشعارات' : 'Click to view'}
+                    </span>
+                  </div>
+                </div>
+              ),
+              {
+                icon: '🔔',
+                duration: 6000,
+                position: isArabic ? 'top-left' : 'top-right',
+                style: {
+                  background: '#ffffff',
+                  backgroundColor: '#ffffff',
+                  color: '#111827',
+                  border: '1px solid #e5e7eb',
+                  borderRight: isArabic ? '4px solid #D94A78' : '1px solid #e5e7eb',
+                  borderLeft: !isArabic ? '4px solid #D94A78' : '1px solid #e5e7eb',
+                  borderRadius: '16px',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.18), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+                  padding: '14px 18px',
+                  minWidth: '320px',
+                  maxWidth: '420px',
+                  opacity: 1,
+                  zIndex: 99999,
+                },
+              }
+            );
+          }
+        } else if (isFirstLoadRef.current) {
+          isFirstLoadRef.current = false;
+        }
+
+        return list;
       } catch {
         return [];
       }
     },
-    refetchInterval: 30000,
+    refetchInterval: 3000,
+    refetchOnWindowFocus: true,
   });
 
   const markReadMutation = useMutation({
@@ -186,8 +264,8 @@ const AdminLayout = () => {
                   <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                 </svg>
                 {adminNotifications.filter(n => !n.read_at).length > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm shadow-red-500/20 animate-pulse border-2 border-white">
-                    {adminNotifications.filter(n => !n.read_at).length > 9 ? "9+" : adminNotifications.filter(n => !n.read_at).length}
+                  <span className="absolute -top-1 -right-1 flex min-w-5 h-5 px-1 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm shadow-red-500/20 animate-pulse border-2 border-white">
+                    {adminNotifications.filter(n => !n.read_at).length}
                   </span>
                 )}
               </button>

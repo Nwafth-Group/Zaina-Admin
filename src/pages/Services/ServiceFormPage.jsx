@@ -94,14 +94,14 @@ export default function ServiceFormPage() {
         description_en: yup.string().required(t('validation.required')).max(500),
         status: yup.string().required(t('validation.required')),
         service_code: yup.string().nullable().max(50),
-        base_price: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
+        base_price: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0).max(99999999.99, isArabic ? 'السعر الأساسي لا يمكن أن يتجاوز 99,999,999.99' : 'Base price cannot exceed 99,999,999.99'),
         options: yup.array().of(
             yup.object().shape({
                 name_ar: yup.string().required(t('validation.required')),
                 name_en: yup.string().required(t('validation.required')),
-                unit_price: yup.number().transform((val) => (isNaN(val) ? undefined : val)).required(t('validation.required')).min(0),
-                min_qty: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(0),
-                max_qty: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(1),
+                unit_price: yup.number().transform((val) => (isNaN(val) ? undefined : val)).required(t('validation.required')).min(0).max(99999999.99, isArabic ? 'سعر الوحدة لا يمكن أن يتجاوز 99,999,999.99' : 'Unit price cannot exceed 99,999,999.99'),
+                min_qty: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(0).max(999999),
+                max_qty: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(1).max(999999),
                 status: yup.string().default('active'),
             })
         ).nullable(),
@@ -496,12 +496,10 @@ export default function ServiceFormPage() {
                 }
             }
 
-            const rawZoneIds = (fullServiceData.service_zone_ids && fullServiceData.service_zone_ids.length > 0)
+            const rawZoneIds = Array.isArray(fullServiceData.service_zone_ids)
                 ? fullServiceData.service_zone_ids
                 : (fullServiceData.service_zones || []).map(z => z.id);
-            if (rawZoneIds && rawZoneIds.length > 0) {
-                setSelectedZoneIds(rawZoneIds.map(String));
-            }
+            setSelectedZoneIds((rawZoneIds || []).map(String));
 
             reset({
                 category_id: fullServiceData.category?.id ? String(fullServiceData.category.id) : '',
@@ -615,9 +613,13 @@ export default function ServiceFormPage() {
             }
 
             // Service Zones
-            (selectedZoneIds || []).forEach((zid, i) => {
-                payload.append(`service_zone_ids[${i}]`, zid);
-            });
+            if (!selectedZoneIds || selectedZoneIds.length === 0) {
+                payload.append('service_zone_ids', '');
+            } else {
+                selectedZoneIds.forEach((zid, i) => {
+                    payload.append(`service_zone_ids[${i}]`, zid);
+                });
+            }
 
             // Start & End Windows
             if (data.start_time) payload.append('start_time', data.start_time);
@@ -1115,7 +1117,30 @@ export default function ServiceFormPage() {
                                     {isArabic ? 'لا توجد مناطق تغطية مضافة حالياً. يمكنك إنشاء مناطق جديدة من صفحة "مناطق التغطية".' : 'No service zones found. Create new zones from Service Zones page.'}
                                 </p>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                                <>
+                                    <div className="flex items-center justify-between pb-2 mb-1 border-b border-gray-100">
+                                        <span className="text-xs font-semibold text-gray-500">
+                                            {isArabic
+                                                ? `${selectedZoneIds.length} من أصل ${serviceZonesList.length} مناطق محددة`
+                                                : `${selectedZoneIds.length} of ${serviceZonesList.length} zones selected`}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (selectedZoneIds.length === serviceZonesList.length) {
+                                                    setSelectedZoneIds([]);
+                                                } else {
+                                                    setSelectedZoneIds(serviceZonesList.map((z) => String(z.id)));
+                                                }
+                                            }}
+                                            className="text-xs font-bold text-[#E91E63] hover:underline cursor-pointer"
+                                        >
+                                            {selectedZoneIds.length === serviceZonesList.length
+                                                ? (isArabic ? 'إلغاء تحديد الكل' : 'Deselect All')
+                                                : (isArabic ? 'تحديد الكل' : 'Select All')}
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
                                     {serviceZonesList.map((zone) => {
                                         const isSelected = selectedZoneIds.some((zid) => String(zid) === String(zone.id));
                                         return (
@@ -1150,6 +1175,7 @@ export default function ServiceFormPage() {
                                         );
                                     })}
                                 </div>
+                            </>
                             )}
                         </FormSection>
 
@@ -1278,7 +1304,7 @@ export default function ServiceFormPage() {
                             {(!isOtherService || isDeepCleaning) && (
                                 <div className="mb-4">
                                     <label className={LABEL_CLASS}>{t('form.base_price')}</label>
-                                    <input type="number" step="0.01" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
+                                    <input type="number" step="0.01" min="0" max="99999999.99" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
                                     <ErrorMsg name="base_price" />
                                 </div>
                             )}
