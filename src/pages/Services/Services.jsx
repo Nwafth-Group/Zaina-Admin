@@ -315,12 +315,34 @@ export default function Services() {
 
                                         {/* Pricing & Rating Info */}
                                         <div className="border-t border-gray-100 pt-3 space-y-2 text-xs">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-400 font-medium">{t('table.base_price')}</span>
-                                                <span className="font-black text-gray-900 text-sm">
-                                                    {service.base_price} <span className="text-[10px] font-normal text-gray-400">{service.price_details?.currency || 'EGP'}</span>
-                                                </span>
-                                            </div>
+                                            {(() => {
+                                                const hasOptions = (service.options || []).length > 0;
+                                                const hasBasePrice = !hasOptions && service.base_price && Number(service.base_price) > 0;
+
+                                                if (hasBasePrice) {
+                                                    return (
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-gray-400 font-medium">{t('table.base_price')}</span>
+                                                            <span className="font-black text-gray-900 text-sm">
+                                                                {service.base_price} <span className="text-[10px] font-normal text-gray-400">{service.price_details?.currency || 'EGP'}</span>
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                if (hasOptions) {
+                                                    return (
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-gray-400 font-medium">{isArabic ? 'التسعير' : 'Pricing'}</span>
+                                                            <span className="font-bold text-[#E91E63] text-xs bg-pink-50 border border-pink-100 px-2.5 py-0.5 rounded-full">
+                                                                {isArabic ? 'حسب الخيارات' : 'Based on options'}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return null;
+                                            })()}
 
                                             <div className="flex justify-between items-center">
                                                 <span className="text-gray-400 font-medium">{t('table.rating')}</span>

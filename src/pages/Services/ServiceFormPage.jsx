@@ -241,8 +241,8 @@ export default function ServiceFormPage() {
 
         working_days: yup.array().of(yup.string()),
         shifts: yup.array().of(yup.object().shape({
-            start_time: yup.string().required(t('validation.required'))
-        })),
+            start_time: yup.string().nullable()
+        })).nullable(),
 
         terms_ar: yup.string().nullable().max(5000),
         terms_en: yup.string().nullable().max(5000),
@@ -340,11 +340,17 @@ export default function ServiceFormPage() {
     const categoryId = watch('category_id');
     const selectedCategory = useMemo(() => categories.find((c) => String(c.id) === String(categoryId)), [categories, categoryId]);
 
+    const isCoreService = (Number(id) >= 1 && Number(id) <= 5) || [
+        'DOMESTIC_HELPER_HOURLY', 'HOSPITALITY_WORKER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE', 'DEEP_CLEANING'
+    ].includes(watchServiceCode) || [
+        'DOMESTIC_HELPER_HOURLY', 'HOSPITALITY_WORKER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE', 'DEEP_CLEANING'
+    ].includes(fullServiceData?.service_code);
+
     const isBabysitting = (watchServiceCode === 'BABYSITTER_HOURLY') || (String(id) === '3') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('babysitting') || selectedCategory.name_en?.toLowerCase().includes('nanny') || selectedCategory.name_ar?.includes('أطفال') || selectedCategory.name_en?.toLowerCase().includes('babysitter')));
     const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (String(id) === '4') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام')));
     const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (String(id) === '2') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
-    const isOtherService = !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
     const isDeepCleaning = (watchServiceCode === 'DEEP_CLEANING') || (String(id) === '5') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
+    const isOtherService = !isCoreService && !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
     const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
     const isSpecializedService = (Number(id) >= 6 && Number(id) <= 11) || (
         isOtherService && !isDeepCleaning
@@ -461,7 +467,10 @@ export default function ServiceFormPage() {
         if (isEditMode && fullServiceData) {
             const singleVisit = (fullServiceData.available_visit_types || []).find(vt => vt.type === 'single_visit');
             const threeDays = (fullServiceData.available_visit_types || []).find(vt => vt.type === '3_days_per_week');
-            const serviceIsOther = (fullServiceData.type === 'other') || (Number(id) >= 6);
+            const isServiceOneToFive = (Number(id) >= 1 && Number(id) <= 5) || [
+                'DOMESTIC_HELPER_HOURLY', 'HOSPITALITY_WORKER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE', 'DEEP_CLEANING'
+            ].includes(fullServiceData.service_code);
+            const serviceIsOther = !isServiceOneToFive && ((fullServiceData.type === 'other') || (Number(id) >= 6));
 
             // Map working days from schedules or available_days
             let workingDaysSet = [];
@@ -511,7 +520,9 @@ export default function ServiceFormPage() {
                 status: fullServiceData.status || 'active',
                 service_code: fullServiceData.service_code || '',
                 
-                base_price: (serviceIsOther && fullServiceData.service_code !== 'DEEP_CLEANING') ? 0 : (fullServiceData.base_price || ''),
+                base_price: isServiceOneToFive
+                    ? (fullServiceData.base_price !== null && fullServiceData.base_price !== undefined ? fullServiceData.base_price : '')
+                    : ((serviceIsOther && fullServiceData.service_code !== 'DEEP_CLEANING') ? 0 : (fullServiceData.base_price || '')),
                 
                 single_visit_checked: serviceIsOther ? true : !!singleVisit,
                 single_visit_discount: singleVisit ? singleVisit.discount : 0,
@@ -544,7 +555,7 @@ export default function ServiceFormPage() {
                 })),
                 
                 working_days: workingDaysSet,
-                shifts: shifts.length ? shifts : [{ start_time: '09:00', end_time: '' }],
+                shifts: shifts.length ? shifts : (isHospitality || isBabysitting || isPedicureManicure ? [] : [{ start_time: '09:00', end_time: '' }]),
                 
                 features: (fullServiceData.features || []).map((f) => ({ ar: f.ar || '', en: f.en || '' })),
                 terms_ar: fullServiceData.terms_ar || '',
@@ -590,7 +601,7 @@ export default function ServiceFormPage() {
                 payload.append('image', data.image[0]);
             }
 
-            payload.append('base_price', (isOtherService && !isDeepCleaning) ? '0' : (data.base_price ?? 0));
+            payload.append('base_price', (isCoreService || !isOtherService || isDeepCleaning) ? (data.base_price ?? 0) : '0');
             if (isOtherService) {
                 payload.append('pricing_type', 'per_service');
             } else if (isSecondOrThirdService && data.pricing_type) {
@@ -677,8 +688,8 @@ export default function ServiceFormPage() {
                 payload.append('working_days[]', day);
             });
 
-            // Shifts
-            if (!isHospitality && !isBabysitting) {
+            // Shifts (Only send for services that use discrete shifts)
+            if (!isHospitality && !isBabysitting && !isPedicureManicure) {
                 (data.shifts || []).forEach((shift, i) => {
                     if (shift.start_time) {
                         payload.append(`shifts[${i}][start_time]`, shift.start_time);
@@ -1301,7 +1312,7 @@ export default function ServiceFormPage() {
                         )}
 
                         <FormSection icon="sparkles" title={isArabic ? 'الأسعار والزيارات' : 'Prices & Visit Options'}>
-                            {(!isOtherService || isDeepCleaning) && (
+                            {(isCoreService || !isOtherService || isDeepCleaning) && (
                                 <div className="mb-4">
                                     <label className={LABEL_CLASS}>{t('form.base_price')}</label>
                                     <input type="number" step="0.01" min="0" max="99999999.99" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
