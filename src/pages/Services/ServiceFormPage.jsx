@@ -77,16 +77,20 @@ export default function ServiceFormPage() {
     const schema = yup.object().shape({
         category_id: yup.string().nullable().notRequired(),
         type: yup.string().required(t('validation.required')),
-        worker_gender_options: yup.array().of(yup.string()).nullable().when('category_id', {
-            is: (categoryId) => {
-                if (!categoryId) return false;
-                const categoriesList = JSON.parse(localStorage.getItem('categories_cache') || '[]');
-                const selectedCat = categoriesList.find(c => String(c.id) === String(categoryId));
-                return selectedCat && (selectedCat.name_en?.toLowerCase().includes('hospitality') || selectedCat.name_ar?.includes('ضيافة'));
-            },
-            then: (s) => s.required(isArabic ? 'يجب اختيار جنس عمالة واحد على الأقل' : 'At least one worker gender option must be selected').min(1, isArabic ? 'يجب اختيار جنس عمالة واحد على الأقل' : 'At least one worker gender option must be selected'),
-            otherwise: (s) => s.nullable().notRequired()
-        }),
+        worker_gender_options: yup.mixed().test(
+            'hosp_gender_required',
+            isArabic ? 'يجب اختيار جنس عمالة واحد على الأقل (ذكور أو إناث)' : 'At least one worker gender option must be selected (Male or Female)',
+            function (value) {
+                const hosp = String(id) === '2' ||
+                    this.parent.service_code === 'HOSPITALITY_WORKER_HOURLY' ||
+                    (categories?.find((c) => String(c.id) === String(this.parent.category_id))?.name_en?.toLowerCase().includes('hospitality'));
+                if (hosp) {
+                    const arr = Array.isArray(value) ? value : (value ? [value] : []);
+                    return arr.length >= 1;
+                }
+                return true;
+            }
+        ),
         pricing_type: yup.string().nullable().notRequired(),
         name_ar: yup.string().required(t('validation.required')).max(100),
         name_en: yup.string().required(t('validation.required')).max(100),
@@ -593,9 +597,19 @@ export default function ServiceFormPage() {
             payload.append('status', data.status);
             if (data.service_code) payload.append('service_code', data.service_code);
 
-            (data.worker_gender_options || []).forEach((gender) => {
-                payload.append('worker_gender_options[]', gender);
-            });
+            if (isHospitality) {
+                if (data.worker_gender_options && data.worker_gender_options.length > 0) {
+                    data.worker_gender_options.forEach((gender) => {
+                        payload.append('worker_gender_options[]', gender);
+                    });
+                } else {
+                    payload.append('worker_gender_options', '');
+                }
+            } else if (data.worker_gender_options && data.worker_gender_options.length > 0) {
+                data.worker_gender_options.forEach((gender) => {
+                    payload.append('worker_gender_options[]', gender);
+                });
+            }
 
             if (data.image && data.image[0] instanceof File) {
                 payload.append('image', data.image[0]);
@@ -764,6 +778,7 @@ export default function ServiceFormPage() {
                 description_ar: 'basic',
                 description_en: 'basic',
                 type: 'basic',
+                worker_gender_options: 'basic',
                 base_price: 'locations',
                 default_duration: 'durations',
                 min_duration: 'durations',
@@ -784,8 +799,14 @@ export default function ServiceFormPage() {
                     setError(key, { type: 'server', message });
                 });
 
-                // Show general error in toast
-                toast.error(respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'));
+                // Show specific detailed error in toast
+                const specificError = validationErrors.workers
+                    ? (Array.isArray(validationErrors.workers) ? validationErrors.workers[0] : validationErrors.workers)
+                    : (validationErrors.worker_gender_options
+                        ? (Array.isArray(validationErrors.worker_gender_options) ? validationErrors.worker_gender_options[0] : validationErrors.worker_gender_options)
+                        : (Array.isArray(Object.values(validationErrors)[0]) ? Object.values(validationErrors)[0][0] : Object.values(validationErrors)[0]));
+
+                toast.error(specificError || respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'), { duration: 6000 });
 
                 // Switch to error tab
                 const firstErrKey = Object.keys(validationErrors)[0];
@@ -809,6 +830,7 @@ export default function ServiceFormPage() {
             description_ar: 'basic',
             description_en: 'basic',
             type: 'basic',
+            worker_gender_options: 'basic',
             base_price: 'locations',
             default_duration: 'durations',
             min_duration: 'durations',
@@ -2025,6 +2047,16 @@ export default function ServiceFormPage() {
                                 ? <span className="text-xs font-semibold text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{t('form.workers_selected', { num: (watch('workers') || []).length })}</span>
                                 : null}
                         >
+                            {/* Prominent error alert if worker assignment conflict exists */}
+                            {errors.workers && (
+                                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
+                                    <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <div className="flex-1 font-semibold leading-relaxed">{errors.workers.message}</div>
+                                </div>
+                            )}
+
                             {/* Worker Search */}
                             <div className="relative mb-3">
                                 <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
