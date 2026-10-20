@@ -41,6 +41,7 @@ export default function ServiceFormPage() {
     // Filterable Workers Picker
     const [workerSearchInput, setWorkerSearchInput] = useState('');
     const [workerSearch, setWorkerSearch] = useState('');
+    const [workerGenderFilter, setWorkerGenderFilter] = useState('all');
     useEffect(() => {
         const timerId = setTimeout(() => setWorkerSearch(workerSearchInput), 400);
         return () => clearTimeout(timerId);
@@ -98,7 +99,28 @@ export default function ServiceFormPage() {
         description_en: yup.string().required(t('validation.required')).max(500),
         status: yup.string().required(t('validation.required')),
         service_code: yup.string().nullable().max(50),
-        base_price: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0).max(99999999.99, isArabic ? 'السعر الأساسي لا يمكن أن يتجاوز 99,999,999.99' : 'Base price cannot exceed 99,999,999.99'),
+        base_price: yup.number()
+            .transform((value) => (isNaN(value) ? undefined : value))
+            .nullable()
+            .test(
+                'base_price_positive_for_core',
+                isArabic ? 'السعر الأساسي يجب أن يكون أكبر من 0 للخدمات من 1 إلى 5 ولا يمكن أن يكون 0' : 'Base price must be greater than 0 for services 1 to 5 and cannot be 0',
+                function (value) {
+                    const isCore = (Number(id) >= 1 && Number(id) <= 5) || [
+                        'DOMESTIC_HELPER_HOURLY', 'HOSPITALITY_WORKER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE', 'DEEP_CLEANING'
+                    ].includes(this.parent?.service_code) || [
+                        'DOMESTIC_HELPER_HOURLY', 'HOSPITALITY_WORKER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE', 'DEEP_CLEANING'
+                    ].includes(fullServiceData?.service_code) ||
+                    this.parent?.type === 'hourly';
+
+                    if (isCore) {
+                        return value !== undefined && value !== null && Number(value) > 0;
+                    }
+                    return true;
+                }
+            )
+            .min(0, isArabic ? 'السعر الأساسي لا يمكن أن يكون أقل من 0' : 'Base price cannot be less than 0')
+            .max(99999999.99, isArabic ? 'السعر الأساسي لا يمكن أن يتجاوز 99,999,999.99' : 'Base price cannot exceed 99,999,999.99'),
         options: yup.array().of(
             yup.object().shape({
                 name_ar: yup.string().required(t('validation.required')),
@@ -234,14 +256,62 @@ export default function ServiceFormPage() {
                 required_worker_count: yup.number().transform((value) => (isNaN(value) ? undefined : value)).required(t('validation.required')).min(1),
                 status: yup.string().required(t('validation.required')).oneOf(['active', 'inactive']),
             })
-        ).nullable().when('category_id', {
-            is: (val) => {
-                const selectedCat = categories?.find(c => String(c.id) === String(val));
-                return selectedCat && (selectedCat.name_en?.toLowerCase().includes('babysitting') || selectedCat.name_ar?.includes('أطفال') || selectedCat.name_en?.toLowerCase().includes('babysitter'));
-            },
-            then: (s) => s.required(t('validation.required')).min(1, isArabic ? 'يجب إدخال فئة عمرية واحدة نشطة على الأقل' : 'At least one active child age group must be configured'),
-            otherwise: (s) => s.nullable()
-        }),
+        )
+        .test('no_age_overlap', isArabic ? 'توجد فئات عمرية متداخلة. يجب ألا تتداخل النطاقات العمرية للأطفال.' : 'Age groups must not overlap.', function(groups) {
+            if (!Array.isArray(groups) || groups.length <= 1) return true;
+            const activeGroups = groups
+                .map((g, idx) => ({ ...g, origIndex: idx }))
+                .filter(g => (g?.status || 'active') === 'active' && g?.age_from !== undefined && g?.age_to !== undefined);
+
+            for (let i = 0; i < activeGroups.length; i++) {
+                for (let j = i + 1; j < activeGroups.length; j++) {
+                    const gA = activeGroups[i];
+                    const gB = activeGroups[j];
+                    const fromA = Number(gA.age_from);
+                    const toA = Number(gA.age_to);
+                    const fromB = Number(gB.age_from);
+                    const toB = Number(gB.age_to);
+
+                    if (fromA <= toA && fromB <= toB) {
+                        if (fromA <= toB && fromB <= toA) {
+                            const msg = isArabic 
+                                ? `تداخل في الفئات العمرية: النطاق (${fromB} إلى ${toB} شهر) يتعارض مع النطاق (${fromA} إلى ${toA} شهر).`
+                                : `Age group overlap: range (${fromB} to ${toB} months) overlaps with range (${fromA} to ${toA} months).`;
+                            return this.createError({
+                                path: `child_age_groups[${gB.origIndex}].age_from`,
+                                message: msg,
+                            });
+                        }
+                    }
+                }
+            }
+            return true;
+        })
+        .test('babysitter_requires_active_age_group', isArabic ? 'يجب إدخال وتفعيل فئة عمرية واحدة للأطفال على الأقل لخدمة جليسة الأطفال.' : 'At least one active child age group must be configured for the Babysitter service.', function(groups) {
+            const { category_id, service_code } = this.parent || {};
+            const isBabysitService = (String(id) === '3') ||
+                (service_code === 'BABYSITTER_HOURLY') ||
+                (watchServiceCode === 'BABYSITTER_HOURLY') ||
+                (fullServiceData?.service_code === 'BABYSITTER_HOURLY') ||
+                (() => {
+                    const selectedCat = categories?.find(c => String(c.id) === String(category_id));
+                    return selectedCat && (
+                        selectedCat.name_en?.toLowerCase().includes('babysitting') ||
+                        selectedCat.name_en?.toLowerCase().includes('nanny') ||
+                        selectedCat.name_ar?.includes('أطفال') ||
+                        selectedCat.name_en?.toLowerCase().includes('babysitter')
+                    );
+                })();
+
+            if (!isBabysitService) return true;
+
+            if (!Array.isArray(groups) || groups.length === 0) {
+                return false;
+            }
+            const activeGroups = groups.filter(g => (g?.status || 'active') === 'active');
+            return activeGroups.length >= 1;
+        })
+        .nullable(),
 
         working_days: yup.array().of(yup.string()),
         shifts: yup.array().of(yup.object().shape({
@@ -373,7 +443,38 @@ export default function ServiceFormPage() {
         },
     });
 
-    // Filterable Workers Picker (Female-only for Services 1, 3, 4; both genders for Service 2; configurable for specialized)
+    // Determine which genders are allowed for this service
+    const watchGenderOptions = watch('worker_gender_options');
+    const serviceAllowedGenders = useMemo(() => {
+        if (isPedicureManicure || isBabysitting || watchServiceCode === 'DOMESTIC_HELPER_HOURLY' || String(id) === '1' || String(id) === '3' || String(id) === '4') {
+            return ['Female'];
+        }
+        if (isDeepCleaning || watchServiceCode === 'DEEP_CLEANING' || String(id) === '5') {
+            return ['Male'];
+        }
+        if (isSpecializedService || isTeamBasedService) {
+            return ['Male'];
+        }
+        if (Array.isArray(watchGenderOptions) && watchGenderOptions.length > 0) {
+            return watchGenderOptions;
+        }
+        if (isHospitality) {
+            return ['Female', 'Male'];
+        }
+        return ['Male', 'Female'];
+    }, [isPedicureManicure, isBabysitting, watchServiceCode, id, isDeepCleaning, isSpecializedService, isTeamBasedService, watchGenderOptions, isHospitality]);
+
+    const activeWorkerGenderParam = useMemo(() => {
+        if (serviceAllowedGenders.length === 1) {
+            return serviceAllowedGenders[0];
+        }
+        if (workerGenderFilter === 'Male' || workerGenderFilter === 'Female') {
+            return workerGenderFilter;
+        }
+        return null; // 'all'
+    }, [serviceAllowedGenders, workerGenderFilter]);
+
+    // Filterable Workers Picker
     const {
         data: workersData,
         isLoading: isWorkersLoading,
@@ -381,7 +482,7 @@ export default function ServiceFormPage() {
         hasNextPage: hasMoreWorkers,
         isFetchingNextPage: isFetchingMoreWorkers,
     } = useInfiniteQuery({
-        queryKey: ['page-workers', workerSearch, id, isHospitality, isPedicureManicure, isOtherService, isSpecializedService, watchIsTeamBased],
+        queryKey: ['page-workers', workerSearch, id, activeWorkerGenderParam, watchIsTeamBased],
         queryFn: async ({ pageParam = 1 }) => {
             const params = new URLSearchParams({ 
                 page: String(pageParam), 
@@ -392,15 +493,8 @@ export default function ServiceFormPage() {
             if (id) {
                 params.append('include_service_id', String(id));
             }
-            if (isPedicureManicure || isBabysitting || watchServiceCode === 'DOMESTIC_HELPER_HOURLY') {
-                params.append('gender', 'Female');
-            } else if (isSpecializedService || isOtherService) {
-                const genders = watch('worker_gender_options') || [];
-                if (genders.length === 1) {
-                    params.append('gender', genders[0]);
-                }
-            } else if (!isHospitality) {
-                params.append('gender', 'Female');
+            if (activeWorkerGenderParam) {
+                params.append('gender', activeWorkerGenderParam);
             }
             if (workerSearch) params.append('search', workerSearch);
             return (await axiosInstance.get(`/admin/workers?${params.toString()}`)).data.data;
@@ -542,8 +636,8 @@ export default function ServiceFormPage() {
                 max_duration: fullServiceData.max_duration || '',
                 min_workers: fullServiceData.min_workers || 1,
                 max_workers: fullServiceData.max_workers || 1,
-                is_team_based: fullServiceData.is_team_based !== undefined && fullServiceData.is_team_based !== null 
-                    ? Boolean(fullServiceData.is_team_based) 
+                is_team_based: (fullServiceData.is_team_based !== undefined && fullServiceData.is_team_based !== null)
+                    ? (fullServiceData.is_team_based === true || fullServiceData.is_team_based === 1 || fullServiceData.is_team_based === '1' || fullServiceData.is_team_based === 'true')
                     : ((Number(id) >= 6 && Number(id) <= 11) || (serviceIsOther && fullServiceData.service_code !== 'DEEP_CLEANING')),
                 min_children: fullServiceData.min_children || '',
                 max_children: fullServiceData.max_children || '',
@@ -683,6 +777,8 @@ export default function ServiceFormPage() {
                     payload.append('child_age_groups[' + index + '][required_worker_count]', String(group.required_worker_count || 1));
                     payload.append('child_age_groups[' + index + '][status]', group.status || 'active');
                 });
+            } else if (isBabysitting) {
+                payload.append('child_age_groups', '');
             }
 
             if (data.options && data.options.length) {
@@ -766,6 +862,7 @@ export default function ServiceFormPage() {
         onSuccess: (response) => {
             toast.success(response.data?.message || 'تمت العملية بنجاح');
             queryClient.invalidateQueries({ queryKey: ['services'] });
+            queryClient.invalidateQueries({ queryKey: ['serviceDetailsPage'] });
             navigate('/services');
         },
         onError: (error) => {
@@ -785,6 +882,9 @@ export default function ServiceFormPage() {
                 max_duration: 'durations',
                 min_workers: 'durations',
                 max_workers: 'durations',
+                min_children: 'durations',
+                max_children: 'durations',
+                child_age_groups: 'durations',
                 shifts: 'shifts',
                 rules: 'rules',
                 workers: 'workers',
@@ -804,13 +904,18 @@ export default function ServiceFormPage() {
                     ? (Array.isArray(validationErrors.workers) ? validationErrors.workers[0] : validationErrors.workers)
                     : (validationErrors.worker_gender_options
                         ? (Array.isArray(validationErrors.worker_gender_options) ? validationErrors.worker_gender_options[0] : validationErrors.worker_gender_options)
-                        : (Array.isArray(Object.values(validationErrors)[0]) ? Object.values(validationErrors)[0][0] : Object.values(validationErrors)[0]));
+                        : (validationErrors.child_age_groups
+                            ? (Array.isArray(validationErrors.child_age_groups) ? validationErrors.child_age_groups[0] : validationErrors.child_age_groups)
+                            : (Array.isArray(Object.values(validationErrors)[0]) ? Object.values(validationErrors)[0][0] : Object.values(validationErrors)[0])));
 
                 toast.error(specificError || respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'), { duration: 6000 });
 
                 // Switch to error tab
                 const firstErrKey = Object.keys(validationErrors)[0];
-                const targetTab = fieldToTabMap[firstErrKey];
+                let targetTab = fieldToTabMap[firstErrKey];
+                if (!targetTab && firstErrKey?.startsWith('child_age_groups')) {
+                    targetTab = 'durations';
+                }
                 if (targetTab) {
                     setActiveTab(targetTab);
                 }
@@ -837,6 +942,9 @@ export default function ServiceFormPage() {
             max_duration: 'durations',
             min_workers: 'durations',
             max_workers: 'durations',
+            min_children: 'durations',
+            max_children: 'durations',
+            child_age_groups: 'durations',
             shifts: 'shifts',
             rules: 'rules',
             workers: 'workers',
@@ -858,7 +966,10 @@ export default function ServiceFormPage() {
             }
 
             // Switch to error tab
-            const targetTab = fieldToTabMap[firstErrorKey];
+            let targetTab = fieldToTabMap[firstErrorKey];
+            if (!targetTab && firstErrorKey?.startsWith('child_age_groups')) {
+                targetTab = 'durations';
+            }
             if (targetTab) {
                 setActiveTab(targetTab);
             }
@@ -1337,7 +1448,7 @@ export default function ServiceFormPage() {
                             {(isCoreService || !isOtherService || isDeepCleaning) && (
                                 <div className="mb-4">
                                     <label className={LABEL_CLASS}>{t('form.base_price')}</label>
-                                    <input type="number" step="0.01" min="0" max="99999999.99" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
+                                    <input type="number" step="0.01" min={isCoreService ? "0.01" : "0"} max="99999999.99" {...register('base_price')} className={`${INPUT_CLASS} ${errors.base_price ? 'border-red-500' : ''}`} />
                                     <ErrorMsg name="base_price" />
                                 </div>
                             )}
@@ -2057,6 +2168,63 @@ export default function ServiceFormPage() {
                                 </div>
                             )}
 
+                            {/* Service Gender Restriction / Filter Bar (No icons, text titles only) */}
+                            {serviceAllowedGenders.length === 1 ? (
+                                <div className="mb-3 flex items-center justify-between p-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                                    <span className="text-xs font-medium text-gray-600">
+                                        {serviceAllowedGenders[0] === 'Female'
+                                            ? (isArabic ? 'الخدمة مخصصة للعاملات الإناث فقط' : 'Service accepts female workers only')
+                                            : (isArabic ? 'الخدمة مخصصة للعمال الذكور فقط' : 'Service accepts male workers only')}
+                                    </span>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                        serviceAllowedGenders[0] === 'Female'
+                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                            : 'bg-sky-50 text-sky-700 border border-sky-200'
+                                    }`}>
+                                        {serviceAllowedGenders[0] === 'Female' ? (isArabic ? 'إناث' : 'Female') : (isArabic ? 'ذكور' : 'Male')}
+                                    </span>
+                                </div>
+                            ) : serviceAllowedGenders.length > 1 ? (
+                                <div className="mb-3 flex flex-wrap items-center gap-2">
+                                    <span className="text-xs font-bold text-gray-600 me-1">
+                                        {isArabic ? 'تصفية حسب الجنس:' : 'Filter by gender:'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWorkerGenderFilter('all')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                            workerGenderFilter === 'all'
+                                                ? 'bg-[#E91E63] text-white border-[#E91E63] shadow-xs'
+                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {isArabic ? 'الكل' : 'All'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWorkerGenderFilter('Male')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                            workerGenderFilter === 'Male'
+                                                ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
+                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-sky-50'
+                                        }`}
+                                    >
+                                        {isArabic ? 'ذكور' : 'Male'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWorkerGenderFilter('Female')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                            workerGenderFilter === 'Female'
+                                                ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-rose-50'
+                                        }`}
+                                    >
+                                        {isArabic ? 'إناث' : 'Female'}
+                                    </button>
+                                </div>
+                            ) : null}
+
                             {/* Worker Search */}
                             <div className="relative mb-3">
                                 <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
@@ -2080,15 +2248,31 @@ export default function ServiceFormPage() {
                                     <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('no_data')}</div>
                                 ) : (
                                     <>
-                                        {workersList.map((worker) => (
-                                            <label key={worker.id} className="flex items-center gap-3 bg-white p-3 border border-gray-100 rounded-lg hover:border-[#E91E63]/30 hover:bg-[#FDF0F3]/10 cursor-pointer transition-colors">
-                                                <input type="checkbox" value={String(worker.id)} {...register('workers')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-gray-700">{worker.name}</p>
-                                                    <p className="text-xs text-gray-400 mt-0.5">{worker.nationality} · ★ {worker.rating || '0.00'}</p>
-                                                </div>
-                                            </label>
-                                        ))}
+                                        {workersList.map((worker) => {
+                                            const isFemale = String(worker.gender).toLowerCase() === 'female';
+                                            return (
+                                                <label key={worker.id} className="flex items-center justify-between gap-3 bg-white p-3 border border-gray-100 rounded-lg hover:border-[#E91E63]/30 hover:bg-[#FDF0F3]/10 cursor-pointer transition-colors">
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        <input type="checkbox" value={String(worker.id)} {...register('workers')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm font-bold text-gray-700 truncate">{worker.name}</p>
+                                                            <p className="text-xs text-gray-400 mt-0.5">{worker.nationality || '—'} · ★ {worker.rating || '0.00'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="shrink-0">
+                                                        {isFemale ? (
+                                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                                                {isArabic ? 'أنثى' : 'Female'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                                                {isArabic ? 'ذكر' : 'Male'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
 
                                         {/* Sentinel */}
                                         <div ref={workerSentinelRef} aria-hidden="true" className="h-px" />

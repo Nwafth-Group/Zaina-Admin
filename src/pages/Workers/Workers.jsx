@@ -13,6 +13,7 @@ import { hasPermission } from '../../utils/permissions.js';
 
 const DEFAULT_FILTERS = {
     status: '',
+    gender: '',
     nationality: '',
     service_id: '',
     min_rating: '',
@@ -90,6 +91,7 @@ export default function Workers() {
     // Drawer filters that are active (committed). Search lives in the header.
     const activeFilterCount =
         (filters.status ? 1 : 0) +
+        (filters.gender ? 1 : 0) +
         (filters.nationality ? 1 : 0) +
         (filters.service_id ? 1 : 0) +
         (filters.min_rating ? 1 : 0) +
@@ -125,7 +127,7 @@ export default function Workers() {
             queryClient.invalidateQueries({ queryKey: ['workers'] });
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'حدث خطأ أثناء العملية.');
+            toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء العملية.' : 'An error occurred during the process.'), { duration: 6000 });
         },
     });
 
@@ -421,6 +423,15 @@ export default function Workers() {
                                 <option value="">{t('filters.all_statuses')}</option>
                                 <option value="active">{t('status.active')}</option>
                                 <option value="inactive">{t('status.inactive')}</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1.5">{isArabic ? 'الجنس' : 'Gender'}</label>
+                            <select value={draftFilters.gender} onChange={(e) => updateDraft('gender', e.target.value)} className={`${selectClass} w-full`}>
+                                <option value="">{isArabic ? 'جميع الأجناس' : 'All Genders'}</option>
+                                <option value="female">{isArabic ? 'إناث' : 'Female'}</option>
+                                <option value="male">{isArabic ? 'ذكور' : 'Male'}</option>
                             </select>
                         </div>
 

@@ -389,7 +389,7 @@ export default function CouponDetails() {
                                 ) : (
                                     <div className="space-y-3">
                                         <span className="text-xs font-bold px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl inline-block">
-                                            {t('details.specific_services', { count: coupon.services_count })}
+                                            {t('details.specific_services', { count: coupon.services_count ?? coupon.services?.length ?? 0 })}
                                         </span>
                                         {coupon.services && coupon.services.length > 0 && (
                                             <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">

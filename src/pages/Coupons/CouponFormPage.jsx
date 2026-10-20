@@ -49,16 +49,25 @@ export default function CouponFormPage() {
     // Validation Schema
     const schema = yup.object().shape({
         name: yup.string().required(t('form.validation.required')),
-        code: yup.string().required(t('form.validation.required')).max(10).uppercase(),
+        code: yup.string().required(t('form.validation.required'))
+            .min(2, isArabic ? 'رمز الكوبون يجب ألا يقل عن حرفين.' : 'Coupon code must be at least 2 characters.')
+            .max(30, isArabic ? 'رمز الكوبون يجب ألا يتجاوز 30 حرفاً.' : 'Coupon code must not exceed 30 characters.')
+            .matches(/^[a-zA-Z0-9_-]+$/, isArabic ? 'رمز الكوبون يجب أن يحتوي على أحرف وأرقام وشرطات وشرطات سفلية فقط.' : 'The code field must only contain letters, numbers, dashes, and underscores.')
+            .uppercase(),
         type: yup.string().required(t('form.validation.required')),
         value: yup.number().required(t('form.validation.required')).typeError(t('form.validation.required'))
             .when('type', {
                 is: 'percentage',
-                then: (schema) => schema.min(0).max(100, t('form.validation.value_percentage')),
-                otherwise: (schema) => schema.min(0, t('form.validation.value_fixed')),
+                then: (schema) => schema.min(0.01, isArabic ? 'قيمة الخصم يجب أن تكون على الأقل 0.01.' : 'The value field must be at least 0.01.').max(100, t('form.validation.value_percentage')),
+                otherwise: (schema) => schema.min(0.01, isArabic ? 'قيمة الخصم يجب أن تكون على الأقل 0.01.' : 'The value field must be at least 0.01.'),
             }),
         start_date: yup.string().required(t('form.validation.required')),
-        end_date: yup.string().required(t('form.validation.required')),
+        end_date: yup.string().required(t('form.validation.required'))
+            .test('is-after-or-equal-start', isArabic ? 'تاريخ النهاية يجب أن يكون تاريخاً بعد أو يساوي تاريخ البداية.' : 'The end date field must be a date after or equal to start date.', function (value) {
+                const { start_date } = this.parent;
+                if (!start_date || !value) return true;
+                return new Date(value) >= new Date(start_date);
+            }),
         usage_limit: yup.number().nullable().transform((value, originalValue) => originalValue === '' ? null : value),
         user_usage_limit: yup.number().required(t('form.validation.required')).min(1).typeError(t('form.validation.required')),
         completed_bookings_count: yup.number().required(t('form.validation.required')).min(0).typeError(t('form.validation.required')),
@@ -103,20 +112,43 @@ export default function CouponFormPage() {
                 status: fullCoupon.status || 'active',
             });
 
-            setIsForAllUsers(Boolean(fullCoupon.is_for_all_users));
-            setSelectedUserIds((fullCoupon.users || []).map(u => u.id));
+            const isAllUsers = fullCoupon.is_for_all_users !== undefined
+                ? Boolean(fullCoupon.is_for_all_users)
+                : (!fullCoupon.users || fullCoupon.users.length === 0);
+            setIsForAllUsers(isAllUsers);
+            setSelectedUserIds((fullCoupon.users || []).map(u => Number(u.id)));
             setSelectedUsers(fullCoupon.users || []);
-            setIsForAllCities(Boolean(fullCoupon.is_for_all_cities));
-            setSelectedCityIds((fullCoupon.cities || []).map(c => c.id));
-            setSelectedAreaIds((fullCoupon.service_zones || fullCoupon.serviceZones || []).map(z => z.id));
-            setIsForAllServices(Boolean(fullCoupon.is_for_all_services));
+
+            const isAllCities = fullCoupon.is_for_all_cities !== undefined
+                ? Boolean(fullCoupon.is_for_all_cities)
+                : ((fullCoupon.service_zones?.length ?? fullCoupon.serviceZones?.length ?? 0) === 0);
+            setIsForAllCities(isAllCities);
+            setSelectedCityIds((fullCoupon.cities || []).map(c => Number(c.id)));
+            setSelectedAreaIds((fullCoupon.service_zones || fullCoupon.serviceZones || []).map(z => Number(z.id)));
+
+            const isAllServices = fullCoupon.is_for_all_services !== undefined
+                ? Boolean(fullCoupon.is_for_all_services)
+                : ((fullCoupon.services?.length ?? 0) === 0);
+            setIsForAllServices(isAllServices);
             setMinWorkers(fullCoupon.min_workers ?? '');
-            setSelectedServices((fullCoupon.services || []).map(s => ({
-                id: s.id,
-                name: s.name,
-                allowed_visit_types: s.pivot?.allowed_visit_types || [],
-                min_workers: s.pivot?.min_workers ?? '',
-            })));
+            setSelectedServices((fullCoupon.services || []).map(s => {
+                const sId = Number(s.id);
+                const isFirstService = sId === 1 || s.code === 'hourly_cleaning';
+                let types = s.pivot?.allowed_visit_types;
+                if (typeof types === 'string') {
+                    try { types = JSON.parse(types); } catch { types = null; }
+                }
+                if (!Array.isArray(types) || types.length === 0) {
+                    types = isFirstService ? ['single_visit', 'three_visits_per_week'] : ['single_visit'];
+                }
+                return {
+                    id: sId,
+                    name: s.name,
+                    code: s.code || s.service_code,
+                    allowed_visit_types: types,
+                    min_workers: s.pivot?.min_workers ?? s.min_workers ?? '',
+                };
+            }));
         }
     }, [fullCoupon, isEditMode, reset]);
 
@@ -169,9 +201,9 @@ export default function CouponFormPage() {
                 payload.users = selectedUserIds;
             }
             if (!isForAllCities) {
-                payload.cities = selectedCityIds;
-                if (selectedAreaIds.length > 0) {
-                    payload.service_zone_ids = selectedAreaIds;
+                payload.service_zone_ids = selectedAreaIds;
+                if (selectedCityIds.length > 0) {
+                    payload.cities = selectedCityIds;
                 }
             }
             if (isForAllServices) {
@@ -198,9 +230,10 @@ export default function CouponFormPage() {
         },
         onError: (error) => {
             const apiMsg = error.response?.data?.message;
-            const validationErrors = error.response?.data?.params;
+            const validationErrors = error.response?.data?.errors || error.response?.data?.params;
             if (validationErrors) {
-                const firstErr = Object.values(validationErrors)[0];
+                const firstVal = Object.values(validationErrors)[0];
+                const firstErr = Array.isArray(firstVal) ? firstVal[0] : firstVal;
                 toast.error(firstErr || (isArabic ? 'خطأ في التحقق من البيانات.' : 'Validation error.'));
             } else {
                 toast.error(apiMsg || (isArabic ? 'حدث خطأ أثناء الحفظ.' : 'An error occurred during save.'));
@@ -208,13 +241,20 @@ export default function CouponFormPage() {
         },
     });
 
+    const onInvalid = (formErrors) => {
+        console.error('Coupon form validation errors:', formErrors);
+        const firstVal = Object.values(formErrors)[0];
+        const msg = firstVal?.message || (isArabic ? 'يرجى مراجعة وتصحيح الحقول المطلوبة في النموذج.' : 'Please fix the required fields.');
+        toast.error(msg);
+    };
+
     const onSubmit = (data) => {
         if (!isForAllUsers && selectedUserIds.length === 0) {
             toast.error(t('form.validation.min_one_user'));
             return;
         }
-        if (!isForAllCities && selectedCityIds.length === 0) {
-            toast.error(t('form.validation.min_one_city'));
+        if (!isForAllCities && selectedAreaIds.length === 0) {
+            toast.error(isArabic ? 'يرجى اختيار منطقة تغطية واحدة على الأقل.' : 'Please select at least one service zone.');
             return;
         }
         if (!isForAllServices && selectedServices.length === 0) {
@@ -245,8 +285,9 @@ export default function CouponFormPage() {
 
     // User selection helpers
     const handleAddUser = (user) => {
-        if (!selectedUserIds.includes(user.id)) {
-            setSelectedUserIds(prev => [...prev, user.id]);
+        const numId = Number(user.id);
+        if (!selectedUserIds.some(id => Number(id) === numId)) {
+            setSelectedUserIds(prev => [...prev, numId]);
             setSelectedUsers(prev => [...prev, user]);
         }
         setUserSearch('');
@@ -254,39 +295,43 @@ export default function CouponFormPage() {
     };
 
     const handleRemoveUser = (userId) => {
-        setSelectedUserIds(prev => prev.filter(id => id !== userId));
-        setSelectedUsers(prev => prev.filter(u => u.id !== userId));
+        const numId = Number(userId);
+        setSelectedUserIds(prev => prev.filter(id => Number(id) !== numId));
+        setSelectedUsers(prev => prev.filter(u => Number(u.id) !== numId));
     };
 
     // City & Area helpers
     const handleCityToggle = (cityId) => {
-        if (selectedCityIds.includes(cityId)) {
-            setSelectedCityIds(prev => prev.filter(id => id !== cityId));
-            const cityAreas = areas.filter(a => a.city_id === cityId).map(a => a.id);
-            setSelectedAreaIds(prev => prev.filter(id => !cityAreas.includes(id)));
+        const numId = Number(cityId);
+        if (selectedCityIds.includes(numId)) {
+            setSelectedCityIds(prev => prev.filter(id => Number(id) !== numId));
+            const cityAreas = areas.filter(a => Number(a.city_id) === numId).map(a => Number(a.id));
+            setSelectedAreaIds(prev => prev.filter(id => !cityAreas.includes(Number(id))));
         } else {
-            setSelectedCityIds(prev => [...prev, cityId]);
+            setSelectedCityIds(prev => [...prev, numId]);
         }
     };
 
     const handleAreaToggle = (areaId) => {
-        if (selectedAreaIds.includes(areaId)) {
-            setSelectedAreaIds(prev => prev.filter(id => id !== areaId));
+        const numId = Number(areaId);
+        if (selectedAreaIds.some(id => Number(id) === numId)) {
+            setSelectedAreaIds(prev => prev.filter(id => Number(id) !== numId));
         } else {
-            setSelectedAreaIds(prev => [...prev, areaId]);
+            setSelectedAreaIds(prev => [...prev, numId]);
         }
     };
 
     // Service helpers
     const handleServiceToggle = (service) => {
-        const exists = selectedServices.some(s => s.id === service.id);
+        const sId = Number(service.id);
+        const exists = selectedServices.some(s => Number(s.id) === sId);
         if (exists) {
-            setSelectedServices(prev => prev.filter(s => s.id !== service.id));
+            setSelectedServices(prev => prev.filter(s => Number(s.id) !== sId));
         } else {
-            const isFirstService = service.id === 1 || service.id === '1' || service.code === 'hourly_cleaning';
+            const isFirstService = sId === 1 || service.code === 'hourly_cleaning';
             setSelectedServices(prev => [...prev, {
-                id: service.id,
-                code: service.code,
+                id: sId,
+                code: service.code || service.service_code,
                 name: isArabic ? service.name_ar : service.name_en,
                 allowed_visit_types: isFirstService ? ['single_visit', 'three_visits_per_week'] : ['single_visit'],
                 min_workers: '',
@@ -295,9 +340,10 @@ export default function CouponFormPage() {
     };
 
     const handleVisitTypeToggle = (serviceId, visitType) => {
+        const sId = Number(serviceId);
         setSelectedServices(prev => prev.map(s => {
-            if (s.id !== serviceId) return s;
-            const isFirstService = s.id === 1 || s.id === '1' || s.code === 'hourly_cleaning';
+            if (Number(s.id) !== sId) return s;
+            const isFirstService = sId === 1 || s.code === 'hourly_cleaning';
             if (!isFirstService && visitType === 'three_visits_per_week') return s;
 
             const hasVt = s.allowed_visit_types.includes(visitType);
@@ -309,8 +355,9 @@ export default function CouponFormPage() {
     };
 
     const handleServiceMinWorkersChange = (serviceId, val) => {
+        const sId = Number(serviceId);
         setSelectedServices(prev => prev.map(s => {
-            if (s.id !== serviceId) return s;
+            if (Number(s.id) !== sId) return s;
             return { ...s, min_workers: val };
         }));
     };
@@ -347,7 +394,7 @@ export default function CouponFormPage() {
                     <p className="font-bold text-sm text-gray-600 mt-3">{isArabic ? 'جاري تحميل بيانات الكوبون...' : 'Loading coupon data...'}</p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
                     {/* 1. Basic Info Section */}
                     <FormSection icon="info" title={t('details.basic_info')}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -479,6 +526,7 @@ export default function CouponFormPage() {
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
+                                        name="coupon_users_scope"
                                         checked={isForAllUsers}
                                         onChange={() => setIsForAllUsers(true)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
@@ -488,6 +536,7 @@ export default function CouponFormPage() {
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
+                                        name="coupon_users_scope"
                                         checked={!isForAllUsers}
                                         onChange={() => setIsForAllUsers(false)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
@@ -546,6 +595,7 @@ export default function CouponFormPage() {
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
+                                        name="coupon_cities_scope"
                                         checked={isForAllCities}
                                         onChange={() => setIsForAllCities(true)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
@@ -555,6 +605,7 @@ export default function CouponFormPage() {
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
+                                        name="coupon_cities_scope"
                                         checked={!isForAllCities}
                                         onChange={() => setIsForAllCities(false)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
@@ -571,7 +622,7 @@ export default function CouponFormPage() {
                                             <label className="block text-xs font-extrabold text-gray-700 mb-2">{isArabic ? 'مناطق التغطية الجغرافية المحددة:' : 'Specific Service Zones:'}</label>
                                             <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
                                                 {serviceZones.map(z => {
-                                                    const isChecked = selectedAreaIds.includes(z.id);
+                                                    const isChecked = selectedAreaIds.some(id => Number(id) === Number(z.id));
                                                     return (
                                                         <button
                                                             key={z.id}
@@ -602,6 +653,7 @@ export default function CouponFormPage() {
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
+                                        name="coupon_services_scope"
                                         checked={isForAllServices}
                                         onChange={() => setIsForAllServices(true)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
@@ -611,6 +663,7 @@ export default function CouponFormPage() {
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
+                                        name="coupon_services_scope"
                                         checked={!isForAllServices}
                                         onChange={() => setIsForAllServices(false)}
                                         className="w-4 h-4 text-[#E91E63] focus:ring-[#E91E63]"
@@ -634,7 +687,7 @@ export default function CouponFormPage() {
                                 <div className="space-y-4 pt-2">
                                     <div className="flex flex-wrap gap-2">
                                         {services.map(svc => {
-                                            const isSelected = selectedServices.some(s => s.id === svc.id);
+                                            const isSelected = selectedServices.some(s => Number(s.id) === Number(svc.id));
                                             return (
                                                 <button
                                                     key={svc.id}
@@ -658,7 +711,8 @@ export default function CouponFormPage() {
                                             <p className="text-xs font-extrabold text-gray-700">{isArabic ? 'تخصيص قواعد زيارات العاملات لكل خدمة:' : 'Per-service Visit Rules & Min Workers:'}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {selectedServices.map(svc => {
-                                                    const isFirstService = svc.id === 1 || svc.id === '1' || svc.code === 'hourly_cleaning';
+                                                    const sId = Number(svc.id);
+                                                    const isFirstService = sId === 1 || svc.code === 'hourly_cleaning';
                                                     const availableVisitTypes = isFirstService
                                                         ? ['single_visit', 'three_visits_per_week']
                                                         : ['single_visit'];

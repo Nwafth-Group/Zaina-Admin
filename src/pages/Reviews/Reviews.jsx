@@ -75,8 +75,10 @@ export default function Reviews() {
 
     // Reject Mutation
     const rejectMutation = useMutation({
-        mutationFn: async (reviewId) => {
-            const res = await axiosInstance.post(`/admin/reviews/${reviewId}/reject`);
+        mutationFn: async (arg) => {
+            const reviewId = typeof arg === 'object' && arg !== null ? arg.reviewId : arg;
+            const reason = typeof arg === 'object' && arg !== null ? arg.reason : undefined;
+            const res = await axiosInstance.post(`/admin/reviews/${reviewId}/reject`, { reason });
             return res.data;
         },
         onSuccess: (data) => {

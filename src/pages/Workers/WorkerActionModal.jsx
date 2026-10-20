@@ -64,6 +64,33 @@ const parsePhone = (rawPhone, nationality) => {
     return { phoneCode: defaultCode, mobile: local };
 };
 
+export const isServiceAllowedForGender = (service, gender) => {
+    if (!gender || !service) return true;
+    const g = String(gender).toLowerCase();
+    const code = (service.service_code || '').toUpperCase();
+    const sId = Number(service.id);
+
+    // Female-only services (1, 3, 4)
+    if (['DOMESTIC_HELPER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE'].includes(code) || [1, 3, 4].includes(sId)) {
+        return g === 'female';
+    }
+
+    // Male-only services (5: Deep Cleaning, 6 to 11: Specialized / Team-based)
+    if (code === 'DEEP_CLEANING' || sId === 5 || service.is_team_based || (sId >= 6 && sId <= 11) || [
+        'SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH'
+    ].includes(code)) {
+        return g === 'male';
+    }
+
+    // Hospitality or other services: check worker_gender_options
+    const opts = service.worker_gender_options || [];
+    if (Array.isArray(opts) && opts.length > 0) {
+        return opts.map((x) => String(x).toLowerCase()).includes(g);
+    }
+
+    return true;
+};
+
 export default function WorkerActionModal({ workerToEdit, onClose }) {
     const { t, i18n } = useTranslation('workers');
     const queryClient = useQueryClient();
@@ -120,9 +147,35 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
         id_number: yup.string().required(t('validation.required')),
         address: yup.string().required(t('validation.required')),
         gender: yup.string().oneOf(['male', 'female']).required(t('validation.required')),
-        status: yup.string().oneOf(['active', 'inactive', 'suspended']).required(t('validation.required')),
+        status: yup.string().oneOf(['active', 'inactive', 'suspended']).required(t('validation.required'))
+            .test('not_assigned_if_inactive', isArabic ? 'لا يمكن تغيير حالة العامل إلى غير نشط لأنه مسند إلى خدمة. يرجى إلغاء تحديد الخدمات أولاً.' : 'Cannot deactivate worker because they are assigned to a service. Please unassign services first.', function(statusVal) {
+                if (statusVal === 'active') return true;
+                const { service_ids, team_id, gender } = this.parent || {};
+                if (Array.isArray(service_ids) && service_ids.length > 0) {
+                    return false;
+                }
+                if (gender === 'male' && team_id) {
+                    const assignedTeam = (teamsList || []).find(t => String(t.id) === String(team_id));
+                    if (assignedTeam && (assignedTeam.services_count > 0 || (Array.isArray(assignedTeam.services) && assignedTeam.services.length > 0))) {
+                        return false;
+                    }
+                }
+                return true;
+            }),
         team_id: yup.string().nullable().notRequired(),
-        service_ids: yup.array().of(yup.string()).nullable().notRequired(),
+        service_ids: yup.array().of(yup.string()).nullable().notRequired()
+            .test('gender_matches_services', isArabic ? 'بعض الخدمات المحددة لا تتطابق مع جنس العامل' : 'Some selected services do not match worker gender', function(serviceIds) {
+                if (!Array.isArray(serviceIds) || serviceIds.length === 0) return true;
+                const { gender } = this.parent || {};
+                if (!gender) return true;
+                for (const sId of serviceIds) {
+                    const s = (servicesList || []).find((srv) => String(srv.id) === String(sId));
+                    if (s && !isServiceAllowedForGender(s, gender)) {
+                        return false;
+                    }
+                }
+                return true;
+            }),
     });
 
     const { register, handleSubmit, reset, watch, setValue, setError, formState: { errors } } = useForm({
@@ -147,6 +200,22 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
     const selectedServiceIds = watch('service_ids') || [];
     const watchPhoneCode = watch('phone_code') || '+966';
     const selectedCountry = ARAB_COUNTRIES.find((c) => c.phoneCode === watchPhoneCode) || ARAB_COUNTRIES[0];
+    const [serviceGenderFilter, setServiceGenderFilter] = useState('compatible');
+
+    const filteredServicesList = useMemo(() => {
+        return (servicesList || []).filter((service) => {
+            if (serviceGenderFilter === 'compatible') {
+                return isServiceAllowedForGender(service, watchGender);
+            }
+            if (serviceGenderFilter === 'male') {
+                return isServiceAllowedForGender(service, 'male');
+            }
+            if (serviceGenderFilter === 'female') {
+                return isServiceAllowedForGender(service, 'female');
+            }
+            return true;
+        });
+    }, [servicesList, serviceGenderFilter, watchGender]);
 
     useEffect(() => {
         if (isEditMode && fullWorkerData) {
@@ -167,7 +236,28 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
         }
     }, [fullWorkerData, isEditMode, reset]);
 
+    useEffect(() => {
+        if (!watchGender || !Array.isArray(selectedServiceIds) || selectedServiceIds.length === 0) return;
+        const validIds = selectedServiceIds.filter((id) => {
+            const s = (servicesList || []).find((srv) => String(srv.id) === String(id));
+            return s ? isServiceAllowedForGender(s, watchGender) : true;
+        });
+        if (validIds.length !== selectedServiceIds.length) {
+            setValue('service_ids', validIds, { shouldValidate: true });
+        }
+    }, [watchGender, servicesList]);
+
     const handleServiceToggle = (service) => {
+        if (!isServiceAllowedForGender(service, watchGender)) {
+            const isMaleTarget = service.id === 5 || service.is_team_based || (Number(service.id) >= 6 && Number(service.id) <= 11) || (service.service_code || '').toUpperCase() === 'DEEP_CLEANING';
+            toast.error(
+                isArabic
+                    ? `هذه الخدمة مخصصة لـ (${isMaleTarget ? 'الذكور' : 'الإناث'}) فقط ولا يمكن إسنادها لعامل (${watchGender === 'male' ? 'ذكر' : 'أنثى'}).`
+                    : `This service is restricted to ${isMaleTarget ? 'Male' : 'Female'} workers only.`
+            );
+            return;
+        }
+
         const sId = String(service.id);
         const isSpecialized = service.is_team_based || (Number(service.id) >= 6 && Number(service.id) <= 11);
 
@@ -415,36 +505,102 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
                 }
             >
                 <div className="space-y-2">
+                    {/* Service Gender Filter Tabs (No icons, text titles only) */}
+                    <div className="flex flex-wrap items-center gap-1.5 pb-1">
+                        <span className="text-xs font-bold text-gray-500 me-1">
+                            {isArabic ? 'تصفية الخدمات:' : 'Filter services:'}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setServiceGenderFilter('compatible')}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                serviceGenderFilter === 'compatible'
+                                    ? 'bg-[#E91E63] text-white border-[#E91E63] shadow-xs'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                            }`}
+                        >
+                            {isArabic ? (watchGender === 'female' ? 'متوافقة (إناث)' : 'متوافقة (ذكور)') : (watchGender === 'female' ? 'Compatible (Female)' : 'Compatible (Male)')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setServiceGenderFilter('all')}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                serviceGenderFilter === 'all'
+                                    ? 'bg-gray-800 text-white border-gray-800 shadow-xs'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                            }`}
+                        >
+                            {isArabic ? 'الكل' : 'All'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setServiceGenderFilter('male')}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                serviceGenderFilter === 'male'
+                                    ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-sky-50'
+                            }`}
+                        >
+                            {isArabic ? 'خدمات الذكور' : 'Male services'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setServiceGenderFilter('female')}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                serviceGenderFilter === 'female'
+                                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-rose-50'
+                            }`}
+                        >
+                            {isArabic ? 'خدمات الإناث' : 'Female services'}
+                        </button>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1 border border-gray-100 rounded-xl bg-gray-50/50">
                         {isServicesLoading ? (
                             <div className="col-span-2 text-center py-4 text-xs text-gray-400">{t('loading')}</div>
-                        ) : (servicesList || []).length === 0 ? (
+                        ) : filteredServicesList.length === 0 ? (
                             <div className="col-span-2 text-center py-4 text-xs text-gray-400">{t('no_data')}</div>
                         ) : (
-                            (servicesList || []).map((service) => {
+                            filteredServicesList.map((service) => {
                                 const sId = String(service.id);
                                 const isSelected = selectedServiceIds.includes(sId);
                                 const isSpecialized = service.is_team_based || (Number(service.id) >= 6 && Number(service.id) <= 11);
+                                const isAllowed = isServiceAllowedForGender(service, watchGender);
+
+                                const code = (service.service_code || '').toUpperCase();
+                                const numId = Number(service.id);
+                                let genderBadge = null;
+                                if (['DOMESTIC_HELPER_HOURLY', 'BABYSITTER_HOURLY', 'PEDICURE_MANICURE'].includes(code) || [1, 3, 4].includes(numId)) {
+                                    genderBadge = { text: isArabic ? 'إناث فقط' : 'Female only', color: 'bg-rose-50 text-rose-600 border-rose-200' };
+                                } else if (code === 'DEEP_CLEANING' || numId === 5 || isSpecialized || (numId >= 6 && numId <= 11)) {
+                                    genderBadge = { text: isArabic ? 'ذكور فقط' : 'Male only', color: 'bg-sky-50 text-sky-600 border-sky-200' };
+                                } else {
+                                    genderBadge = { text: isArabic ? 'ذكور / إناث' : 'Male / Female', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
+                                }
 
                                 return (
                                     <div
                                         key={service.id}
                                         onClick={() => handleServiceToggle(service)}
-                                        className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                                            isSelected
-                                                ? 'bg-pink-50/70 border-[#E91E63] shadow-xs'
-                                                : 'bg-white border-gray-100 hover:border-gray-200'
+                                        className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${
+                                            !isAllowed
+                                                ? 'opacity-40 cursor-not-allowed bg-gray-100/60 border-gray-200'
+                                                : isSelected
+                                                ? 'bg-pink-50/70 border-[#E91E63] shadow-xs cursor-pointer'
+                                                : 'bg-white border-gray-100 hover:border-gray-200 cursor-pointer'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2.5 min-w-0">
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
+                                                disabled={!isAllowed}
                                                 onChange={() => {}}
-                                                className="w-4 h-4 text-[#E91E63] rounded border-gray-300 focus:ring-[#E91E63]"
+                                                className="w-4 h-4 text-[#E91E63] rounded border-gray-300 focus:ring-[#E91E63] disabled:opacity-40"
                                             />
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold text-gray-800 truncate">
+                                                <p className={`text-xs font-bold truncate ${!isAllowed ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
                                                     {isArabic ? service.name_ar : service.name_en || service.name_ar}
                                                 </p>
                                                 <p className="text-[10px] text-gray-400 font-mono truncate">
@@ -452,15 +608,22 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
                                                 </p>
                                             </div>
                                         </div>
-                                        <span
-                                            className={`text-[9px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
-                                                isSpecialized
-                                                    ? 'bg-purple-50 text-purple-600'
-                                                    : 'bg-blue-50 text-blue-600'
-                                            }`}
-                                        >
-                                            {isSpecialized ? (isArabic ? 'تخصصية (6-11)' : 'Specialized') : (isArabic ? 'عادية (1-5)' : 'Standard')}
-                                        </span>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {genderBadge && (
+                                                <span className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold ${genderBadge.color}`}>
+                                                    {genderBadge.text}
+                                                </span>
+                                            )}
+                                            <span
+                                                className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                                                    isSpecialized
+                                                        ? 'bg-purple-50 text-purple-600'
+                                                        : 'bg-blue-50 text-blue-600'
+                                                }`}
+                                            >
+                                                {isSpecialized ? (isArabic ? 'تخصصية (6-11)' : 'Specialized') : (isArabic ? 'عادية (1-5)' : 'Standard')}
+                                            </span>
+                                        </div>
                                     </div>
                                 );
                             })

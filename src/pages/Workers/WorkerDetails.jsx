@@ -95,7 +95,7 @@ export default function WorkerDetails() {
             queryClient.invalidateQueries({ queryKey: ['workers'] });
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث حالة العامل' : 'Failed to update worker status'));
+            toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث حالة العامل' : 'Failed to update worker status'), { duration: 6000 });
         },
     });
 
