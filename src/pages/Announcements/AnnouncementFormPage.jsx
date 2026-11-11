@@ -127,7 +127,7 @@ export default function AnnouncementFormPage() {
             ) : (
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Announcement Content */}
-                    <FormSection icon="info" title={t('sections.details.title')} description={t('sections.details.desc')}>
+                    <FormSection icon="info" title={t('sections.details.title', isArabic ? 'الإعلان' : 'Announcement')} description={t('sections.details.desc', isArabic ? 'العنوان والرسالة التي سيقرأها العملاء.' : 'The title and message customers will see.')}>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Arabic Content Column */}
                             <div className="space-y-4 p-5 rounded-2xl bg-gray-50/60 border border-gray-100">
@@ -139,10 +139,10 @@ export default function AnnouncementFormPage() {
                                 </div>
 
                                 <div>
-                                    <label className={LABEL_CLASS}>{t('form.title_ar')} *</label>
+                                    <label className={LABEL_CLASS}>{t('form.title_ar', 'العنوان (بالعربية)')} *</label>
                                     <input
                                         {...register('title_ar')}
-                                        placeholder={t('form.title_ar_placeholder')}
+                                        placeholder={t('form.title_ar_placeholder', 'اكتب عنوان الإعلان بالعربية…')}
                                         dir="rtl"
                                         className={`${INPUT_CLASS} ${errors.title_ar ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
                                     />
@@ -150,12 +150,12 @@ export default function AnnouncementFormPage() {
                                 </div>
 
                                 <div>
-                                    <label className={LABEL_CLASS}>{t('form.body_ar')} *</label>
+                                    <label className={LABEL_CLASS}>{t('form.body_ar', 'نص الرسالة (بالعربية)')} *</label>
                                     <textarea
                                         {...register('body_ar')}
                                         rows={5}
                                         dir="rtl"
-                                        placeholder={t('form.body_ar_placeholder')}
+                                        placeholder={t('form.body_ar_placeholder', 'اكتب تفاصيل الإعلان بالعربية التي سيقرأها العملاء…')}
                                         className={`${INPUT_CLASS} h-32 p-3.5 resize-y ${errors.body_ar ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
                                     />
                                     {errors.body_ar && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.body_ar.message}</p>}
@@ -172,10 +172,10 @@ export default function AnnouncementFormPage() {
                                 </div>
 
                                 <div>
-                                    <label className={LABEL_CLASS}>{t('form.title_en')} *</label>
+                                    <label className={LABEL_CLASS}>{t('form.title_en', 'العنوان (بالإنجليزية)')} *</label>
                                     <input
                                         {...register('title_en')}
-                                        placeholder={t('form.title_en_placeholder')}
+                                        placeholder={t('form.title_en_placeholder', 'e.g. Summer sale is live')}
                                         dir="ltr"
                                         className={`${INPUT_CLASS} ${errors.title_en ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
                                     />
@@ -183,12 +183,12 @@ export default function AnnouncementFormPage() {
                                 </div>
 
                                 <div>
-                                    <label className={LABEL_CLASS}>{t('form.body_en')} *</label>
+                                    <label className={LABEL_CLASS}>{t('form.body_en', 'نص الرسالة (بالإنجليزية)')} *</label>
                                     <textarea
                                         {...register('body_en')}
                                         rows={5}
                                         dir="ltr"
-                                        placeholder={t('form.body_en_placeholder')}
+                                        placeholder={t('form.body_en_placeholder', 'Write the announcement details in English…')}
                                         className={`${INPUT_CLASS} h-32 p-3.5 resize-y ${errors.body_en ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
                                     />
                                     {errors.body_en && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.body_en.message}</p>}

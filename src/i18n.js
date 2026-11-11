@@ -12,8 +12,11 @@ i18n
     ns: ['auth','common' , 'users' , 'services' , 'employees' ,'workers' , 'categories' , 'bookings' , 'dashboard' , 'banners' , 'announcements' , 'settings' , 'locations', 'reports', 'legal_documents'], // أسماء الملفات (Namespaces) اللي عملناها
     defaultNS: 'common',
     backend: {
-      // المسار الصحيح لقراءة الملفات في Vite
+      // المسار الصحيح لقراءة الملفات في Vite مع منع التخزين المؤقت القديم
       loadPath: '/admin/locales/{{lng}}/{{ns}}.json',
+      queryStringParams: {
+        v: typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : Date.now(),
+      },
     },
     interpolation: {
       escapeValue: false,

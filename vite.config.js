@@ -5,4 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/admin/',
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(Date.now()),
+  },
 })
+
