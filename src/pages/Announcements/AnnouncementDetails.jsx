@@ -81,7 +81,10 @@ export default function AnnouncementDetails() {
                                 }`}>
                                     👥 {isAllAudience ? (isArabic ? 'جميع العملاء' : 'All Customers') : (isArabic ? `عملاء محددون (${readers.length})` : `Specific Customers (${readers.length})`)}
                                 </span>
-                                <h3 className="text-2xl font-black text-gray-900">{announcement.title}</h3>
+                                <h3 className="text-2xl font-black text-gray-900">{announcement.title_ar || announcement.title}</h3>
+                                {announcement.title_en && announcement.title_en !== (announcement.title_ar || announcement.title) && (
+                                    <h4 className="text-base font-bold text-gray-500 mt-0.5">{announcement.title_en}</h4>
+                                )}
                                 {announcement.created_at && (
                                     <p className="text-xs text-gray-400 mt-1">
                                         📅 {isArabic ? 'تاريخ النشر: ' : 'Published At: '}{announcement.created_at.substring(0, 10)}
@@ -90,11 +93,28 @@ export default function AnnouncementDetails() {
                             </div>
                         </div>
 
-                        {/* Message Body Content Box */}
-                        <div className="pt-4 border-t border-gray-100">
-                            <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider mb-2">{isArabic ? 'محتوى الرسالة / الإعلان:' : 'Announcement Content:'}</h4>
-                            <div className="p-5 rounded-2xl bg-gray-50/70 border border-gray-100 text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                {announcement.body}
+                        {/* Bilingual Message Body Content Grid */}
+                        <div className="pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-5 rounded-2xl bg-gray-50/70 border border-gray-100 space-y-2">
+                                <div className="flex items-center gap-2 pb-1.5 border-b border-gray-200">
+                                    <span>🇸🇦</span>
+                                    <span className="text-xs font-bold text-gray-700">{isArabic ? 'المحتوى العربي' : 'Arabic Content'}</span>
+                                </div>
+                                <h5 className="font-bold text-sm text-gray-900">{announcement.title_ar || announcement.title}</h5>
+                                <p className="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {announcement.body_ar || announcement.body}
+                                </p>
+                            </div>
+
+                            <div className="p-5 rounded-2xl bg-gray-50/70 border border-gray-100 space-y-2" dir="ltr">
+                                <div className="flex items-center gap-2 pb-1.5 border-b border-gray-200">
+                                    <span>🇬🇧</span>
+                                    <span className="text-xs font-bold text-gray-700">English Content</span>
+                                </div>
+                                <h5 className="font-bold text-sm text-gray-900">{announcement.title_en || announcement.title}</h5>
+                                <p className="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {announcement.body_en || announcement.body}
+                                </p>
                             </div>
                         </div>
                     </div>

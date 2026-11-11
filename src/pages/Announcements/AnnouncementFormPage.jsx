@@ -22,13 +22,15 @@ export default function AnnouncementFormPage() {
     const [sendToAll, setSendToAll] = useState(false);
 
     const schema = yup.object().shape({
-        title: yup.string().required(t('validation.required')),
-        body: yup.string().required(t('validation.required')),
+        title_ar: yup.string().required(t('validation.required')),
+        title_en: yup.string().required(t('validation.required')),
+        body_ar: yup.string().required(t('validation.required')),
+        body_en: yup.string().required(t('validation.required')),
     });
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
-        defaultValues: { title: '', body: '' },
+        defaultValues: { title_ar: '', title_en: '', body_ar: '', body_en: '' },
     });
 
     // Fetch details in edit mode
@@ -40,7 +42,12 @@ export default function AnnouncementFormPage() {
 
     useEffect(() => {
         if (isEditMode && fullData) {
-            reset({ title: fullData.title || '', body: fullData.body || '' });
+            reset({
+                title_ar: fullData.title_ar || fullData.title || '',
+                title_en: fullData.title_en || fullData.title || '',
+                body_ar: fullData.body_ar || fullData.body || '',
+                body_en: fullData.body_en || fullData.body || '',
+            });
             setSelectedIds((fullData.reader_ids || []).map(Number));
             setSendToAll(Boolean(fullData.send_to_all));
         }
@@ -48,9 +55,18 @@ export default function AnnouncementFormPage() {
 
     const submitMutation = useMutation({
         mutationFn: async (data) => {
+            const basePayload = {
+                title_ar: data.title_ar,
+                title_en: data.title_en,
+                body_ar: data.body_ar,
+                body_en: data.body_en,
+                title: data.title_ar || data.title_en,
+                body: data.body_ar || data.body_en,
+            };
+
             const payload = sendToAll
-                ? { title: data.title, body: data.body, send_to_all: true }
-                : { title: data.title, body: data.body, customer_ids: selectedIds };
+                ? { ...basePayload, send_to_all: true }
+                : { ...basePayload, customer_ids: selectedIds };
 
             const url = isEditMode ? `/admin/announcements/${announcementId}` : '/admin/announcements';
             return isEditMode ? axiosInstance.put(url, payload) : axiosInstance.post(url, payload);
@@ -112,26 +128,71 @@ export default function AnnouncementFormPage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Announcement Content */}
                     <FormSection icon="info" title={t('sections.details.title')} description={t('sections.details.desc')}>
-                        <div className="space-y-4">
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.title_field')} *</label>
-                                <input
-                                    {...register('title')}
-                                    placeholder={t('form.title_placeholder')}
-                                    className={`${INPUT_CLASS} ${errors.title ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
-                                />
-                                {errors.title && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.title.message}</p>}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Arabic Content Column */}
+                            <div className="space-y-4 p-5 rounded-2xl bg-gray-50/60 border border-gray-100">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                    <span className="text-base">🇸🇦</span>
+                                    <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider">
+                                        {isArabic ? 'المحتوى باللغة العربية' : 'Arabic Content'}
+                                    </h3>
+                                </div>
+
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.title_ar')} *</label>
+                                    <input
+                                        {...register('title_ar')}
+                                        placeholder={t('form.title_ar_placeholder')}
+                                        dir="rtl"
+                                        className={`${INPUT_CLASS} ${errors.title_ar ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
+                                    />
+                                    {errors.title_ar && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.title_ar.message}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.body_ar')} *</label>
+                                    <textarea
+                                        {...register('body_ar')}
+                                        rows={5}
+                                        dir="rtl"
+                                        placeholder={t('form.body_ar_placeholder')}
+                                        className={`${INPUT_CLASS} h-32 p-3.5 resize-y ${errors.body_ar ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
+                                    />
+                                    {errors.body_ar && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.body_ar.message}</p>}
+                                </div>
                             </div>
 
-                            <div>
-                                <label className={LABEL_CLASS}>{t('form.body')} *</label>
-                                <textarea
-                                    {...register('body')}
-                                    rows={5}
-                                    placeholder={t('form.body_placeholder')}
-                                    className={`${INPUT_CLASS} h-32 p-3.5 resize-y ${errors.body ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
-                                />
-                                {errors.body && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.body.message}</p>}
+                            {/* English Content Column */}
+                            <div className="space-y-4 p-5 rounded-2xl bg-gray-50/60 border border-gray-100">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                    <span className="text-base">🇬🇧</span>
+                                    <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider">
+                                        {isArabic ? 'المحتوى باللغة الإنجليزية' : 'English Content'}
+                                    </h3>
+                                </div>
+
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.title_en')} *</label>
+                                    <input
+                                        {...register('title_en')}
+                                        placeholder={t('form.title_en_placeholder')}
+                                        dir="ltr"
+                                        className={`${INPUT_CLASS} ${errors.title_en ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
+                                    />
+                                    {errors.title_en && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.title_en.message}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={LABEL_CLASS}>{t('form.body_en')} *</label>
+                                    <textarea
+                                        {...register('body_en')}
+                                        rows={5}
+                                        dir="ltr"
+                                        placeholder={t('form.body_en_placeholder')}
+                                        className={`${INPUT_CLASS} h-32 p-3.5 resize-y ${errors.body_en ? 'border-rose-500 ring-2 ring-rose-500/10' : ''}`}
+                                    />
+                                    {errors.body_en && <p className="text-xs text-rose-600 mt-1 font-bold">{errors.body_en.message}</p>}
+                                </div>
                             </div>
                         </div>
                     </FormSection>

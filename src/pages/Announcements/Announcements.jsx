@@ -146,7 +146,7 @@ export default function Announcements() {
                         <div key={announcement.id} onClick={() => navigate(`/announcements/${announcement.id}`)} className="group rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col p-4 transition hover:border-pink-200 hover:shadow-md cursor-pointer">
                             <div className="flex items-start justify-between gap-2" onClick={(e) => e.stopPropagation()}>
                                 <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 min-w-0">
-                                    {announcement.title}
+                                    {isArabic ? (announcement.title_ar || announcement.title) : (announcement.title_en || announcement.title)}
                                 </h3>
                                 <RowActionsMenu
                                     label={t('actions.title')}
@@ -175,7 +175,7 @@ export default function Announcements() {
                             </div>
 
                             <p className="text-xs text-gray-500 mt-2 line-clamp-4 flex-1">
-                                {announcement.body}
+                                {isArabic ? (announcement.body_ar || announcement.body) : (announcement.body_en || announcement.body)}
                             </p>
 
                             <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
@@ -209,10 +209,10 @@ export default function Announcements() {
                                 {announcements.map((announcement) => (
                                     <tr key={announcement.id} onClick={() => navigate(`/announcements/${announcement.id}`)} className="hover:bg-gray-50/80 transition cursor-pointer">
                                         <td className="py-3 px-4  font-bold text-gray-900 max-w-[200px] truncate">
-                                            {announcement.title}
+                                            {isArabic ? (announcement.title_ar || announcement.title) : (announcement.title_en || announcement.title)}
                                         </td>
                                         <td className="py-3 px-4  text-gray-600 max-w-[300px] truncate">
-                                            {announcement.body}
+                                            {isArabic ? (announcement.body_ar || announcement.body) : (announcement.body_en || announcement.body)}
                                         </td>
                                         <td className="py-3 px-4 ">
                                             <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-pink-50 text-[#E91E63]">
