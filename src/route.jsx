@@ -48,11 +48,13 @@ import ServiceZones from './pages/ServiceZones/ServiceZones.jsx';
 import ServiceZoneFormPage from './pages/ServiceZones/ServiceZoneFormPage.jsx';
 import TransportDispatch from './pages/Transport/TransportDispatch.jsx';
 import TransportGroupDetails from './pages/Transport/TransportGroupDetails.jsx';
+import RouteErrorBoundary from './component/RouteErrorBoundary.jsx';
 
 export const router = createBrowserRouter([
   {
     path: '/auth',
     element: <GuestRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { path: '', element: <AuthLayout />, children: [{ index: true, element: <LoginPage /> }, { path: 'login', element: <LoginPage /> }] },
     ],
@@ -60,6 +62,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <ProtectedRoute />,
+    errorElement: <RouteErrorBoundary />,
     children : [
       {
         path: '',
