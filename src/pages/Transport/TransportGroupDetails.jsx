@@ -74,6 +74,13 @@ export default function TransportGroupDetails() {
     const departurePoints = pointsData?.data?.items || pointsData?.data || [];
     const details = shiftData?.data || { total_bookings: 0, total_workers: 0, assigned_workers: 0, unassigned_workers: 0, bookings: [], driver_manifests: [] };
 
+    // Active driver manifests (filter out any empty driver manifests with 0 passengers)
+    const activeDriverManifests = useMemo(() => {
+        return (details.driver_manifests || []).filter(
+            (m) => (Number(m.assigned_passengers_count) > 0 || (Array.isArray(m.passengers) && m.passengers.length > 0))
+        );
+    }, [details.driver_manifests]);
+
     // Check if the overall shift has already started
     const isShiftStarted = useMemo(() => {
         if (details?.is_shift_started !== undefined) return Boolean(details.is_shift_started);
@@ -594,7 +601,7 @@ export default function TransportGroupDetails() {
                         <h2 className="text-sm font-black text-gray-900 flex items-center gap-2">
                             <span>{isArabic ? 'كشوفات وجداول رحلات السائقين الميدانية' : 'Assigned Drivers Manifests'}</span>
                             <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                                {details.driver_manifests?.length || 0}
+                                {activeDriverManifests.length}
                             </span>
                         </h2>
                         <p className="text-xs text-gray-400 mt-0.5">
@@ -604,11 +611,11 @@ export default function TransportGroupDetails() {
                         </p>
                     </div>
                     <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg shrink-0">
-                        🚐 {details.driver_manifests?.length || 0} {isArabic ? 'سائقين مكلفين' : 'Assigned Drivers'}
+                        🚐 {activeDriverManifests.length} {isArabic ? 'سائقين مكلفين' : 'Assigned Drivers'}
                     </span>
                 </div>
 
-                {details.driver_manifests?.length === 0 ? (
+                {activeDriverManifests.length === 0 ? (
                     <div className="p-16 text-center text-gray-400 space-y-2">
                         <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto text-xl">
                             🚐
@@ -622,7 +629,7 @@ export default function TransportGroupDetails() {
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100">
-                        {details.driver_manifests.map((manifest) => {
+                        {activeDriverManifests.map((manifest) => {
                             const percent = manifest.vehicle_capacity > 0
                                 ? Math.min(100, Math.round((manifest.assigned_passengers_count / manifest.vehicle_capacity) * 100))
                                 : 0;
