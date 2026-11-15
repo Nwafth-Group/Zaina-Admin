@@ -4,17 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../api/axios.js';
 
-const format12Hour = (timeStr) => {
-    if (!timeStr || timeStr === '—' || timeStr === 'غير محدد') return timeStr || '—';
-    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
-    if (!match) return timeStr;
-    let hours = parseInt(match[1], 10);
-    const minutes = match[2];
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    return `${hours}:${minutes} ${ampm}`;
-};
+import { format12Hour } from '../../utils/timeFormat.js';
 
 export default function TransportDispatch() {
     const { i18n } = useTranslation('common');
@@ -242,7 +232,7 @@ export default function TransportDispatch() {
                         {Array.from({ length: 17 }, (_, i) => {
                             const hourNum = i + 6; // from 06:00 to 22:00
                             const hourStr = String(hourNum).padStart(2, '0') + ':00';
-                            const display12 = format12Hour(hourStr);
+                            const display12 = format12Hour(hourStr, isArabic);
                             return (
                                 <option key={hourStr} value={hourStr}>
                                     {display12} ({hourStr})
@@ -297,7 +287,7 @@ export default function TransportDispatch() {
                                                 <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                <span>{format12Hour(shift.start_time)}</span>
+                                                <span>{format12Hour(shift.start_time, isArabic)}</span>
                                             </div>
 
                                             {/* Preparation Badge */}

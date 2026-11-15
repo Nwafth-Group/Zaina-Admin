@@ -5,17 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
-const format12Hour = (timeStr) => {
-    if (!timeStr || timeStr === '—' || timeStr === 'غير محدد') return timeStr || '—';
-    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
-    if (!match) return timeStr;
-    let hours = parseInt(match[1], 10);
-    const minutes = match[2];
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    return `${hours}:${minutes} ${ampm}`;
-};
+import { format12Hour, formatTimeRange } from '../../utils/timeFormat.js';
 
 const parseTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
@@ -231,7 +221,7 @@ export default function TransportGroupDetails() {
 
         // Departure time check for upcoming shifts
         if (!isBookingLocked(selectedWorkerTarget.booking) && chosenMins > maxMins) {
-            const maxFormatted = format12Hour(formatMinutesTo24Hour(maxMins));
+            const maxFormatted = format12Hour(formatMinutesTo24Hour(maxMins), isArabic);
             toast.error(
                 isArabic
                     ? `وقت انطلاق السائق يجب أن يكون قبل 60 دقيقة على الأقل من موعد الشفت (قبل ${maxFormatted})!`
@@ -309,9 +299,9 @@ export default function TransportGroupDetails() {
         const distinctPoints = Array.from(new Set((manifest.passengers || []).map((p) => p.pickup_point).filter(Boolean)));
         const pointsLabel = distinctPoints.length > 0 ? distinctPoints.join(' ، ') : (manifest.departure_point?.name || 'غير محددة');
 
-        let text = `*جدول رحلة السائق الميداني - زينة*\n📅 التاريخ: ${date}\n⏰ شفت الخدمة: ${format12Hour(shiftFormatted)}\n👨‍✈️ السائق: ${manifest.driver_name} (${manifest.driver_phone})\n🚐 المركبة: ${manifest.vehicle_type} [${manifest.vehicle_plate}]\n🚏 نقاط الانطلاق: ${pointsLabel}\n⏱️ موعد التحرك الأساسي: ${format12Hour(manifest.departure_time)}\n👥 عدد العاملات: ${manifest.assigned_passengers_count} / ${manifest.vehicle_capacity} مقاعد\n\n*قائمة العاملات والتوصيل:*\n`;
+        let text = `*جدول رحلة السائق الميداني - زينة*\n📅 التاريخ: ${date}\n⏰ شفت الخدمة: ${format12Hour(shiftFormatted, true)}\n👨‍✈️ السائق: ${manifest.driver_name} (${manifest.driver_phone})\n🚐 المركبة: ${manifest.vehicle_type} [${manifest.vehicle_plate}]\n🚏 نقاط الانطلاق: ${pointsLabel}\n⏱️ موعد التحرك الأساسي: ${format12Hour(manifest.departure_time, true)}\n👥 عدد العاملات: ${manifest.assigned_passengers_count} / ${manifest.vehicle_capacity} مقاعد\n\n*قائمة العاملات والتوصيل:*\n`;
         manifest.passengers?.forEach((p, idx) => {
-            text += `\n${idx + 1}) العاملة: ${p.worker_name} (${p.worker_phone})\n   🚏 نقطة الانطلاق: ${p.pickup_point || 'سكن العاملات'}${p.departure_time ? ` (${format12Hour(p.departure_time)})` : ''}\n   العميل: ${p.customer_name} (${p.customer_phone})\n   الحجز: #${p.booking_ref} - ${p.service_name}\n   العنوان: ${p.destination_address}\n`;
+            text += `\n${idx + 1}) العاملة: ${p.worker_name} (${p.worker_phone})\n   🚏 نقطة الانطلاق: ${p.pickup_point || 'سكن العاملات'}${p.departure_time ? ` (${format12Hour(p.departure_time, true)})` : ''}\n   العميل: ${p.customer_name} (${p.customer_phone})\n   الحجز: #${p.booking_ref} - ${p.service_name}\n   العنوان: ${p.destination_address}\n`;
         });
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
@@ -338,7 +328,7 @@ export default function TransportGroupDetails() {
                     </button>
                     <span className="text-gray-300">/</span>
                     <span className="font-bold text-gray-900">
-                        {isArabic ? `شفت ${format12Hour(shiftFormatted)}` : `Shift ${format12Hour(shiftFormatted)}`}
+                        {isArabic ? `شفت ${format12Hour(shiftFormatted, true)}` : `Shift ${format12Hour(shiftFormatted, false)}`}
                     </span>
                 </div>
 
@@ -372,7 +362,7 @@ export default function TransportGroupDetails() {
                         <div className="space-y-1.5">
                             <div className="flex flex-wrap items-center gap-2.5">
                                 <h1 className="text-xl font-black text-gray-900 tracking-tight">
-                                    {isArabic ? `إدارة ترحيل وتوزيع شفت ${format12Hour(shiftFormatted)}` : `Shift ${format12Hour(shiftFormatted)} Dispatch Operations`}
+                                    {isArabic ? `إدارة ترحيل وتوزيع شفت ${format12Hour(shiftFormatted, true)}` : `Shift ${format12Hour(shiftFormatted, false)} Dispatch Operations`}
                                 </h1>
                             </div>
                             <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 font-medium">
@@ -507,10 +497,16 @@ export default function TransportGroupDetails() {
                                             )}
                                         </div>
 
-                                        <div className="text-xs text-gray-500 flex items-center gap-3">
-                                            <span className="font-mono text-gray-700 font-bold">⏰ {format12Hour(booking.start_time)} - {format12Hour(booking.end_time)}</span>
-                                            <span>•</span>
-                                            <span className="font-bold text-gray-800">📍 {booking.governorate} — {booking.area}</span>
+                                        <div className="text-xs text-gray-600 flex flex-wrap items-center gap-2.5">
+                                            <span className="inline-flex items-center gap-1.5 font-bold text-gray-800 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-2xs">
+                                                <span className="text-sm">⏰</span>
+                                                <span>{formatTimeRange(booking.start_time, booking.end_time, isArabic)}</span>
+                                            </span>
+                                            <span className="text-gray-300">•</span>
+                                            <span className="font-bold text-gray-800 flex items-center gap-1">
+                                                <span>📍</span>
+                                                <span>{booking.governorate} — {booking.area}</span>
+                                            </span>
                                         </div>
                                     </div>
 
@@ -557,7 +553,7 @@ export default function TransportGroupDetails() {
                                                                     <span className="text-gray-500 font-normal">({worker.assigned_driver?.vehicle_type})</span>
                                                                 </p>
                                                                 <p className="text-[10px] text-gray-500 flex items-center gap-1.5">
-                                                                    <span>⏱️ {format12Hour(worker.departure_time)}</span>
+                                                                    <span>⏱️ {format12Hour(worker.departure_time, isArabic)}</span>
                                                                     <span>•</span>
                                                                     <span className="truncate">{worker.departure_point?.name || 'سكن العاملات'}</span>
                                                                 </p>
@@ -688,7 +684,7 @@ export default function TransportGroupDetails() {
                                                     <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
                                                         <span>🚏 {isArabic ? 'نقاط الانطلاق:' : 'Pickup Points:'} <b>{pointsLabel}</b></span>
                                                         <span>•</span>
-                                                        <span>⏱️ {isArabic ? 'موعد التحرك الأساسي:' : 'Departure:'} <b className="text-emerald-700 font-mono">{format12Hour(manifest.departure_time)}</b></span>
+                                                        <span>⏱️ {isArabic ? 'موعد التحرك الأساسي:' : 'Departure:'} <b className="text-emerald-700 font-mono">{format12Hour(manifest.departure_time, isArabic)}</b></span>
                                                         <span>•</span>
                                                         <span>👥 {isArabic ? 'الحمولة:' : 'Capacity:'} <b>{manifest.assigned_passengers_count} / {manifest.vehicle_capacity} {isArabic ? 'مقاعد' : 'seats'}</b></span>
                                                     </div>
@@ -767,7 +763,7 @@ export default function TransportGroupDetails() {
                                                                 {p.departure_time && (
                                                                     <div className="text-[11px] text-emerald-700 font-mono font-bold flex items-center gap-1 mt-0.5">
                                                                         <span>⏱️</span>
-                                                                        <span>{format12Hour(p.departure_time)}</span>
+                                                                        <span>{format12Hour(p.departure_time, isArabic)}</span>
                                                                     </div>
                                                                 )}
                                                             </td>
@@ -860,7 +856,7 @@ export default function TransportGroupDetails() {
                                         const currentLoad = manifest?.assigned_passengers_count || 0;
                                         const cap = d.vehicle_capacity || 5;
                                         const isFull = currentLoad >= cap;
-                                        const tripInfo = manifest?.departure_time ? ` [رحلة: ${format12Hour(manifest.departure_time)}]` : '';
+                                        const tripInfo = manifest?.departure_time ? ` [رحلة: ${format12Hour(manifest.departure_time, isArabic)}]` : '';
 
                                         return (
                                             <option key={d.id} value={d.id}>
@@ -890,8 +886,8 @@ export default function TransportGroupDetails() {
                                                 <span>🚐</span>
                                                 <span>
                                                     {isArabic
-                                                        ? `رحلة السائق المجدولة: ${matchingManifest.departure_point?.name || 'سكن العاملات'} — ${format12Hour(matchingManifest.departure_time)}`
-                                                        : `Driver run: ${matchingManifest.departure_point?.name || 'Depot'} — ${format12Hour(matchingManifest.departure_time)}`}
+                                                        ? `رحلة السائق المجدولة: ${matchingManifest.departure_point?.name || 'سكن العاملات'} — ${format12Hour(matchingManifest.departure_time, true)}`
+                                                        : `Driver run: ${matchingManifest.departure_point?.name || 'Depot'} — ${format12Hour(matchingManifest.departure_time, false)}`}
                                                 </span>
                                             </span>
                                             <button

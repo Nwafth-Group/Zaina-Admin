@@ -5,17 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axios.js';
 
-const format12Hour = (timeStr) => {
-    if (!timeStr || timeStr === '—' || timeStr === 'غير محدد') return timeStr || '—';
-    const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
-    if (!match) return timeStr;
-    let hours = parseInt(match[1], 10);
-    const minutes = match[2];
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    return `${hours}:${minutes} ${ampm}`;
-};
+import { format12Hour, formatTimeRange } from '../utils/timeFormat.js';
 
 export default function Operations() {
     const navigate = useNavigate();
@@ -759,12 +749,12 @@ export default function Operations() {
                                                     </td>
 
                                                     <td className="py-3.5 px-4 font-mono">
-                                                        <div className="text-[11px] font-bold text-gray-800" dir="ltr">
-                                                            {format12Hour(b.planned_start_time)} - {format12Hour(b.planned_end_time)}
+                                                        <div className="text-[11px] font-bold text-gray-800">
+                                                            {formatTimeRange(b.planned_start_time, b.planned_end_time, isArabic)}
                                                         </div>
                                                         {(b.actual_start_time || b.actual_end_time) && (
                                                             <div className="text-[10px] text-blue-700 font-bold mt-0.5" dir="ltr">
-                                                                {format12Hour(b.actual_start_time) || '—'} → {format12Hour(b.actual_end_time) || '...'}
+                                                                {format12Hour(b.actual_start_time, isArabic) || '—'} → {format12Hour(b.actual_end_time, isArabic) || '...'}
                                                             </div>
                                                         )}
                                                         {b.started_by && (
@@ -1428,7 +1418,7 @@ export default function Operations() {
                                     <span>{isArabic ? 'اقتراح بدائل مؤهلة للحجز (US-A37)' : 'Suggest Alternatives (US-A37)'}</span>
                                 </h3>
                                 <p className="text-[11px] text-gray-500 mt-0.5">
-                                    #{alternativesBooking.booking_ref} — {alternativesBooking.service?.name} ({format12Hour(alternativesBooking.planned_start_time)} - {format12Hour(alternativesBooking.planned_end_time)})
+                                    #{alternativesBooking.booking_ref} — {alternativesBooking.service?.name} ({formatTimeRange(alternativesBooking.planned_start_time, alternativesBooking.planned_end_time, isArabic)})
                                 </p>
                             </div>
                             <button onClick={() => setAlternativesBooking(null)} className="text-gray-400 hover:text-gray-600 font-bold">✕</button>
@@ -1735,7 +1725,7 @@ export default function Operations() {
                                                                         {isArabic ? 'فاصل انتقال بين الخدمتين:' : 'Transition Gap:'}
                                                                     </span>
                                                                     <span className="font-mono text-[11px]" dir="ltr">
-                                                                        {format12Hour(item.start_time)} → {format12Hour(item.end_time)}
+                                                                        {format12Hour(item.start_time, isArabic)} → {format12Hour(item.end_time, isArabic)}
                                                                     </span>
                                                                 </div>
                                                                 <div className="font-extrabold text-[11px] whitespace-nowrap">
@@ -1798,8 +1788,8 @@ export default function Operations() {
                                                                 </div>
 
                                                                 <div className="text-end shrink-0">
-                                                                    <div className="text-xs font-black text-gray-800 font-mono bg-gray-100 px-2.5 py-1 rounded-lg" dir="ltr">
-                                                                        {format12Hour(item.planned_start)} - {format12Hour(item.planned_end)}
+                                                                    <div className="text-xs font-black text-gray-800 font-mono bg-gray-100 px-2.5 py-1 rounded-lg">
+                                                                        {formatTimeRange(item.planned_start, item.planned_end, isArabic)}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1834,7 +1824,7 @@ export default function Operations() {
                                                                     <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-mono bg-gray-50/80 p-2 rounded-xl" dir="ltr">
                                                                         <span className="font-sans font-bold text-gray-700">{isArabic ? 'التوقيت الفعلي:' : 'Actual:'}</span>
                                                                         <span>
-                                                                            {format12Hour(item.actual_start) || '—'} → {format12Hour(item.actual_end) || '...'}
+                                                                            {format12Hour(item.actual_start, isArabic) || '—'} → {format12Hour(item.actual_end, isArabic) || '...'}
                                                                         </span>
                                                                     </div>
                                                                 )}
