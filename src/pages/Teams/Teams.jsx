@@ -113,6 +113,10 @@ export default function Teams() {
     // 3. Toggle Team Status Mutation
     const toggleStatusMutation = useMutation({
         mutationFn: async (team) => {
+            const hasActiveBookings = team.has_active_bookings ?? ((team.stats?.upcoming_bookings || 0) > 0 || (team.stats?.in_service_bookings || 0) > 0);
+            if (hasActiveBookings) {
+                throw new Error(isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot change team status while the team has upcoming or in-progress bookings.');
+            }
             const nextStatus = team.status === 'active' ? 'inactive' : 'active';
             return axiosInstance.put(`/admin/teams/${team.id}`, {
                 name_ar: team.name_ar,
@@ -128,7 +132,7 @@ export default function Teams() {
             refetch();
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء تعديل الحالة' : 'Error updating status'));
+            toast.error(err.response?.data?.message || err.message || (isArabic ? 'حدث خطأ أثناء تعديل الحالة' : 'Error updating status'));
         },
     });
 
@@ -371,68 +375,102 @@ export default function Teams() {
 
                                         {/* Status */}
                                         <td className="py-3.5 px-4">
-                                            <span
-                                                className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
-                                                    team.status === 'active'
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-rose-50 text-rose-700 border-rose-200'
-                                                }`}
-                                            >
-                                                <span
-                                                    className={`w-1.5 h-1.5 rounded-full ${
-                                                        team.status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'
-                                                    }`}
-                                                ></span>
-                                                {team.status === 'active' ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
-                                            </span>
+                                            {(() => {
+                                                const hasActiveBookings = team.has_active_bookings ?? ((team.stats?.upcoming_bookings || 0) > 0 || (team.stats?.in_service_bookings || 0) > 0);
+
+                                                return (
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        <span
+                                                            className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-2xs ${
+                                                                team.status === 'active'
+                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                                                            }`}
+                                                        >
+                                                            <span
+                                                                className={`w-1.5 h-1.5 rounded-full ${
+                                                                    team.status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'
+                                                                }`}
+                                                            ></span>
+                                                            {team.status === 'active' ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive')}
+                                                        </span>
+                                                        {hasActiveBookings && (
+                                                            <span
+                                                                className="text-[10px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 font-bold"
+                                                                title={isArabic ? 'الفريق لديه خدمات قادمة أو قيد التنفيذ (الحالة مقفلة)' : 'Team has upcoming or in-progress services (Status locked)'}
+                                                            >
+                                                                {isArabic ? 'خدمة نشطة' : 'In Service/Upcoming'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
 
                                         {/* RowActionsMenu */}
                                         <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <RowActionsMenu
-                                                label={isArabic ? 'خيارات' : 'Actions'}
-                                                items={[
-                                                    {
-                                                        key: 'view',
-                                                        label: isArabic ? 'عرض التفاصيل' : 'View Details',
-                                                        icon: (
-                                                            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                            </svg>
-                                                        ),
-                                                        onClick: () => navigate(`/teams/${team.id}`),
-                                                    },
-                                                    hasPermission('teams.edit') && {
-                                                        key: 'edit',
-                                                        label: isArabic ? 'تعديل' : 'Edit',
-                                                        icon: <EditIcon />,
-                                                        onClick: () => setActionModal({ isOpen: true, teamToEdit: team }),
-                                                    },
-                                                    hasPermission('teams.edit') && {
-                                                        key: 'toggle',
-                                                        label: isArabic ? 'تغيير الحالة' : 'Toggle Status',
-                                                        icon: <ToggleIcon />,
-                                                        onClick: () => toggleStatusMutation.mutate(team),
-                                                        disabled: toggleStatusMutation.isPending,
-                                                    },
-                                                    hasPermission('teams.delete') && {
-                                                        key: 'delete',
-                                                        label: isArabic ? 'حذف' : 'Delete',
-                                                        icon: <TrashIcon />,
-                                                        danger: true,
-                                                        onClick: () => {
-                                                            setDeleteConfirm({
-                                                                isOpen: true,
-                                                                teamId: team.id,
-                                                                teamName: isArabic ? team.name_ar : team.name_en || team.name_ar,
-                                                                workersCount: team.workers_count || 0,
-                                                            });
-                                                        },
-                                                        disabled: deleteTeamMutation.isPending,
-                                                    },
-                                                ].filter(Boolean)}
-                                            />
+                                            {(() => {
+                                                const hasActiveBookings = team.has_active_bookings ?? ((team.stats?.upcoming_bookings || 0) > 0 || (team.stats?.in_service_bookings || 0) > 0);
+
+                                                return (
+                                                    <RowActionsMenu
+                                                        label={isArabic ? 'خيارات' : 'Actions'}
+                                                        items={[
+                                                            {
+                                                                key: 'view',
+                                                                label: isArabic ? 'عرض التفاصيل' : 'View Details',
+                                                                icon: (
+                                                                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                ),
+                                                                onClick: () => navigate(`/teams/${team.id}`),
+                                                            },
+                                                            hasPermission('teams.edit') && {
+                                                                key: 'edit',
+                                                                label: isArabic ? 'تعديل' : 'Edit',
+                                                                icon: <EditIcon />,
+                                                                onClick: () => setActionModal({ isOpen: true, teamToEdit: team }),
+                                                            },
+                                                            hasPermission('teams.edit') && {
+                                                                key: 'toggle',
+                                                                label: isArabic ? 'تغيير الحالة' : 'Toggle Status',
+                                                                icon: <ToggleIcon />,
+                                                                disabled: hasActiveBookings || toggleStatusMutation.isPending,
+                                                                title: hasActiveBookings ? (isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ' : 'Cannot change status with upcoming or in-progress services') : '',
+                                                                onClick: () => {
+                                                                    if (hasActiveBookings) {
+                                                                        toast.error(isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot change team status while the team has upcoming or in-progress bookings.');
+                                                                        return;
+                                                                    }
+                                                                    toggleStatusMutation.mutate(team);
+                                                                },
+                                                            },
+                                                            hasPermission('teams.delete') && {
+                                                                key: 'delete',
+                                                                label: isArabic ? 'حذف' : 'Delete',
+                                                                icon: <TrashIcon />,
+                                                                danger: true,
+                                                                disabled: hasActiveBookings || deleteTeamMutation.isPending,
+                                                                title: hasActiveBookings ? (isArabic ? 'لا يمكن حذف الفريق لوجود خدمات قادمة أو قيد التنفيذ' : 'Cannot delete team with upcoming or in-progress services') : '',
+                                                                onClick: () => {
+                                                                    if (hasActiveBookings) {
+                                                                        toast.error(isArabic ? 'لا يمكن حذف الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot delete team while the team has upcoming or in-progress bookings.');
+                                                                        return;
+                                                                    }
+                                                                    setDeleteConfirm({
+                                                                        isOpen: true,
+                                                                        teamId: team.id,
+                                                                        teamName: isArabic ? team.name_ar : team.name_en || team.name_ar,
+                                                                        workersCount: team.workers_count || 0,
+                                                                    });
+                                                                },
+                                                            },
+                                                        ].filter(Boolean)}
+                                                    />
+                                                );
+                                            })()}
                                         </td>
                                     </tr>
                                 ))

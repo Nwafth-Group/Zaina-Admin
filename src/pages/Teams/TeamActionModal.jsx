@@ -97,6 +97,13 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose, onSuccess
     const selectedWorkerIds = watch('worker_ids') || [];
     const selectedServiceIds = watch('service_ids') || [];
 
+    const hasActiveBookings = isEditMode && Boolean(
+        teamDetails?.has_active_bookings ?? (
+            (teamDetails?.stats?.upcoming_bookings || 0) > 0 ||
+            (teamDetails?.stats?.in_service_bookings || 0) > 0
+        )
+    );
+
     useEffect(() => {
         if (isEditMode && teamDetails) {
             reset({
@@ -161,6 +168,10 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose, onSuccess
     });
 
     const onSubmit = (data) => {
+        if (hasActiveBookings && data.status !== teamDetails?.status) {
+            toast.error(isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot change team status while the team has upcoming or in-progress bookings.');
+            data.status = teamDetails?.status;
+        }
         mutation.mutate(data);
     };
 
@@ -259,12 +270,25 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose, onSuccess
                         <label className={LABEL_CLASS}>{isArabic ? 'الحالة التشغيلية' : 'Status'} *</label>
                         <OptionCards
                             value={statusValue}
-                            onChange={(v) => setValue('status', v, { shouldValidate: true })}
+                            disabled={hasActiveBookings}
+                            onChange={(v) => {
+                                if (hasActiveBookings) {
+                                    toast.error(isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot change team status while the team has upcoming or in-progress bookings.');
+                                    return;
+                                }
+                                setValue('status', v, { shouldValidate: true });
+                            }}
                             options={[
                                 { value: 'active', label: isArabic ? 'نشط' : 'Active', dot: 'bg-emerald-500' },
                                 { value: 'inactive', label: isArabic ? 'معطل' : 'Inactive', dot: 'bg-gray-400' },
                             ]}
                         />
+                        {hasActiveBookings && (
+                            <p className="text-[11px] text-amber-600 mt-1.5 font-bold flex items-center gap-1">
+                                <span>⚠️</span>
+                                <span>{isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ.' : 'Status is locked because team has upcoming or in-progress services.'}</span>
+                            </p>
+                        )}
                         <ErrorMsg name="status" />
                     </div>
                 </div>

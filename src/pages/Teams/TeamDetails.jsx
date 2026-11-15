@@ -97,6 +97,10 @@ export default function TeamDetails() {
     // Toggle status mutation
     const toggleStatusMutation = useMutation({
         mutationFn: async () => {
+            const hasActiveBookings = team?.has_active_bookings ?? ((team?.stats?.upcoming_bookings || 0) > 0 || (team?.stats?.in_service_bookings || 0) > 0);
+            if (hasActiveBookings) {
+                throw new Error(isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot change team status while the team has upcoming or in-progress bookings.');
+            }
             const newStatus = team.status === 'active' ? 'inactive' : 'active';
             return axiosInstance.put(`/admin/teams/${teamId}`, {
                 name_ar: team.name_ar,
@@ -112,7 +116,7 @@ export default function TeamDetails() {
             refetch();
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث حالة الفريق' : 'Failed to update team status'));
+            toast.error(err.response?.data?.message || err.message || (isArabic ? 'فشل تحديث حالة الفريق' : 'Failed to update team status'));
         },
     });
 
@@ -210,22 +214,37 @@ export default function TeamDetails() {
                             <span>{isArabic ? 'تعديل بيانات الفريق' : 'Edit Team'}</span>
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={() => toggleStatusMutation.mutate()}
-                            disabled={toggleStatusMutation.isPending}
-                            className={`px-4 h-10 rounded-xl text-xs font-bold border active:scale-95 transition-all flex items-center gap-2 outline-none cursor-pointer ${
-                                team.status === 'active'
-                                    ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            }`}
-                        >
-                            <span>
-                                {team.status === 'active'
-                                    ? (isArabic ? 'تعطيل الفريق' : 'Deactivate Team')
-                                    : (isArabic ? 'تفعيل الفريق' : 'Activate Team')}
-                            </span>
-                        </button>
+                        {(() => {
+                            const hasActiveBookings = team?.has_active_bookings ?? ((team?.stats?.upcoming_bookings || 0) > 0 || (team?.stats?.in_service_bookings || 0) > 0);
+
+                            return (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (hasActiveBookings) {
+                                            toast.error(isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ مرتبطة به.' : 'Cannot change team status while the team has upcoming or in-progress bookings.');
+                                            return;
+                                        }
+                                        toggleStatusMutation.mutate();
+                                    }}
+                                    disabled={hasActiveBookings || toggleStatusMutation.isPending}
+                                    title={hasActiveBookings ? (isArabic ? 'لا يمكن تغيير حالة الفريق لوجود خدمات قادمة أو قيد التنفيذ' : 'Cannot change status with upcoming or in-progress services') : ''}
+                                    className={`px-4 h-10 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 outline-none ${
+                                        hasActiveBookings
+                                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'
+                                            : team.status === 'active'
+                                            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 cursor-pointer active:scale-95'
+                                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 cursor-pointer active:scale-95'
+                                    }`}
+                                >
+                                    <span>
+                                        {team.status === 'active'
+                                            ? (isArabic ? 'تعطيل الفريق' : 'Deactivate Team')
+                                            : (isArabic ? 'تفعيل الفريق' : 'Activate Team')}
+                                    </span>
+                                </button>
+                            );
+                        })()}
                     </div>
                 )}
             </div>
