@@ -192,17 +192,37 @@ export const router = createBrowserRouter([
         },
         { path: 'settings', element: <Settings /> },
         { path: 'settings/company-info', element: <CompanyInfo /> },
-        { path: 'drivers', element: <Drivers /> },
-        { path: 'drivers/create', element: <DriverFormPage /> },
-        { path: 'drivers/:id/edit', element: <DriverFormPage /> },
-        { path: 'departure-points', element: <DeparturePoints /> },
-        { path: 'departure-points/create', element: <DeparturePointFormPage /> },
-        { path: 'departure-points/:id/edit', element: <DeparturePointFormPage /> },
-        { path: 'service-zones', element: <ServiceZones /> },
-        { path: 'service-zones/create', element: <ServiceZoneFormPage /> },
-        { path: 'service-zones/:id/edit', element: <ServiceZoneFormPage /> },
-        { path: 'transport-dispatch', element: <TransportDispatch /> },
-        { path: 'transport-dispatch/details', element: <TransportGroupDetails /> },
+        {
+          element: <PermissionRoute permission="drivers.view" />,
+          children: [
+            { path: 'drivers', element: <Drivers /> },
+            { path: 'drivers/create', element: <DriverFormPage /> },
+            { path: 'drivers/:id/edit', element: <DriverFormPage /> },
+          ],
+        },
+        {
+          element: <PermissionRoute permission="departure_points.view" />,
+          children: [
+            { path: 'departure-points', element: <DeparturePoints /> },
+            { path: 'departure-points/create', element: <DeparturePointFormPage /> },
+            { path: 'departure-points/:id/edit', element: <DeparturePointFormPage /> },
+          ],
+        },
+        {
+          element: <PermissionRoute permission="service_zones.view" />,
+          children: [
+            { path: 'service-zones', element: <ServiceZones /> },
+            { path: 'service-zones/create', element: <ServiceZoneFormPage /> },
+            { path: 'service-zones/:id/edit', element: <ServiceZoneFormPage /> },
+          ],
+        },
+        {
+          element: <PermissionRoute permission="transport_dispatch.view" />,
+          children: [
+            { path: 'transport-dispatch', element: <TransportDispatch /> },
+            { path: 'transport-dispatch/details', element: <TransportGroupDetails /> },
+          ],
+        },
         {
           element: <PermissionRoute permission="roles.view" />,
           children: [
