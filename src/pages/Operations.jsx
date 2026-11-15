@@ -629,27 +629,52 @@ export default function Operations() {
                                                                     {isArabic ? 'بانتظار تعيين فريق' : 'Team Unassigned'}
                                                                 </span>
                                                             )
-                                                        ) : b.worker ? (
-                                                            <div>
-                                                                <div className="font-bold text-gray-800 flex items-center gap-1.5">
-                                                                    <span className="w-6 h-6 rounded-full bg-rose-50 text-[#E91E63] font-bold text-[10px] flex items-center justify-center border border-rose-100">
-                                                                        {b.worker.name?.charAt(0)}
+                                                        ) : (() => {
+                                                            const assignedWorkers = (b.crew && b.crew.length > 0)
+                                                                ? b.crew
+                                                                : (b.workers && b.workers.length > 0
+                                                                    ? b.workers
+                                                                    : (b.worker ? [b.worker] : []));
+                                                            const requiredCount = b.service?.required_workers || 1;
+
+                                                            if (assignedWorkers.length === 0) {
+                                                                return (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                                                                        {isArabic ? 'غير معيّن' : 'Unassigned'}
                                                                     </span>
-                                                                    <span>{b.worker.name}</span>
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <div className="space-y-1.5 min-w-[150px]">
+                                                                    {assignedWorkers.map((w, wIdx) => (
+                                                                        <div key={w.id || wIdx} className="flex items-center justify-between gap-2 p-1 rounded-lg bg-gray-50/80 hover:bg-gray-50 border border-gray-100 transition-colors">
+                                                                            <div className="font-bold text-gray-800 flex items-center gap-1.5 min-w-0">
+                                                                                <span className="w-5 h-5 rounded-full bg-rose-50 text-[#E91E63] font-bold text-[9px] flex items-center justify-center border border-rose-100 shrink-0">
+                                                                                    {w.name?.charAt(0) || 'W'}
+                                                                                </span>
+                                                                                <span className="truncate text-xs font-bold text-gray-900">{w.name}</span>
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setTimelineWorkerId(w.id)}
+                                                                                className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-bold whitespace-nowrap shrink-0"
+                                                                                title={isArabic ? 'عرض جدول العامل' : 'View Timeline'}
+                                                                            >
+                                                                                {isArabic ? 'الجدول' : 'Timeline'}
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                    {requiredCount > assignedWorkers.length && (
+                                                                        <div className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 mt-1">
+                                                                            {isArabic
+                                                                                ? `⚠️ تم تعيين ${assignedWorkers.length} من أصل ${requiredCount} عمال`
+                                                                                : `⚠️ ${assignedWorkers.length} of ${requiredCount} assigned`}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setTimelineWorkerId(b.worker.id)}
-                                                                    className="text-[10px] text-blue-600 hover:underline font-bold mt-0.5 block"
-                                                                >
-                                                                    {isArabic ? 'عرض جدول العامل' : 'View Timeline'}
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
-                                                                {isArabic ? 'غير معيّن' : 'Unassigned'}
-                                                            </span>
-                                                        )}
+                                                            );
+                                                        })()}
                                                     </td>
 
                                                     <td className="py-3.5 px-4">
@@ -1478,70 +1503,258 @@ export default function Operations() {
 
             {/* MODAL 6: Worker Daily Timeline (US-A31) */}
             {timelineWorkerId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs overflow-y-auto">
-                    <div className="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-xl border border-gray-200 space-y-4 my-auto">
-                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                            <div>
-                                <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-blue-600" />
-                                    <span>{isArabic ? 'المخطط الزمني اليومي للعامل (US-A31)' : 'Worker Daily Timeline (US-A31)'}</span>
-                                </h3>
-                                <p className="text-[11px] text-gray-500 mt-0.5">
-                                    {timelineData?.data?.worker?.name} — {selectedDate}
-                                </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl border border-gray-100 overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+                        {/* Header Banner */}
+                        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 p-5 text-white relative">
+                            <button
+                                onClick={() => setTimelineWorkerId(null)}
+                                className="absolute top-4 end-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors text-sm font-bold"
+                            >
+                                ✕
+                            </button>
+
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E91E63] to-[#D81B60] text-white font-black text-lg flex items-center justify-center shadow-md shrink-0 border border-white/20">
+                                    {timelineData?.data?.worker?.name?.charAt(0) || 'W'}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="text-base font-black text-white truncate">
+                                            {timelineData?.data?.worker?.name || (isArabic ? 'العامل' : 'Worker')}
+                                        </h3>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/10">
+                                            {timelineData?.data?.worker?.gender === 'female' ? (isArabic ? 'عاملة' : 'Female') : (isArabic ? 'عامل' : 'Male')}
+                                        </span>
+                                        {timelineData?.data?.worker?.nationality && (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white/90 border border-white/10">
+                                                {timelineData.data.worker.nationality}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-xs text-gray-300 mt-1 flex-wrap">
+                                        <span className="flex items-center gap-1">
+                                            <span>📅</span>
+                                            <span className="font-mono">{selectedDate}</span>
+                                        </span>
+                                        {timelineData?.data?.worker?.mobile && timelineData.data.worker.mobile !== '—' && (
+                                            <a
+                                                href={`tel:${timelineData.data.worker.mobile}`}
+                                                className="flex items-center gap-1 text-[#F06292] hover:underline font-mono text-xs"
+                                                dir="ltr"
+                                            >
+                                                <span>📞</span>
+                                                <span>{timelineData.data.worker.mobile}</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <button onClick={() => setTimelineWorkerId(null)} className="text-gray-400 hover:text-gray-600 font-bold">✕</button>
                         </div>
 
-                        {isLoadingTimeline ? (
-                            <div className="py-8 text-center text-gray-400 font-bold flex justify-center items-center gap-2">
-                                <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-                                    <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
-                                </svg>
-                                <span>{isArabic ? 'جاري التحميل...' : 'Loading...'}</span>
-                            </div>
-                        ) : (timelineData?.data?.timeline?.length ?? 0) === 0 ? (
-                            <div className="py-8 text-center text-gray-400 font-bold">
-                                {isArabic ? 'لا توجد خدمات مجدولة لهذا العامل في هذا اليوم.' : 'No scheduled services for this worker today.'}
-                            </div>
-                        ) : (
-                            <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                                {timelineData.data.timeline.map((item, i) => (
-                                    item.type === 'transition_gap' ? (
-                                        <div
-                                            key={i}
-                                            className={`p-2.5 rounded-xl border text-[11px] font-mono flex items-center justify-between ${
-                                                item.is_valid
-                                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                                                    : 'bg-rose-50 border-rose-200 text-rose-800 font-bold'
-                                            }`}
-                                        >
-                                            <span>{isArabic ? 'فاصل انتقال بين الخدمتين:' : 'Transition Gap:'} {format12Hour(item.start_time)} → {format12Hour(item.end_time)}</span>
-                                            <span className="font-bold">{item.gap_minutes} {isArabic ? 'دقيقة' : 'min'} {item.is_valid ? '✓' : `⚠️ ${isArabic ? 'نقص عن 60 دقيقة' : '< 60 min'}`}</span>
+                        {/* Content Area */}
+                        <div className="p-5 sm:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            {isLoadingTimeline ? (
+                                <div className="py-12 text-center text-gray-400 font-bold flex flex-col justify-center items-center gap-3">
+                                    <svg className="animate-spin h-8 w-8 text-[#E91E63]" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
+                                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
+                                    </svg>
+                                    <span className="text-sm font-semibold">{isArabic ? 'جاري جلب الجدول الزمني...' : 'Loading daily timeline...'}</span>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Absence Warning Banner if any */}
+                                    {timelineData?.data?.absences && timelineData.data.absences.length > 0 && (
+                                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-800">
+                                            <span className="text-lg shrink-0">⚠️</span>
+                                            <div className="text-xs">
+                                                <p className="font-bold">{isArabic ? 'العامل مسجل في حالة غياب/إجازة في هذا التاريخ' : 'Worker is marked absent on this date'}</p>
+                                                <p className="text-rose-600 mt-0.5">
+                                                    {timelineData.data.absences[0]?.reason}
+                                                    {timelineData.data.absences[0]?.notes ? ` — ${timelineData.data.absences[0].notes}` : ''}
+                                                </p>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <div key={i} className="p-3 bg-gray-50 border border-gray-200 rounded-xl">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-bold text-gray-900 text-xs">
-                                                    #{item.booking_ref} — {item.service_name}
-                                                </span>
-                                                <span className="font-mono text-[11px] text-gray-600" dir="ltr">
-                                                    {format12Hour(item.planned_start)} - {format12Hour(item.planned_end)}
+                                    )}
+
+                                    {/* Quick Summary Metrics */}
+                                    {timelineData?.data?.timeline && timelineData.data.timeline.length > 0 && (
+                                        <div className="grid grid-cols-2 gap-2.5 pb-2">
+                                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between">
+                                                <span className="text-xs text-gray-500 font-medium">{isArabic ? 'إجمالي الخدمات' : 'Total Services'}</span>
+                                                <span className="text-sm font-black text-gray-900">
+                                                    {timelineData.data.timeline.filter(t => t.type === 'service').length}
                                                 </span>
                                             </div>
-                                            <p className="text-[11px] text-gray-500 mt-1">{item.customer_name} ({item.address})</p>
+                                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between">
+                                                <span className="text-xs text-gray-500 font-medium">{isArabic ? 'مستوى المخاطر' : 'Risk Status'}</span>
+                                                <span className={`text-xs font-bold ${timelineData.data.timeline.some(t => t.is_at_risk || (t.type === 'transition_gap' && !t.is_valid)) ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                                    {timelineData.data.timeline.some(t => t.is_at_risk || (t.type === 'transition_gap' && !t.is_valid))
+                                                        ? (isArabic ? '⚠️ يوجد خطر' : '⚠️ At Risk')
+                                                        : (isArabic ? '✓ منتظم' : '✓ Normal')}
+                                                </span>
+                                            </div>
                                         </div>
-                                    )
-                                ))}
-                            </div>
-                        )}
+                                    )}
 
-                        <div className="flex justify-end pt-3 border-t border-gray-100">
+                                    {/* Timeline Items */}
+                                    {(timelineData?.data?.timeline?.length ?? 0) === 0 ? (
+                                        <div className="py-12 text-center text-gray-400 space-y-2">
+                                            <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto text-xl">
+                                                ☕
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-600">
+                                                {isArabic ? 'لا توجد خدمات مجدولة لهذا العامل في هذا اليوم.' : 'No scheduled services for this worker today.'}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                {isArabic ? 'العامل متاح ومفرغ للإسناد والتشغيل.' : 'Worker is free and available for assignment.'}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="relative ps-6 space-y-4 before:absolute before:top-2 before:bottom-2 before:start-2.5 before:w-0.5 before:bg-gray-200">
+                                            {timelineData.data.timeline.map((item, idx) => {
+                                                if (item.type === 'transition_gap') {
+                                                    return (
+                                                        <div key={idx} className="relative -ms-3.5 my-2">
+                                                            <div className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
+                                                                item.is_valid
+                                                                    ? 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
+                                                                    : 'bg-rose-50 border-rose-300 text-rose-900 ring-2 ring-rose-200 animate-pulse'
+                                                            }`}>
+                                                                <div className="flex items-center gap-1.5 font-bold">
+                                                                    <span>{item.is_valid ? '🚗' : '⚠️'}</span>
+                                                                    <span>
+                                                                        {isArabic ? 'فاصل انتقال بين الخدمتين:' : 'Transition Gap:'}
+                                                                    </span>
+                                                                    <span className="font-mono text-[11px]" dir="ltr">
+                                                                        {format12Hour(item.start_time)} → {format12Hour(item.end_time)}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="font-extrabold text-[11px] whitespace-nowrap">
+                                                                    {item.gap_minutes} {isArabic ? 'دقيقة' : 'mins'}
+                                                                    {item.is_valid ? ' ✓' : (isArabic ? ' (أقل من 60 دقيقة)' : ' (< 60m)')}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                // Service Item
+                                                const statusColor = 
+                                                    item.status === 'inService' ? 'bg-amber-500' :
+                                                    item.status === 'completed' ? 'bg-emerald-500' :
+                                                    item.status === 'cancelled' ? 'bg-rose-500' : 'bg-blue-500';
+
+                                                const statusBadgeClass =
+                                                    item.status === 'inService' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                                    item.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                                    item.status === 'cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                                                    'bg-blue-50 text-blue-700 border border-blue-200';
+
+                                                const statusLabel =
+                                                    item.status === 'inService' ? (isArabic ? 'قيد التنفيذ' : 'In Service') :
+                                                    item.status === 'completed' ? (isArabic ? 'مكتمل' : 'Completed') :
+                                                    item.status === 'cancelled' ? (isArabic ? 'ملغي' : 'Cancelled') :
+                                                    (isArabic ? 'مؤكد' : 'Upcoming');
+
+                                                return (
+                                                    <div key={idx} className="relative group">
+                                                        {/* Timeline Dot */}
+                                                        <span className={`absolute -start-[25px] top-4 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ring-2 ring-gray-100 ${statusColor}`} />
+
+                                                        {/* Card */}
+                                                        <div className={`p-4 rounded-2xl border transition-all shadow-2xs ${
+                                                            item.is_at_risk
+                                                                ? 'bg-rose-50/60 border-rose-200'
+                                                                : 'bg-white border-gray-200 hover:border-[#E91E63]/40 hover:shadow-xs'
+                                                        }`}>
+                                                            {/* Card Header: Ref, Service Name & Timing */}
+                                                            <div className="flex items-start justify-between gap-3 pb-2.5 border-b border-gray-100">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="font-mono text-xs font-black text-[#E91E63]">
+                                                                            #{item.booking_ref}
+                                                                        </span>
+                                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadgeClass}`}>
+                                                                            {statusLabel}
+                                                                        </span>
+                                                                        {item.is_at_risk && (
+                                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 animate-pulse">
+                                                                                ⚠️ {isArabic ? 'في خطر' : 'At Risk'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <h4 className="font-bold text-gray-900 text-sm mt-1">
+                                                                        {item.service_name || (isArabic ? 'خدمة منزلية' : 'Service')}
+                                                                    </h4>
+                                                                </div>
+
+                                                                <div className="text-end shrink-0">
+                                                                    <div className="text-xs font-black text-gray-800 font-mono bg-gray-100 px-2.5 py-1 rounded-lg" dir="ltr">
+                                                                        {format12Hour(item.planned_start)} - {format12Hour(item.planned_end)}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Card Body: Customer & Address */}
+                                                            <div className="mt-2.5 space-y-1.5 text-xs text-gray-600">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="font-bold text-gray-800 flex items-center gap-1.5">
+                                                                        <span>👤</span>
+                                                                        <span>{item.customer_name}</span>
+                                                                    </span>
+                                                                    {item.customer_mobile && item.customer_mobile !== '—' && (
+                                                                        <a
+                                                                            href={`tel:${item.customer_mobile}`}
+                                                                            className="text-blue-600 hover:underline font-mono text-[11px]"
+                                                                            dir="ltr"
+                                                                        >
+                                                                            {item.customer_mobile}
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="flex items-start gap-1.5 text-gray-500 text-[11px]">
+                                                                    <span className="shrink-0 mt-0.5">📍</span>
+                                                                    <span className="leading-relaxed">
+                                                                        {item.address} {item.service_zone && item.service_zone !== '—' ? `(${item.service_zone})` : ''}
+                                                                    </span>
+                                                                </div>
+
+                                                                {/* Actual Execution Timing if recorded */}
+                                                                {(item.actual_start || item.actual_end) && (
+                                                                    <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-mono bg-gray-50/80 p-2 rounded-xl" dir="ltr">
+                                                                        <span className="font-sans font-bold text-gray-700">{isArabic ? 'التوقيت الفعلي:' : 'Actual:'}</span>
+                                                                        <span>
+                                                                            {format12Hour(item.actual_start) || '—'} → {format12Hour(item.actual_end) || '...'}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* At Risk Alert Reason */}
+                                                                {item.is_at_risk && item.at_risk_reason && (
+                                                                    <div className="mt-2 p-2 bg-rose-100/70 text-rose-800 rounded-xl text-[11px] font-medium leading-relaxed">
+                                                                        ⚠️ {item.at_risk_reason}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 bg-gray-50/80 border-t border-gray-100 flex justify-end">
                             <button
                                 type="button"
                                 onClick={() => setTimelineWorkerId(null)}
-                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200 transition"
+                                className="px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-xs font-bold transition shadow-xs"
                             >
                                 {isArabic ? 'إغلاق' : 'Close'}
                             </button>
