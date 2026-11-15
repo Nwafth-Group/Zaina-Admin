@@ -96,8 +96,8 @@ export default function BookingDetails() {
         }
     };
 
-    const { data: booking, isLoading, isError } = useQuery({
-        queryKey: ['bookingDetail', bookingId],
+    const { data: booking, isLoading, isError, refetch } = useQuery({
+        queryKey: ['bookingDetail', String(bookingId)],
         queryFn: async () => (await axiosInstance.get(`/admin/bookings/${bookingId}`)).data.data,
         enabled: !!bookingId,
     });
@@ -107,7 +107,10 @@ export default function BookingDetails() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم تحديث حالة الحجز بنجاح' : 'Booking status updated successfully'));
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            queryClient.invalidateQueries({ queryKey: ['bookingDetail', bookingId] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', String(bookingId)] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', Number(bookingId)] });
+            refetch();
             setStatusDropdownOpen(false);
         },
         onError: (error) => {
@@ -1097,6 +1100,7 @@ export default function BookingDetails() {
                     isArabic={isArabic}
                     t={t}
                     onClose={() => setAssignModalOpen(false)}
+                    onSuccess={() => refetch()}
                 />
             )}
 
@@ -1105,6 +1109,7 @@ export default function BookingDetails() {
                     booking={booking}
                     isArabic={isArabic}
                     onClose={() => setAssignTeamModalOpen(false)}
+                    onSuccess={() => refetch()}
                 />
             )}
 
@@ -1114,6 +1119,7 @@ export default function BookingDetails() {
                     worker={replacingWorker}
                     isArabic={isArabic}
                     onClose={() => setReplacingWorker(null)}
+                    onSuccess={() => refetch()}
                     onOpenAssignTeam={() => setAssignTeamModalOpen(true)}
                 />
             )}
@@ -1122,13 +1128,14 @@ export default function BookingDetails() {
                 <RescheduleBookingModal
                     booking={booking}
                     onClose={() => setRescheduleOpen(false)}
+                    onSuccess={() => refetch()}
                 />
             )}
         </div>
     );
 }
 
-function AssignWorkersModal({ booking, isArabic, t, onClose }) {
+function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
     const queryClient = useQueryClient();
     const [selectedIds, setSelectedIds] = useState(booking.assigned_worker_ids || []);
     const [note, setNote] = useState('');
@@ -1145,8 +1152,11 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
         mutationFn: (payload) => axiosInstance.post(`/admin/bookings/${booking.id}/assign-workers`, payload),
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم تعيين العمال بنجاح' : 'Workers assigned successfully'));
-            queryClient.invalidateQueries({ queryKey: ['bookingDetail', booking.id] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', String(booking.id)] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', Number(booking.id)] });
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {
@@ -1341,7 +1351,7 @@ function AssignWorkersModal({ booking, isArabic, t, onClose }) {
     );
 }
 
-function ReplaceWorkerModal({ booking, worker, isArabic, onClose, onOpenAssignTeam }) {
+function ReplaceWorkerModal({ booking, worker, isArabic, onClose, onOpenAssignTeam, onSuccess }) {
     const queryClient = useQueryClient();
     const [selectedWorkerId, setSelectedWorkerId] = useState(null);
     const [reason, setReason] = useState('');
@@ -1371,8 +1381,11 @@ function ReplaceWorkerModal({ booking, worker, isArabic, onClose, onOpenAssignTe
         mutationFn: (payload) => axiosInstance.post(`/admin/bookings/${booking.id}/replace-worker`, payload),
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم استبدال العامل بنجاح وتحديث الجدول التشغيلي' : 'Worker replaced successfully'));
-            queryClient.invalidateQueries({ queryKey: ['bookingDetail', booking.id] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', String(booking.id)] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', Number(booking.id)] });
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
-export default function AssignTeamModal({ booking, isArabic, onClose }) {
+export default function AssignTeamModal({ booking, isArabic, onClose, onSuccess }) {
     const queryClient = useQueryClient();
     const currentTeamId = booking?.team?.id || booking?.team_id || null;
     const isReassign = Boolean(currentTeamId);
@@ -29,11 +29,13 @@ export default function AssignTeamModal({ booking, isArabic, onClose }) {
         mutationFn: (payload) => axiosInstance.post(`/admin/bookings/${booking.id}/assign-team`, payload),
         onSuccess: (res) => {
             toast.success(res.data?.message || (isArabic ? 'تم تعيين فريق العمل بنجاح' : 'Team assigned successfully'));
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail'] });
             queryClient.invalidateQueries({ queryKey: ['bookingDetail', String(booking.id)] });
             queryClient.invalidateQueries({ queryKey: ['bookingDetail', Number(booking.id)] });
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
             queryClient.invalidateQueries({ queryKey: ['dailyOperations'] });
             queryClient.invalidateQueries({ queryKey: ['transportDispatch'] });
+            onSuccess?.();
             onClose();
         },
         onError: (err) => {

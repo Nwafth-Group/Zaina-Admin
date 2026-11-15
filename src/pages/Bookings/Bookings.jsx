@@ -174,7 +174,7 @@ export default function Bookings() {
         (filters.date_to ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
-    const { data: pageData, isLoading, isError, error } = useQuery({
+    const { data: pageData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['bookings', queryString],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/bookings?${queryString}`);
@@ -205,6 +205,7 @@ export default function Bookings() {
         onSuccess: (response) => {
             toast.success(response.data?.message || 'تم إلغاء الحجز');
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            refetch();
             setCancelTarget(null);
             setCancelNote('');
         },
@@ -644,6 +645,7 @@ export default function Bookings() {
                 <RescheduleBookingModal
                     booking={rescheduleTarget}
                     onClose={() => setRescheduleTarget(null)}
+                    onSuccess={() => refetch()}
                 />
             )}
         </div>

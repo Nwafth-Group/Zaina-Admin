@@ -25,7 +25,7 @@ const getSaturdayStartStr = (dateStr) => {
     return `${year}-${month}-${dayOfMonth}`;
 };
 
-export default function RescheduleBookingModal({ booking, onClose }) {
+export default function RescheduleBookingModal({ booking, onClose, onSuccess }) {
     const { t, i18n } = useTranslation('bookings');
     const queryClient = useQueryClient();
     const isArabic = i18n.language?.startsWith('ar');
@@ -132,7 +132,12 @@ export default function RescheduleBookingModal({ booking, onClose }) {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم إعادة جدولة الحجز بنجاح.' : 'Booking rescheduled successfully.'));
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            queryClient.invalidateQueries({ queryKey: ['bookingDetail', booking.id] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', String(booking.id)] });
+            queryClient.invalidateQueries({ queryKey: ['bookingDetail', Number(booking.id)] });
+            queryClient.invalidateQueries({ queryKey: ['dailyOperations'] });
+            queryClient.invalidateQueries({ queryKey: ['transportDispatch'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {
