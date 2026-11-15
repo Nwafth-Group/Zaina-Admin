@@ -50,7 +50,6 @@ export default function Reviews() {
             const res = await axiosInstance.get(`/admin/reviews?${params.toString()}`);
             return res.data.data;
         },
-        keepPreviousData: true,
     });
 
     const reviewsList = responseData?.items || [];
@@ -252,17 +251,21 @@ export default function Reviews() {
                                     const targetName = isService
                                         ? (isArabic ? item.target?.name_ar : item.target?.name_en) || item.target?.name || 'خدمة'
                                         : item.target?.name || 'عامل/عاملة';
+                                    const customerDisplayName = item.customer?.name || item.customer_name || 'عميل';
+                                    const customerPhone = item.customer?.mobile || item.customer?.phone || '';
 
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
                                             <td className="py-3.5 px-4  font-bold text-gray-900">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-7 h-7 rounded-full bg-pink-100 text-[#E91E63] font-black text-xs flex items-center justify-center">
-                                                        {item.customer?.name ? item.customer.name.charAt(0) : 'U'}
+                                                        {customerDisplayName.charAt(0) || 'U'}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900">{item.customer?.name || 'عميل'}</p>
-                                                        <p className="text-[10px] text-gray-400 font-mono">{item.customer?.mobile || ''}</p>
+                                                        <p className="font-bold text-gray-900">{customerDisplayName}</p>
+                                                        {customerPhone && (
+                                                            <p className="text-[10px] text-gray-400 font-mono">{customerPhone}</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -288,7 +291,7 @@ export default function Reviews() {
                                             </td>
 
                                             <td className="py-3.5 px-4  text-gray-500 font-mono text-[11px]">
-                                                {item.created_at ? new Date(item.created_at).toLocaleDateString('ar-EG') : '—'}
+                                                {item.created_since || (item.created_at ? new Date(item.created_at.replace(' ', 'T')).toLocaleDateString('ar-EG') : '—')}
                                             </td>
 
                                             <td className="py-3.5 px-4 ">
@@ -359,8 +362,20 @@ export default function Reviews() {
                         <div className="space-y-3 text-xs">
                             <div className="flex justify-between py-1 border-b border-gray-50">
                                 <span className="text-gray-500 font-bold">{isArabic ? 'العميل:' : 'Customer:'}</span>
-                                <span className="font-extrabold text-gray-900">{selectedReview.customer?.name || '—'}</span>
+                                <div className="text-end">
+                                    <span className="font-extrabold text-gray-900 block">{selectedReview.customer?.name || selectedReview.customer_name || '—'}</span>
+                                    {(selectedReview.customer?.mobile || selectedReview.customer?.phone) && (
+                                        <span className="text-[11px] text-gray-400 font-mono">{selectedReview.customer?.mobile || selectedReview.customer?.phone}</span>
+                                    )}
+                                </div>
                             </div>
+
+                            {selectedReview.booking_ref && (
+                                <div className="flex justify-between py-1 border-b border-gray-50">
+                                    <span className="text-gray-500 font-bold">{isArabic ? 'رقم الحجز:' : 'Booking Ref:'}</span>
+                                    <span className="font-extrabold text-[#E91E63] font-mono">{selectedReview.booking_ref}</span>
+                                </div>
+                            )}
 
                             <div className="flex justify-between py-1 border-b border-gray-50">
                                 <span className="text-gray-500 font-bold">{isArabic ? 'الهدف المُقيَّم:' : 'Target Item:'}</span>
@@ -388,20 +403,20 @@ export default function Reviews() {
                         </div>
 
                         <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                            {selectedReview.status !== 'approved' && (
+                            {hasPermission('reviews.edit') && selectedReview.status !== 'approved' && (
                                 <button
                                     onClick={() => approveMutation.mutate(selectedReview.id)}
-                                    disabled={approveMutation.isLoading}
-                                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition"
+                                    disabled={approveMutation.isPending}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition disabled:opacity-50"
                                 >
                                     {isArabic ? 'اعتماد التقييم' : 'Approve'}
                                 </button>
                             )}
-                            {selectedReview.status !== 'rejected' && (
+                            {hasPermission('reviews.edit') && selectedReview.status !== 'rejected' && (
                                 <button
                                     onClick={() => rejectMutation.mutate(selectedReview.id)}
-                                    disabled={rejectMutation.isLoading}
-                                    className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition"
+                                    disabled={rejectMutation.isPending}
+                                    className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition disabled:opacity-50"
                                 >
                                     {isArabic ? 'رفض التقييم' : 'Reject'}
                                 </button>
