@@ -517,36 +517,8 @@ export default function ServiceFormPage() {
         return list;
     }, [workersResp, fullServiceData?.workers, id]);
 
-    // Tab Counts
-    const workerCounts = useMemo(() => {
-        let all = allWorkers.length;
-        let unassigned = 0;
-        let assigned = 0;
-        let other = 0;
-
-        allWorkers.forEach((worker) => {
-            const workerServices = (worker.assigned_services?.length
-                ? worker.assigned_services
-                : (worker.services?.length
-                    ? worker.services
-                    : (worker.assigned_service ? [worker.assigned_service] : [])));
-            const isAssignedToThis = id && workerServices.some(s => Number(s.id) === Number(id));
-            const isSelected = selectedWorkerIds.includes(String(worker.id));
-
-            if (workerServices.length === 0) {
-                unassigned++;
-            } else if (isAssignedToThis || isSelected) {
-                assigned++;
-            } else {
-                other++;
-            }
-        });
-
-        return { all, unassigned, assigned, other };
-    }, [allWorkers, id, selectedWorkerIds]);
-
-    // Filtered Workers List
-    const workersList = useMemo(() => {
+    // Filter out workers assigned to other services: only display employees who can handle this service (current assigned + unassigned available)
+    const eligibleWorkers = useMemo(() => {
         return allWorkers.filter((worker) => {
             const workerServices = (worker.assigned_services?.length
                 ? worker.assigned_services
@@ -555,14 +527,54 @@ export default function ServiceFormPage() {
                     : (worker.assigned_service ? [worker.assigned_service] : [])));
             const isAssignedToThis = id && workerServices.some(s => Number(s.id) === Number(id));
             const isSelected = selectedWorkerIds.includes(String(worker.id));
+            const isUnassigned = workerServices.length === 0;
 
-            // Tab filter: 'all' | 'unassigned' | 'assigned' | 'other'
+            // Only display employees who can handle this service (assigned to this service or unassigned)
+            return isAssignedToThis || isSelected || isUnassigned;
+        });
+    }, [allWorkers, id, selectedWorkerIds]);
+
+    // Tab Counts
+    const workerCounts = useMemo(() => {
+        let all = eligibleWorkers.length;
+        let unassigned = 0;
+        let assigned = 0;
+
+        eligibleWorkers.forEach((worker) => {
+            const workerServices = (worker.assigned_services?.length
+                ? worker.assigned_services
+                : (worker.services?.length
+                    ? worker.services
+                    : (worker.assigned_service ? [worker.assigned_service] : [])));
+            const isAssignedToThis = id && workerServices.some(s => Number(s.id) === Number(id));
+            const isSelected = selectedWorkerIds.includes(String(worker.id));
+
+            if (workerServices.length === 0 && !isSelected) {
+                unassigned++;
+            } else if (isAssignedToThis || isSelected) {
+                assigned++;
+            }
+        });
+
+        return { all, unassigned, assigned };
+    }, [eligibleWorkers, id, selectedWorkerIds]);
+
+    // Filtered Workers List
+    const workersList = useMemo(() => {
+        return eligibleWorkers.filter((worker) => {
+            const workerServices = (worker.assigned_services?.length
+                ? worker.assigned_services
+                : (worker.services?.length
+                    ? worker.services
+                    : (worker.assigned_service ? [worker.assigned_service] : [])));
+            const isAssignedToThis = id && workerServices.some(s => Number(s.id) === Number(id));
+            const isSelected = selectedWorkerIds.includes(String(worker.id));
+
+            // Tab filter: 'all' | 'unassigned' | 'assigned'
             if (workerFilterTab === 'unassigned') {
-                if (workerServices.length > 0) return false;
+                if (workerServices.length > 0 || isSelected) return false;
             } else if (workerFilterTab === 'assigned') {
                 if (!isAssignedToThis && !isSelected) return false;
-            } else if (workerFilterTab === 'other') {
-                if (workerServices.length === 0 || isAssignedToThis) return false;
             }
 
             // Search filter
@@ -581,7 +593,7 @@ export default function ServiceFormPage() {
 
             return true;
         });
-    }, [allWorkers, workerFilterTab, selectedWorkerIds, workerSearchInput, id]);
+    }, [eligibleWorkers, workerFilterTab, selectedWorkerIds, workerSearchInput, id]);
 
     const areAllVisibleSelected = useMemo(() => {
         if (workersList.length === 0) return false;
@@ -2370,17 +2382,6 @@ export default function ServiceFormPage() {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setWorkerFilterTab('unassigned')}
-                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                workerFilterTab === 'unassigned'
-                                                    ? 'bg-white text-gray-900 shadow-2xs'
-                                                    : 'text-gray-500 hover:text-gray-900'
-                                            }`}
-                                        >
-                                            {isArabic ? `غير مسندين (${workerCounts.unassigned})` : `Unassigned (${workerCounts.unassigned})`}
-                                        </button>
-                                        <button
-                                            type="button"
                                             onClick={() => setWorkerFilterTab('assigned')}
                                             className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                                 workerFilterTab === 'assigned'
@@ -2390,19 +2391,17 @@ export default function ServiceFormPage() {
                                         >
                                             {isArabic ? `المسندين لهذه الخدمة (${selectedWorkerIds.length})` : `Assigned (${selectedWorkerIds.length})`}
                                         </button>
-                                        {workerCounts.other > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setWorkerFilterTab('other')}
-                                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                    workerFilterTab === 'other'
-                                                        ? 'bg-white text-purple-700 shadow-2xs'
-                                                        : 'text-gray-500 hover:text-purple-700'
-                                                }`}
-                                            >
-                                                {isArabic ? `خدمات أخرى (${workerCounts.other})` : `Other Services (${workerCounts.other})`}
-                                            </button>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setWorkerFilterTab('unassigned')}
+                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                workerFilterTab === 'unassigned'
+                                                    ? 'bg-white text-gray-900 shadow-2xs'
+                                                    : 'text-gray-500 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            {isArabic ? `غير مسندين / متاحين (${workerCounts.unassigned})` : `Available (${workerCounts.unassigned})`}
+                                        </button>
                                     </div>
                                 </div>
 
@@ -2449,10 +2448,10 @@ export default function ServiceFormPage() {
                                     <div className="flex items-center gap-2 font-semibold text-xs text-end flex-wrap">
                                         <span className="px-2.5 py-1 rounded-lg font-bold text-xs bg-pink-50 text-[#E91E63] border border-pink-200">
                                             {isArabic
-                                                ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${allWorkers.length} عامل مؤهل`
-                                                : `Selected ${selectedWorkerIds.length} of ${allWorkers.length} qualified workers`}
+                                                ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${eligibleWorkers.length} عامل مؤهل ومتاح`
+                                                : `Selected ${selectedWorkerIds.length} of ${eligibleWorkers.length} available workers`}
                                         </span>
-                                        {workersList.length !== allWorkers.length && (
+                                        {workersList.length !== eligibleWorkers.length && (
                                             <span className="text-gray-400 font-normal">
                                                 ({isArabic ? `المعروض: ${workersList.length}` : `Showing: ${workersList.length}`})
                                             </span>
