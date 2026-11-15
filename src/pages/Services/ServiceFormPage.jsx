@@ -475,49 +475,33 @@ export default function ServiceFormPage() {
         return null; // 'all'
     }, [serviceAllowedGenders, workerGenderFilter]);
 
-    // Filterable Workers Picker
+    // Filterable Workers Picker (fetches active workers matching gender parameter)
     const {
-        data: workersData,
+        data: workersResp,
         isLoading: isWorkersLoading,
-        fetchNextPage: fetchMoreWorkers,
-        hasNextPage: hasMoreWorkers,
-        isFetchingNextPage: isFetchingMoreWorkers,
-    } = useInfiniteQuery({
-        queryKey: ['page-workers', workerSearch, id, activeWorkerGenderParam, watchIsTeamBased, workerFilterTab],
-        queryFn: async ({ pageParam = 1 }) => {
+    } = useQuery({
+        queryKey: ['service-form-workers', activeWorkerGenderParam],
+        queryFn: async () => {
             const params = new URLSearchParams({ 
-                page: String(pageParam), 
-                per_page: '20', 
+                per_page: '250', 
                 status: 'active',
             });
-            if (workerFilterTab === 'unassigned') {
-                params.append('unassigned_only', 'true');
-            }
-            if (id) {
-                params.append('include_service_id', String(id));
-            }
             if (activeWorkerGenderParam) {
                 params.append('gender', activeWorkerGenderParam);
             }
-            if (workerSearch) params.append('search', workerSearch);
-            return (await axiosInstance.get(`/admin/workers?${params.toString()}`)).data.data;
-        },
-        initialPageParam: 1,
-        getNextPageParam: (lastPage) => {
-            const m = lastPage?.meta;
-            return m && m.current_page < m.last_page ? m.current_page + 1 : undefined;
+            const res = await axiosInstance.get(`/admin/workers?${params.toString()}`);
+            return res.data?.data?.items || [];
         },
     });
-
-    const rawWorkersList = useMemo(() => (workersData?.pages || []).flatMap((p) => p?.items || []), [workersData]);
 
     const watchedWorkers = watch('workers');
     const selectedWorkerIds = useMemo(() => {
         return Array.isArray(watchedWorkers) ? watchedWorkers.map(String) : [];
     }, [watchedWorkers]);
 
-    const workersList = useMemo(() => {
-        let list = [...rawWorkersList];
+    // All workers combined with fullServiceData.workers
+    const allWorkers = useMemo(() => {
+        let list = [...(workersResp || [])];
         if (fullServiceData?.workers && Array.isArray(fullServiceData.workers)) {
             const existingIds = new Set(list.map(w => String(w.id)));
             for (const sw of fullServiceData.workers) {
@@ -530,25 +514,91 @@ export default function ServiceFormPage() {
                 }
             }
         }
-        if (workerFilterTab === 'assigned') {
-            return list.filter(w => selectedWorkerIds.includes(String(w.id)));
-        }
         return list;
-    }, [rawWorkersList, workerFilterTab, selectedWorkerIds, fullServiceData?.workers, id]);
+    }, [workersResp, fullServiceData?.workers, id]);
 
-    const workerScrollRef = useRef(null);
-    const workerSentinelRef = useRef(null);
-    useEffect(() => {
-        const root = workerScrollRef.current;
-        const target = workerSentinelRef.current;
-        if (!root || !target || !hasMoreWorkers) return undefined;
-        const observer = new IntersectionObserver(
-            (entries) => { if (entries[0].isIntersecting && !isFetchingMoreWorkers) fetchMoreWorkers(); },
-            { root, rootMargin: '120px' },
-        );
-        observer.observe(target);
-        return () => observer.disconnect();
-    }, [hasMoreWorkers, isFetchingMoreWorkers, fetchMoreWorkers, workersList.length]);
+    // Tab Counts
+    const workerCounts = useMemo(() => {
+        let all = allWorkers.length;
+        let unassigned = 0;
+        let assigned = 0;
+        let other = 0;
+
+        allWorkers.forEach((worker) => {
+            const workerServices = (worker.assigned_services?.length
+                ? worker.assigned_services
+                : (worker.services?.length
+                    ? worker.services
+                    : (worker.assigned_service ? [worker.assigned_service] : [])));
+            const isAssignedToThis = id && workerServices.some(s => Number(s.id) === Number(id));
+            const isSelected = selectedWorkerIds.includes(String(worker.id));
+
+            if (workerServices.length === 0) {
+                unassigned++;
+            } else if (isAssignedToThis || isSelected) {
+                assigned++;
+            } else {
+                other++;
+            }
+        });
+
+        return { all, unassigned, assigned, other };
+    }, [allWorkers, id, selectedWorkerIds]);
+
+    // Filtered Workers List
+    const workersList = useMemo(() => {
+        return allWorkers.filter((worker) => {
+            const workerServices = (worker.assigned_services?.length
+                ? worker.assigned_services
+                : (worker.services?.length
+                    ? worker.services
+                    : (worker.assigned_service ? [worker.assigned_service] : [])));
+            const isAssignedToThis = id && workerServices.some(s => Number(s.id) === Number(id));
+            const isSelected = selectedWorkerIds.includes(String(worker.id));
+
+            // Tab filter: 'all' | 'unassigned' | 'assigned' | 'other'
+            if (workerFilterTab === 'unassigned') {
+                if (workerServices.length > 0) return false;
+            } else if (workerFilterTab === 'assigned') {
+                if (!isAssignedToThis && !isSelected) return false;
+            } else if (workerFilterTab === 'other') {
+                if (workerServices.length === 0 || isAssignedToThis) return false;
+            }
+
+            // Search filter
+            if (workerSearchInput && workerSearchInput.trim()) {
+                const term = workerSearchInput.trim().toLowerCase();
+                const nameMatch = worker.name?.toLowerCase().includes(term);
+                const nationalityMatch = worker.nationality?.toLowerCase().includes(term);
+                const phoneMatch = worker.phone_number?.toLowerCase().includes(term);
+                const serviceMatch = workerServices.some(s => 
+                    s.name_ar?.toLowerCase().includes(term) || s.name_en?.toLowerCase().includes(term)
+                );
+                if (!nameMatch && !nationalityMatch && !phoneMatch && !serviceMatch) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }, [allWorkers, workerFilterTab, selectedWorkerIds, workerSearchInput, id]);
+
+    const areAllVisibleSelected = useMemo(() => {
+        if (workersList.length === 0) return false;
+        return workersList.every(w => selectedWorkerIds.includes(String(w.id)));
+    }, [workersList, selectedWorkerIds]);
+
+    const handleSelectAllVisible = () => {
+        const visibleIds = workersList.map(w => String(w.id));
+        const newSelection = Array.from(new Set([...selectedWorkerIds, ...visibleIds]));
+        setValue('workers', newSelection, { shouldValidate: true, shouldDirty: true });
+    };
+
+    const handleDeselectAllVisible = () => {
+        const visibleIdSet = new Set(workersList.map(w => String(w.id)));
+        const newSelection = selectedWorkerIds.filter(id => !visibleIdSet.has(id));
+        setValue('workers', newSelection, { shouldValidate: true, shouldDirty: true });
+    };
 
     useEffect(() => {
         if (isHospitality) {
@@ -2254,154 +2304,231 @@ export default function ServiceFormPage() {
                             ) : null}
 
                             {/* Worker Search & Filters */}
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 mb-3">
-                                <div className="relative flex-1">
-                                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={workerSearchInput}
-                                        onChange={(e) => setWorkerSearchInput(e.target.value)}
-                                        placeholder={t('form.search_workers')}
-                                        className={`${INPUT_CLASS} ps-9`}
-                                    />
+                            <div className="space-y-2.5 mb-3">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                                    <div className="relative flex-1">
+                                        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={workerSearchInput}
+                                            onChange={(e) => setWorkerSearchInput(e.target.value)}
+                                            placeholder={t('form.search_workers')}
+                                            className={`${INPUT_CLASS} ps-9 pe-8`}
+                                        />
+                                        {workerSearchInput && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setWorkerSearchInput('')}
+                                                className="absolute inset-y-0 end-0 pe-3 flex items-center text-gray-400 hover:text-gray-600"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Tab Filters */}
+                                    <div className="flex items-center gap-1 p-1 bg-gray-100/90 rounded-xl border border-gray-200/60 self-start sm:self-auto shrink-0 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={() => setWorkerFilterTab('all')}
+                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                workerFilterTab === 'all'
+                                                    ? 'bg-white text-gray-900 shadow-2xs'
+                                                    : 'text-gray-500 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            {isArabic ? `الكل (${workerCounts.all})` : `All (${workerCounts.all})`}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setWorkerFilterTab('unassigned')}
+                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                workerFilterTab === 'unassigned'
+                                                    ? 'bg-white text-gray-900 shadow-2xs'
+                                                    : 'text-gray-500 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            {isArabic ? `غير مسندين (${workerCounts.unassigned})` : `Unassigned (${workerCounts.unassigned})`}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setWorkerFilterTab('assigned')}
+                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                workerFilterTab === 'assigned'
+                                                    ? 'bg-white text-[#E91E63] shadow-2xs'
+                                                    : 'text-gray-500 hover:text-[#E91E63]'
+                                            }`}
+                                        >
+                                            {isArabic ? `المسندين لهذه الخدمة (${selectedWorkerIds.length})` : `Assigned (${selectedWorkerIds.length})`}
+                                        </button>
+                                        {workerCounts.other > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setWorkerFilterTab('other')}
+                                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                    workerFilterTab === 'other'
+                                                        ? 'bg-white text-purple-700 shadow-2xs'
+                                                        : 'text-gray-500 hover:text-purple-700'
+                                                }`}
+                                            >
+                                                {isArabic ? `خدمات أخرى (${workerCounts.other})` : `Other Services (${workerCounts.other})`}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl border border-gray-200/60 self-start sm:self-auto shrink-0">
-                                    <button
-                                        type="button"
-                                        onClick={() => setWorkerFilterTab('all')}
-                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                            workerFilterTab === 'all'
-                                                ? 'bg-white text-gray-900 shadow-2xs'
-                                                : 'text-gray-500 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        {isArabic ? 'جميع العمال' : 'All Workers'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setWorkerFilterTab('unassigned')}
-                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                            workerFilterTab === 'unassigned'
-                                                ? 'bg-white text-gray-900 shadow-2xs'
-                                                : 'text-gray-500 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        {isArabic ? 'غير مسندين' : 'Unassigned'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setWorkerFilterTab('assigned')}
-                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                            workerFilterTab === 'assigned'
-                                                ? 'bg-white text-[#E91E63] shadow-2xs'
-                                                : 'text-gray-500 hover:text-[#E91E63]'
-                                        }`}
-                                    >
-                                        {isArabic ? `المسندين (${selectedWorkerIds.length})` : `Assigned (${selectedWorkerIds.length})`}
-                                    </button>
+                                {/* Select All / Deselect All Action Bar */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2 bg-white rounded-xl border border-gray-200 text-xs shadow-2xs">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        <label className="flex items-center gap-2 cursor-pointer font-bold text-gray-700 hover:text-[#E91E63] select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={areAllVisibleSelected}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        handleSelectAllVisible();
+                                                    } else {
+                                                        handleDeselectAllVisible();
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63] cursor-pointer"
+                                            />
+                                            <span>{isArabic ? 'تحديد الكل في هذه القائمة' : 'Select All in this list'}</span>
+                                        </label>
+
+                                        <span className="text-gray-300">|</span>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleSelectAllVisible}
+                                            className="font-bold text-[#E91E63] hover:underline cursor-pointer"
+                                        >
+                                            {isArabic ? 'تحديد الكل' : 'Select All'}
+                                        </button>
+
+                                        <span className="text-gray-300">|</span>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleDeselectAllVisible}
+                                            className="font-bold text-gray-500 hover:text-gray-700 hover:underline cursor-pointer"
+                                        >
+                                            {isArabic ? 'إلغاء التحديد' : 'Unselect All'}
+                                        </button>
+                                    </div>
+
+                                    <div className="font-semibold text-gray-500 text-end">
+                                        {isArabic
+                                            ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${allWorkers.length} عامل`
+                                            : `Selected ${selectedWorkerIds.length} of ${allWorkers.length} workers`}
+                                        {workersList.length !== allWorkers.length && (
+                                            <span className="text-gray-400 ms-1 font-normal">
+                                                ({isArabic ? `المعروض: ${workersList.length}` : `Showing: ${workersList.length}`})
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div ref={workerScrollRef} className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4 max-h-80 overflow-y-auto bg-gray-50/50">
+                            <div className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4 max-h-80 overflow-y-auto bg-gray-50/50">
                                 {isWorkersLoading ? (
-                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('loading')}</div>
+                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500 gap-2">
+                                        <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
+                                        <span>{t('loading')}</span>
+                                    </div>
                                 ) : workersList.length === 0 ? (
-                                    <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('no_data')}</div>
-                                ) : (
-                                    <>
-                                        {workersList.map((worker) => {
-                                            const isFemale = String(worker.gender).toLowerCase() === 'female';
-                                            const isChecked = selectedWorkerIds.includes(String(worker.id));
-                                            const workerServices = (worker.assigned_services?.length
-                                                ? worker.assigned_services
-                                                : (worker.services?.length
-                                                    ? worker.services
-                                                    : (worker.assigned_service ? [worker.assigned_service] : [])));
-
-                                            return (
-                                                <label
-                                                    key={worker.id}
-                                                    className={`flex items-center justify-between gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
-                                                        isChecked
-                                                            ? 'bg-pink-50/40 border-[#E91E63]/50 shadow-2xs'
-                                                            : 'bg-white border-gray-200/80 hover:border-gray-300 hover:bg-gray-50/50'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        <input
-                                                            type="checkbox"
-                                                            value={String(worker.id)}
-                                                            {...register('workers')}
-                                                            className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63] shrink-0"
-                                                        />
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <p className="text-sm font-bold text-gray-900 truncate">{worker.name}</p>
-
-                                                                {/* Service Badges */}
-                                                                {workerServices.length > 0 ? (
-                                                                    workerServices.map((s) => {
-                                                                        const isCurrent = id && Number(s.id) === Number(id);
-                                                                        return (
-                                                                            <span
-                                                                                key={s.id}
-                                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                                                                                    isCurrent
-                                                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                                                        : 'bg-purple-50 text-purple-700 border-purple-200'
-                                                                                }`}
-                                                                            >
-                                                                                <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                                </svg>
-                                                                                <span>{isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}</span>
-                                                                                {isCurrent && <span className="text-[9px] font-normal text-emerald-600">({isArabic ? 'هذه الخدمة' : 'Current'})</span>}
-                                                                            </span>
-                                                                        );
-                                                                    })
-                                                                ) : (
-                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
-                                                                        {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-xs text-gray-400 mt-0.5">{worker.nationality || '—'} · ★ {worker.rating || '0.00'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="shrink-0">
-                                                        {isFemale ? (
-                                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                                                {isArabic ? 'أنثى' : 'Female'}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-                                                                {isArabic ? 'ذكر' : 'Male'}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            );
-                                        })}
-
-                                        {/* Sentinel */}
-                                        <div ref={workerSentinelRef} aria-hidden="true" className="h-px" />
-                                        {isFetchingMoreWorkers && (
-                                            <div className="flex justify-center items-center py-2 gap-2 text-xs text-gray-500">
-                                                <svg className="animate-spin h-4 w-4 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
-                                                {t('loading')}
-                                            </div>
-                                        )}
-                                        {hasMoreWorkers && !isFetchingMoreWorkers && (
-                                            <button type="button" onClick={() => fetchMoreWorkers()} className="text-xs font-semibold text-[#E91E63] hover:text-[#D81B60] py-2 transition-colors">
-                                                {t('form.load_more')}
+                                    <div className="flex flex-col justify-center items-center py-8 text-sm text-gray-400 gap-1">
+                                        <p>{t('no_data')}</p>
+                                        {workerSearchInput && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setWorkerSearchInput('')}
+                                                className="text-xs font-bold text-[#E91E63] hover:underline"
+                                            >
+                                                {isArabic ? 'مسح البحث' : 'Clear search'}
                                             </button>
                                         )}
-                                    </>
+                                    </div>
+                                ) : (
+                                    workersList.map((worker) => {
+                                        const isFemale = String(worker.gender).toLowerCase() === 'female';
+                                        const isChecked = selectedWorkerIds.includes(String(worker.id));
+                                        const workerServices = (worker.assigned_services?.length
+                                            ? worker.assigned_services
+                                            : (worker.services?.length
+                                                ? worker.services
+                                                : (worker.assigned_service ? [worker.assigned_service] : [])));
+
+                                        return (
+                                            <label
+                                                key={worker.id}
+                                                className={`flex items-center justify-between gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
+                                                    isChecked
+                                                        ? 'bg-pink-50/40 border-[#E91E63]/50 shadow-2xs'
+                                                        : 'bg-white border-gray-200/80 hover:border-gray-300 hover:bg-gray-50/50'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        value={String(worker.id)}
+                                                        {...register('workers')}
+                                                        className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63] shrink-0"
+                                                    />
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <p className="text-sm font-bold text-gray-900 truncate">{worker.name}</p>
+
+                                                            {/* Service Badges */}
+                                                            {workerServices.length > 0 ? (
+                                                                workerServices.map((s) => {
+                                                                    const isCurrent = id && Number(s.id) === Number(id);
+                                                                    return (
+                                                                        <span
+                                                                            key={s.id}
+                                                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                                                isCurrent
+                                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                                    : 'bg-purple-50 text-purple-700 border-purple-200'
+                                                                            }`}
+                                                                        >
+                                                                            <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                            </svg>
+                                                                            <span>{isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}</span>
+                                                                            {isCurrent && <span className="text-[9px] font-normal text-emerald-600">({isArabic ? 'هذه الخدمة' : 'Current'})</span>}
+                                                                        </span>
+                                                                    );
+                                                                })
+                                                            ) : (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                                                                    {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-gray-400 mt-0.5">{worker.nationality || '—'} · ★ {worker.rating || '0.00'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="shrink-0">
+                                                    {isFemale ? (
+                                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                                            {isArabic ? 'أنثى' : 'Female'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                                            {isArabic ? 'ذكر' : 'Male'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        );
+                                    })
                                 )}
                             </div>
                             <ErrorMsg name="workers" />

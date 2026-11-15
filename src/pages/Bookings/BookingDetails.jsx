@@ -1229,9 +1229,30 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
 
                 <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-1">
                     <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-                            {isArabic ? 'العمال المتاحون والمؤهلون' : 'Eligible & Available Workers'}
-                        </label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                {isArabic ? 'العمال المتاحون والمؤهلون' : 'Eligible & Available Workers'}
+                            </label>
+                            {eligibleWorkers.length > 0 && (
+                                <div className="flex items-center gap-2 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedIds(eligibleWorkers.map(w => w.id))}
+                                        className="font-bold text-[#E91E63] hover:underline cursor-pointer"
+                                    >
+                                        {isArabic ? 'تحديد الكل' : 'Select All'}
+                                    </button>
+                                    <span className="text-gray-300">|</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedIds([])}
+                                        className="font-bold text-gray-500 hover:text-gray-700 hover:underline cursor-pointer"
+                                    >
+                                        {isArabic ? 'إلغاء التحديد' : 'Deselect All'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
                         {isLoading ? (
                             <div className="py-6 flex justify-center">

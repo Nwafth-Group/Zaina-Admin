@@ -324,6 +324,38 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose, onSuccess
                     />
                 </div>
 
+                {/* Select All / Deselect All Toolbar */}
+                {filteredWorkers.length > 0 && (
+                    <div className="flex items-center justify-between px-1 text-xs">
+                        <span className="text-gray-500 font-medium">
+                            {isArabic ? `المتاحين: ${filteredWorkers.length}` : `Available: ${filteredWorkers.length}`}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const allIds = Array.from(new Set([...selectedWorkerIds, ...filteredWorkers.map(w => w.id)]));
+                                    setValue('worker_ids', allIds, { shouldValidate: true });
+                                }}
+                                className="font-bold text-[#E91E63] hover:underline cursor-pointer"
+                            >
+                                {isArabic ? 'تحديد الكل' : 'Select All'}
+                            </button>
+                            <span className="text-gray-300">|</span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const filteredSet = new Set(filteredWorkers.map(w => w.id));
+                                    setValue('worker_ids', selectedWorkerIds.filter(id => !filteredSet.has(id)), { shouldValidate: true });
+                                }}
+                                className="font-bold text-gray-500 hover:text-gray-700 hover:underline cursor-pointer"
+                            >
+                                {isArabic ? 'إلغاء التحديد' : 'Deselect All'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Worker Cards Grid */}
                 <div className="max-h-64 overflow-y-auto space-y-2 p-1 border border-gray-100 rounded-xl bg-gray-50/50">
                     {isWorkersLoading ? (
