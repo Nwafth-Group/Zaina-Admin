@@ -322,42 +322,7 @@ export default function ServiceFormPage() {
         terms_ar: yup.string().nullable().max(5000),
         terms_en: yup.string().nullable().max(5000),
 
-        workers: yup.array().of(yup.string())
-            .when('is_team_based', {
-                is: (val) => !val,
-                then: (s) => s.test('workers_match_min_max', function(val) {
-                    const { min_workers, max_workers } = this.parent;
-                    const count = Array.isArray(val) ? val.length : 0;
-                    if (count === 0) return true;
-                    const min = Number(min_workers || 0);
-                    const max = Number(max_workers || 0);
-                    if (min > 0 && max > 0 && min === max) {
-                        if (count !== min) {
-                            return this.createError({
-                                message: isArabic
-                                    ? `يجب إسناد ${min} عمال بالضبط ليتطابق مع الحد الأدنى والأقصى للعمال.`
-                                    : `Assigned workers count must be exactly ${min} to match min and max workers.`
-                            });
-                        }
-                    } else {
-                        if (min > 0 && count < min) {
-                            return this.createError({
-                                message: isArabic
-                                    ? `عدد العمال المسندين (${count}) أقل من الحد الأدنى للعمال (${min}).`
-                                    : `Assigned workers count (${count}) is less than minimum workers (${min}).`
-                            });
-                        }
-                        if (max > 0 && count > max) {
-                            return this.createError({
-                                message: isArabic
-                                    ? `عدد العمال المسندين (${count}) يتجاوز الحد الأقصى للعمال (${max}).`
-                                    : `Assigned workers count (${count}) exceeds maximum workers (${max}).`
-                            });
-                        }
-                    }
-                    return true;
-                }),
-            }),
+        workers: yup.array().of(yup.string()).nullable(),
         teams: yup.array().of(yup.string()).nullable(),
 
         rules: yup.object().shape({
@@ -624,12 +589,9 @@ export default function ServiceFormPage() {
     }, [workersList, selectedWorkerIds]);
 
     const handleSelectAllVisible = () => {
-        const targetCount = Number(watch('max_workers') || watch('min_workers') || 0);
-        let visibleIds = workersList.map(w => String(w.id));
-        if (targetCount > 0 && visibleIds.length > targetCount) {
-            visibleIds = visibleIds.slice(0, targetCount);
-        }
-        setValue('workers', visibleIds, { shouldValidate: true, shouldDirty: true });
+        const visibleIds = workersList.map(w => String(w.id));
+        const merged = Array.from(new Set([...selectedWorkerIds, ...visibleIds]));
+        setValue('workers', merged, { shouldValidate: true, shouldDirty: true });
     };
 
     const handleDeselectAllVisible = () => {
@@ -2205,6 +2167,35 @@ export default function ServiceFormPage() {
                                 ? <span className="text-xs font-semibold text-[#E91E63] bg-[#FDF0F3] px-2.5 py-1 rounded-lg">{isArabic ? `${(watch('teams') || []).length} فرق محددة` : `${(watch('teams') || []).length} teams selected`}</span>
                                 : null}
                         >
+                            {/* Teams Action Bar */}
+                            <div className="flex items-center justify-between mb-3 px-3 py-2 bg-white rounded-xl border border-gray-200 text-xs shadow-2xs">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const allTeamIds = teamsList.map(t => String(t.id));
+                                            setValue('teams', allTeamIds, { shouldValidate: true, shouldDirty: true });
+                                        }}
+                                        className="font-bold text-[#E91E63] hover:underline cursor-pointer"
+                                    >
+                                        {isArabic ? 'تحديد كافة الفرق' : 'Select All Teams'}
+                                    </button>
+                                    <span className="text-gray-300">|</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setValue('teams', [], { shouldValidate: true, shouldDirty: true });
+                                        }}
+                                        className="font-bold text-gray-500 hover:text-gray-700 hover:underline cursor-pointer"
+                                    >
+                                        {isArabic ? 'إلغاء التحديد' : 'Unselect All'}
+                                    </button>
+                                </div>
+                                <span className="font-semibold text-gray-500">
+                                    {isArabic ? `تم تحديد ${(watch('teams') || []).length} من ${teamsList.length} فرق` : `Selected ${(watch('teams') || []).length} of ${teamsList.length} teams`}
+                                </span>
+                            </div>
+
                             <div className="flex flex-col gap-3 border border-gray-100 rounded-xl p-4 max-h-96 overflow-y-auto bg-gray-50/50">
                                 {isTeamsLoading ? (
                                     <div className="flex justify-center items-center py-6 text-sm text-gray-500">{t('loading')}</div>
@@ -2456,21 +2447,10 @@ export default function ServiceFormPage() {
                                     </div>
 
                                     <div className="flex items-center gap-2 font-semibold text-xs text-end flex-wrap">
-                                        {watch('min_workers') && Number(watch('min_workers')) > 0 && (
-                                            <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] border ${
-                                                selectedWorkerIds.length === Number(watch('min_workers'))
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                                            }`}>
-                                                {isArabic
-                                                    ? `المطلوب: ${watch('min_workers')} ${Number(watch('min_workers')) === 1 ? 'عامل' : 'عمال'}`
-                                                    : `Required: ${watch('min_workers')} workers`}
-                                            </span>
-                                        )}
-                                        <span className="text-gray-500">
+                                        <span className="px-2.5 py-1 rounded-lg font-bold text-xs bg-pink-50 text-[#E91E63] border border-pink-200">
                                             {isArabic
-                                                ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${allWorkers.length} عامل`
-                                                : `Selected ${selectedWorkerIds.length} of ${allWorkers.length} workers`}
+                                                ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${allWorkers.length} عامل مؤهل`
+                                                : `Selected ${selectedWorkerIds.length} of ${allWorkers.length} qualified workers`}
                                         </span>
                                         {workersList.length !== allWorkers.length && (
                                             <span className="text-gray-400 font-normal">
