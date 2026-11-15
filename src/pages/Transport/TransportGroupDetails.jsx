@@ -306,9 +306,12 @@ export default function TransportGroupDetails() {
     };
 
     const shareWhatsApp = (manifest) => {
-        let text = `*جدول رحلة السائق الميداني - زينة*\n📅 التاريخ: ${date}\n⏰ شفت الخدمة: ${format12Hour(shiftFormatted)}\n👨‍✈️ السائق: ${manifest.driver_name} (${manifest.driver_phone})\n🚐 المركبة: ${manifest.vehicle_type} [${manifest.vehicle_plate}]\n🚏 نقطة الانطلاق: ${manifest.departure_point?.name || 'غير محددة'}\n⏱️ موعد التحرك: ${format12Hour(manifest.departure_time)}\n👥 عدد العاملات: ${manifest.assigned_passengers_count} / ${manifest.vehicle_capacity} مقاعد\n\n*قائمة العاملات والتوصيل:*\n`;
+        const distinctPoints = Array.from(new Set((manifest.passengers || []).map((p) => p.pickup_point).filter(Boolean)));
+        const pointsLabel = distinctPoints.length > 0 ? distinctPoints.join(' ، ') : (manifest.departure_point?.name || 'غير محددة');
+
+        let text = `*جدول رحلة السائق الميداني - زينة*\n📅 التاريخ: ${date}\n⏰ شفت الخدمة: ${format12Hour(shiftFormatted)}\n👨‍✈️ السائق: ${manifest.driver_name} (${manifest.driver_phone})\n🚐 المركبة: ${manifest.vehicle_type} [${manifest.vehicle_plate}]\n🚏 نقاط الانطلاق: ${pointsLabel}\n⏱️ موعد التحرك الأساسي: ${format12Hour(manifest.departure_time)}\n👥 عدد العاملات: ${manifest.assigned_passengers_count} / ${manifest.vehicle_capacity} مقاعد\n\n*قائمة العاملات والتوصيل:*\n`;
         manifest.passengers?.forEach((p, idx) => {
-            text += `\n${idx + 1}) العاملة: ${p.worker_name} (${p.worker_phone})\n   العميل: ${p.customer_name} (${p.customer_phone})\n   الحجز: #${p.booking_ref} - ${p.service_name}\n   العنوان: ${p.destination_address}\n`;
+            text += `\n${idx + 1}) العاملة: ${p.worker_name} (${p.worker_phone})\n   🚏 نقطة الانطلاق: ${p.pickup_point || 'سكن العاملات'}${p.departure_time ? ` (${format12Hour(p.departure_time)})` : ''}\n   العميل: ${p.customer_name} (${p.customer_phone})\n   الحجز: #${p.booking_ref} - ${p.service_name}\n   العنوان: ${p.destination_address}\n`;
         });
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
@@ -678,13 +681,19 @@ export default function TransportGroupDetails() {
                                                 </span>
                                             </div>
 
-                                            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                                                <span>🚏 <b>{manifest.departure_point?.name || 'سكن العاملات'}</b></span>
-                                                <span>•</span>
-                                                <span>⏱️ {isArabic ? 'موعد التحرك:' : 'Departure:'} <b className="text-emerald-700 font-mono">{format12Hour(manifest.departure_time)}</b></span>
-                                                <span>•</span>
-                                                <span>👥 {isArabic ? 'الحمولة:' : 'Capacity:'} <b>{manifest.assigned_passengers_count} / {manifest.vehicle_capacity} {isArabic ? 'مقاعد' : 'seats'}</b></span>
-                                            </div>
+                                            {(() => {
+                                                const distinctPoints = Array.from(new Set((manifest.passengers || []).map((p) => p.pickup_point).filter(Boolean)));
+                                                const pointsLabel = distinctPoints.length > 0 ? distinctPoints.join(' ، ') : (manifest.departure_point?.name || (isArabic ? 'سكن العاملات' : 'Worker Depot'));
+                                                return (
+                                                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+                                                        <span>🚏 {isArabic ? 'نقاط الانطلاق:' : 'Pickup Points:'} <b>{pointsLabel}</b></span>
+                                                        <span>•</span>
+                                                        <span>⏱️ {isArabic ? 'موعد التحرك الأساسي:' : 'Departure:'} <b className="text-emerald-700 font-mono">{format12Hour(manifest.departure_time)}</b></span>
+                                                        <span>•</span>
+                                                        <span>👥 {isArabic ? 'الحمولة:' : 'Capacity:'} <b>{manifest.assigned_passengers_count} / {manifest.vehicle_capacity} {isArabic ? 'مقاعد' : 'seats'}</b></span>
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {/* Linear Progress Capacity Bar */}
                                             <div className="w-full max-w-sm pt-1">
@@ -729,6 +738,7 @@ export default function TransportGroupDetails() {
                                                 <tr>
                                                     <th className="p-2.5 text-center w-12">#</th>
                                                     <th className="p-2.5 text-start">{isArabic ? 'العاملة' : 'Worker'}</th>
+                                                    <th className="p-2.5 text-start">{isArabic ? 'نقطة وموعد الانطلاق' : 'Pickup & Departure'}</th>
                                                     <th className="p-2.5 text-start">{isArabic ? 'رقم الحجز' : 'Booking'}</th>
                                                     <th className="p-2.5 text-start">{isArabic ? 'الخدمة' : 'Service'}</th>
                                                     <th className="p-2.5 text-start">{isArabic ? 'العميل' : 'Customer'}</th>
@@ -748,6 +758,18 @@ export default function TransportGroupDetails() {
                                                             <td className="p-2.5">
                                                                 <div className="font-bold text-gray-900">{p.worker_name}</div>
                                                                 <div className="text-[11px] text-gray-400 font-mono" dir="ltr">{p.worker_phone}</div>
+                                                            </td>
+                                                            <td className="p-2.5">
+                                                                <div className="font-bold text-gray-800 flex items-center gap-1">
+                                                                    <span>🚏</span>
+                                                                    <span>{p.pickup_point || (isArabic ? 'سكن العاملات' : 'Worker Depot')}</span>
+                                                                </div>
+                                                                {p.departure_time && (
+                                                                    <div className="text-[11px] text-emerald-700 font-mono font-bold flex items-center gap-1 mt-0.5">
+                                                                        <span>⏱️</span>
+                                                                        <span>{format12Hour(p.departure_time)}</span>
+                                                                    </div>
+                                                                )}
                                                             </td>
                                                             <td className="p-2.5 font-bold text-[#E91E63]">#{p.booking_ref}</td>
                                                             <td className="p-2.5 text-gray-800">{p.service_name}</td>
