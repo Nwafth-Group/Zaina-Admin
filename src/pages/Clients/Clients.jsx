@@ -59,7 +59,7 @@ export default function Clients() {
         return params.toString();
     }, [currentPage, search, verification]);
 
-    const { data, isLoading, isError, error } = useQuery({
+    const { data, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['clients', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/users?${queryString}`)).data.data,
         keepPreviousData: true,
@@ -75,7 +75,10 @@ export default function Clients() {
 
     const toggleStatusMutation = useMutation({
         mutationFn: (userId) => axiosInstance.patch(`/admin/users/${userId}/toggle-status`),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
+        onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['clients'] });
+        refetch();
+    },
         onError: (err) => toast.error(err.response?.data?.message || t('review_modal.error')),
     });
 

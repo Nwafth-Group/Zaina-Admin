@@ -39,7 +39,7 @@ export default function Reports() {
     }, [page, search, statusFilter]);
 
     // Fetch reports
-    const { data: pageData, isLoading, isError, error } = useQuery({
+    const { data: pageData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['reports', queryString],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/reports?${queryString}`);

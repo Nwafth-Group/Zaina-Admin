@@ -42,7 +42,7 @@ export default function Drivers() {
         return params.toString();
     }, [page, search, filters]);
 
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['drivers', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/drivers?${queryString}`)).data,
         keepPreviousData: true,
@@ -61,6 +61,7 @@ export default function Drivers() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حذف السائق بنجاح' : 'Driver deleted successfully'));
             queryClient.invalidateQueries({ queryKey: ['drivers'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء حذف السائق' : 'Error deleting driver'));

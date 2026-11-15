@@ -55,7 +55,7 @@ export default function Coupons() {
     }, [page, search, filters]);
 
     // Fetch coupons list
-    const { data: pageData, isLoading, isError, error } = useQuery({
+    const { data: pageData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['coupons', queryString],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/coupons?${queryString}`);
@@ -112,6 +112,7 @@ export default function Coupons() {
             toast.success(response.data?.message || t('toggled'));
             queryClient.invalidateQueries({ queryKey: ['coupons'] });
             queryClient.invalidateQueries({ queryKey: ['couponDetail'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('error', { defaultValue: 'Error updating status' }));
@@ -124,6 +125,7 @@ export default function Coupons() {
         onSuccess: (response) => {
             toast.success(response.data?.message || t('deleted'));
             queryClient.invalidateQueries({ queryKey: ['coupons'] });
+            refetch();
             setDeleteTarget(null);
         },
         onError: (error) => {

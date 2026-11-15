@@ -91,7 +91,7 @@ export default function Teams() {
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
     // 1. Fetch Teams
-    const { data: teamsResp, isLoading, isError, error } = useQuery({
+    const { data: teamsResp, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['teams', queryString],
         queryFn: async () => {
             const res = await axiosInstance.get(`/admin/teams?${queryString}`);
@@ -125,6 +125,7 @@ export default function Teams() {
             toast.success(res.data?.message || (isArabic ? 'تم تغيير حالة الفريق بنجاح' : 'Team status updated successfully'));
             queryClient.invalidateQueries({ queryKey: ['teams'] });
             queryClient.invalidateQueries({ queryKey: ['workers'] });
+            refetch();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء تعديل الحالة' : 'Error updating status'));
@@ -138,6 +139,7 @@ export default function Teams() {
             toast.success(res.data?.message || (isArabic ? 'تم حذف الفريق بنجاح' : 'Team deleted successfully'));
             queryClient.invalidateQueries({ queryKey: ['teams'] });
             queryClient.invalidateQueries({ queryKey: ['workers'] });
+            refetch();
             setDeleteConfirm({ isOpen: false, teamId: null, teamName: '', workersCount: 0 });
         },
         onError: (err) => {
@@ -518,6 +520,7 @@ export default function Teams() {
                     isOpen={actionModal.isOpen}
                     teamToEdit={actionModal.teamToEdit}
                     onClose={() => setActionModal({ isOpen: false, teamToEdit: null })}
+                    onSuccess={() => refetch()}
                 />
             )}
 

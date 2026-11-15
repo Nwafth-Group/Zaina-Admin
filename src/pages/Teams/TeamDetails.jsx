@@ -85,7 +85,7 @@ export default function TeamDetails() {
     const [editModalOpen, setEditModalOpen] = useState(false);
 
     // Fetch team details
-    const { data: team, isLoading, isError } = useQuery({
+    const { data: team, isLoading, isError, refetch } = useQuery({
         queryKey: ['team-details', teamId],
         queryFn: async () => {
             const res = await axiosInstance.get(`/admin/teams/${teamId}`);
@@ -107,8 +107,9 @@ export default function TeamDetails() {
         },
         onSuccess: () => {
             toast.success(isArabic ? 'تم تحديث حالة الفريق بنجاح' : 'Team status updated successfully');
-            queryClient.invalidateQueries({ queryKey: ['team-details', teamId] });
+            queryClient.invalidateQueries({ queryKey: ['team-details'] });
             queryClient.invalidateQueries({ queryKey: ['teams'] });
+            refetch();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث حالة الفريق' : 'Failed to update team status'));
@@ -645,6 +646,7 @@ export default function TeamDetails() {
                     teamToEdit={team}
                     isOpen={editModalOpen}
                     onClose={() => setEditModalOpen(false)}
+                    onSuccess={() => refetch()}
                 />
             )}
         </div>

@@ -9,7 +9,7 @@ import * as yup from 'yup';
 import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, SelectField, OptionCards, ImageDropzone, FormSection } from '../../components/form/FormKit';
 
-export default function CategoryActionModal({ categoryToEdit, mainCategories, onClose }) {
+export default function CategoryActionModal({ categoryToEdit, mainCategories, onClose, onSuccess }) {
     const { t, i18n } = useTranslation('categories');
     const queryClient = useQueryClient();
     const isEditMode = !!categoryToEdit;
@@ -58,6 +58,8 @@ export default function CategoryActionModal({ categoryToEdit, mainCategories, on
         onSuccess: (response) => {
             toast.success(response.data.message || 'تمت العملية بنجاح');
             queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['main-categories'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

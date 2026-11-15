@@ -19,7 +19,7 @@ export default function Announcements() {
 
     const lastCountsRef = useRef({ all: 0, total_recipients: 0 });
 
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['announcements', currentPage],
         queryFn: async () => (await axiosInstance.get(`/admin/announcements?page=${currentPage}`)).data.data,
         keepPreviousData: true,
@@ -40,6 +40,7 @@ export default function Announcements() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حذف الإعلان بنجاح' : 'Announcement deleted successfully'));
             queryClient.invalidateQueries({ queryKey: ['announcements'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء حذف الإعلان.' : 'Error deleting announcement.'));

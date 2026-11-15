@@ -225,7 +225,7 @@ export default function CouponFormPage() {
         onSuccess: (response) => {
             toast.success(response.data.message || (isArabic ? 'تم حفظ الكوبون بنجاح' : 'Coupon saved successfully'));
             queryClient.invalidateQueries({ queryKey: ['coupons'] });
-            queryClient.invalidateQueries({ queryKey: ['couponDetail', couponId] });
+            queryClient.invalidateQueries({ queryKey: ['couponDetail'] });
             navigate('/coupons');
         },
         onError: (error) => {

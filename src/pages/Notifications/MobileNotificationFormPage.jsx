@@ -82,7 +82,7 @@ export default function MobileNotificationFormPage() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حفظ وجدولة الإشعار بنجاح' : 'Notification saved and scheduled successfully'));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
-            queryClient.invalidateQueries({ queryKey: ['mobileNotificationDetail', notificationId] });
+            queryClient.invalidateQueries({ queryKey: ['mobileNotificationDetail'] });
             navigate('/mobile-notifications');
         },
         onError: (error) => {

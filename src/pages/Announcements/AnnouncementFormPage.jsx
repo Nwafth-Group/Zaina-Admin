@@ -74,7 +74,7 @@ export default function AnnouncementFormPage() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حفظ الإعلان بنجاح' : 'Announcement saved successfully'));
             queryClient.invalidateQueries({ queryKey: ['announcements'] });
-            queryClient.invalidateQueries({ queryKey: ['announcementDetails', announcementId] });
+            queryClient.invalidateQueries({ queryKey: ['announcementDetails'] });
             navigate('/announcements');
         },
         onError: (error) => {

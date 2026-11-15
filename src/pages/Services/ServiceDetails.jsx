@@ -66,7 +66,7 @@ export default function ServiceDetails() {
 
     const [activeTab, setActiveTab] = useState('profile'); // profile | bookings | reviews
 
-    const { data: responseData, isLoading, isError } = useQuery({
+    const { data: responseData, isLoading, isError, refetch } = useQuery({
         queryKey: ['service-details', serviceId],
         queryFn: async () => (await axiosInstance.get(`/admin/services/${serviceId}/details`)).data.data,
         enabled: !!serviceId,
@@ -76,8 +76,10 @@ export default function ServiceDetails() {
         mutationFn: async () => axiosInstance.post(`/admin/services/${serviceId}/toggle-status`),
         onSuccess: (res) => {
             toast.success(res.data?.message || (isArabic ? 'تم تغيير حالة الخدمة بنجاح' : 'Service status updated successfully'));
+            queryClient.invalidateQueries({ queryKey: ['service-details'] });
             queryClient.invalidateQueries({ queryKey: ['service-details', serviceId] });
             queryClient.invalidateQueries({ queryKey: ['services'] });
+            refetch();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء تغيير الحالة' : 'Failed to update status'));

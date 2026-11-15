@@ -69,7 +69,7 @@ export default function BannerFormPage() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حفظ البنر الإعلاني بنجاح' : 'Banner saved successfully'));
             queryClient.invalidateQueries({ queryKey: ['banners'] });
-            queryClient.invalidateQueries({ queryKey: ['bannerDetail', bannerId] });
+            queryClient.invalidateQueries({ queryKey: ['bannerDetail'] });
             navigate('/banners');
         },
         onError: (error) => {

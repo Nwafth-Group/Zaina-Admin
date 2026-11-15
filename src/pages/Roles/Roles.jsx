@@ -32,7 +32,7 @@ export default function Roles() {
     }, [searchInput]);
 
     // 1. Get Roles
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['roles-list'],
         queryFn: async () => {
             const res = await axiosInstance.get('/admin/roles');
@@ -71,6 +71,7 @@ export default function Roles() {
         onSuccess: (response) => {
             toast.success(response.data?.message || t('role_management.delete_success'));
             queryClient.invalidateQueries({ queryKey: ['roles-list'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('role_management.delete_error'));
@@ -83,6 +84,7 @@ export default function Roles() {
         onSuccess: (response) => {
             toast.success(response.data?.message || t('role_management.duplicate_success'));
             queryClient.invalidateQueries({ queryKey: ['roles-list'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('role_management.duplicate_error'));
@@ -104,6 +106,7 @@ export default function Roles() {
         onSuccess: (response) => {
             toast.success(response.data?.message || t('role_management.status_success'));
             queryClient.invalidateQueries({ queryKey: ['roles-list'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('role_management.status_error'));
@@ -328,6 +331,7 @@ export default function Roles() {
                 <RoleActionModal
                     roleToEdit={actionModal.roleToEdit}
                     onClose={() => setActionModal({ isOpen: false, roleToEdit: null })}
+                    onSuccess={() => refetch()}
                 />
             )}
         </div>

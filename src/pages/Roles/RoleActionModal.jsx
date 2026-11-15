@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, SelectField, FormSection } from '../../components/form/FormKit';
 
-export default function RoleActionModal({ roleToEdit, onClose }) {
+export default function RoleActionModal({ roleToEdit, onClose, onSuccess }) {
     const { t } = useTranslation('common');
     const queryClient = useQueryClient();
     const isEditMode = !!roleToEdit;
@@ -93,6 +93,7 @@ export default function RoleActionModal({ roleToEdit, onClose }) {
         onSuccess: (response) => {
             toast.success(response.data?.message || t('role_management.save_success'));
             queryClient.invalidateQueries({ queryKey: ['roles-list'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

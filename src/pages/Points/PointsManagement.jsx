@@ -80,7 +80,7 @@ export default function PointsManagement() {
     }, [txSearchInput]);
 
     // Query for Earning Rules
-    const { data: rulesData, isLoading: isRulesLoading } = useQuery({
+    const { data: rulesData, isLoading: isRulesLoading, refetch: refetchRules } = useQuery({
         queryKey: ['points-rules'],
         queryFn: async () => {
             const response = await axiosInstance.get('/admin/points/rules');
@@ -91,7 +91,7 @@ export default function PointsManagement() {
     const isSettingsLoading = false;
 
     // Query for Services points settings
-    const { data: servicesData, isLoading: isServicesLoading } = useQuery({
+    const { data: servicesData, isLoading: isServicesLoading, refetch: refetchServices } = useQuery({
         queryKey: ['points-services'],
         queryFn: async () => {
             const response = await axiosInstance.get('/admin/points/services');
@@ -106,7 +106,7 @@ export default function PointsManagement() {
         search: txSearch,
     }).toString();
 
-    const { data: txData, isLoading: isTxLoading } = useQuery({
+    const { data: txData, isLoading: isTxLoading, refetch: refetchTx } = useQuery({
         queryKey: ['points-transactions', txQueryString],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/points/transactions?${txQueryString}`);
@@ -187,7 +187,8 @@ export default function PointsManagement() {
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['points-rules']);
+            queryClient.invalidateQueries({ queryKey: ['points-rules'] });
+            refetchRules();
             toast.success(editingRule ? 'Rule updated successfully' : 'Rule created successfully');
             setIsRuleModalOpen(false);
             setEditingRule(null);
@@ -203,7 +204,8 @@ export default function PointsManagement() {
             return await axiosInstance.delete(`/admin/points/rules/${id}`);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['points-rules']);
+            queryClient.invalidateQueries({ queryKey: ['points-rules'] });
+            refetchRules();
             toast.success('Rule deleted successfully');
         },
         onError: () => {
@@ -219,7 +221,8 @@ export default function PointsManagement() {
             return await axiosInstance.put(`/admin/points/services/${id}`, payload);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['points-services']);
+            queryClient.invalidateQueries({ queryKey: ['points-services'] });
+            refetchServices();
             toast.success('Service points configurations updated successfully');
             setIsServiceModalOpen(false);
             setEditingService(null);

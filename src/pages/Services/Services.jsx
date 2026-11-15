@@ -78,7 +78,7 @@ export default function Services() {
         (filters.type ? 1 : 0);
 
     // 1. جلب قائمة الخدمات مع الفلاتر والبحث
-    const { data: services = [], isLoading, isError, error } = useQuery({
+    const { data: services = [], isLoading, isError, error, refetch } = useQuery({
         queryKey: ['services', queryString],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/services?${queryString}`);
@@ -111,6 +111,8 @@ export default function Services() {
         onSuccess: (response) => {
             toast.success(response.data.message || "تم تغيير حالة الخدمة بنجاح");
             queryClient.invalidateQueries({ queryKey: ['services'] });
+            queryClient.invalidateQueries({ queryKey: ['service-details'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "حدث خطأ أثناء تغيير الحالة.");

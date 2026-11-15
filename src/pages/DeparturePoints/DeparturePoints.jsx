@@ -32,7 +32,7 @@ export default function DeparturePoints() {
         return params.toString();
     }, [page, search]);
 
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['departure-points', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/departure-points?${queryString}`)).data,
         keepPreviousData: true,
@@ -46,6 +46,7 @@ export default function DeparturePoints() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حذف نقطة الانطلاق بنجاح' : 'Departure point deleted'));
             queryClient.invalidateQueries({ queryKey: ['departure-points'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء الحذف' : 'Error deleting departure point'));

@@ -75,7 +75,7 @@ export default function ClientDetails() {
     const [reason, setReason] = useState('');
     const [reasonError, setReasonError] = useState('');
 
-    const { data: responseData, isLoading, isError } = useQuery({
+    const { data: responseData, isLoading, isError, refetch } = useQuery({
         queryKey: ['user-review', userId],
         queryFn: async () => (await axiosInstance.get(`/admin/users/${userId}`)).data.data,
     });
@@ -91,6 +91,7 @@ export default function ClientDetails() {
             queryClient.invalidateQueries({ queryKey: ['user-review'] });
             queryClient.invalidateQueries({ queryKey: ['users'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            refetch();
             setIsRejecting(false);
             setReason('');
         },

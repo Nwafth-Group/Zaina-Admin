@@ -129,6 +129,7 @@ export default function TransportGroupDetails() {
             toast.success(res?.message || (isArabic ? 'تم تعيين العاملة للسائق بنجاح' : 'Worker assigned to driver successfully'));
             queryClient.invalidateQueries({ queryKey: ['transport-shift-details'] });
             queryClient.invalidateQueries({ queryKey: ['transport-dispatch-shifts-overview'] });
+            refetch();
             setIsAssignModalOpen(false);
             setSelectedWorkerTarget(null);
         },
@@ -151,6 +152,7 @@ export default function TransportGroupDetails() {
             toast.success(res?.message || (isArabic ? 'تم فك ارتباط العاملة بنجاح' : 'Worker unassigned successfully'));
             queryClient.invalidateQueries({ queryKey: ['transport-shift-details'] });
             queryClient.invalidateQueries({ queryKey: ['transport-dispatch-shifts-overview'] });
+            refetch();
         },
         onError: (err) => {
             const serverMsg = err.response?.data?.errors?.booking_id?.[0]

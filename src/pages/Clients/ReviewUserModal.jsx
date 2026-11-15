@@ -42,7 +42,7 @@ function DocumentTile({ label, url, t }) {
     );
 }
 
-export default function ReviewUserModal({ userId, onClose }) {
+export default function ReviewUserModal({ userId, onClose, onSuccess }) {
     const { t, i18n } = useTranslation('users');
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
@@ -67,6 +67,8 @@ export default function ReviewUserModal({ userId, onClose }) {
             );
             queryClient.invalidateQueries({ queryKey: ['users'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['user-review'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

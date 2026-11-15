@@ -64,7 +64,7 @@ export default function Category() {
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
     // Listing data (reacts to filters).
-    const { data, isLoading, isError, error } = useQuery({
+    const { data, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['categories', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/categories?${queryString}`)).data.data.items || [],
         keepPreviousData: true,
@@ -72,7 +72,7 @@ export default function Category() {
 
     // Main categories for the modal's parent dropdown — fetched independently so
     // it stays complete regardless of the listing filters.
-    const { data: mainCategories = [] } = useQuery({
+    const { data: mainCategories = [], refetch: refetchMainCategories } = useQuery({
         queryKey: ['main-categories'],
         queryFn: async () => (await axiosInstance.get('/admin/categories?type=main')).data.data.items || [],
     });
@@ -107,6 +107,8 @@ export default function Category() {
             toast.success(response.data.message || t('toggle_success', { defaultValue: 'Status updated successfully' }));
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             queryClient.invalidateQueries({ queryKey: ['main-categories'] });
+            refetch();
+            refetchMainCategories();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('toggle_error', { defaultValue: 'Failed to update status' }));
@@ -330,6 +332,10 @@ export default function Category() {
                     categoryToEdit={actionModal.categoryToEdit}
                     mainCategories={mainCategories}
                     onClose={() => setActionModal({ isOpen: false, categoryToEdit: null })}
+                    onSuccess={() => {
+                        refetch();
+                        refetchMainCategories();
+                    }}
                 />
             )}
 

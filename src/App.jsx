@@ -8,7 +8,15 @@ import { Toaster } from 'react-hot-toast'
 import { router } from "./route.jsx" 
 
 // تعريف وتجهيز الـ QueryClient
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    },
+  },
+})
 
 export default function App() {
   return (

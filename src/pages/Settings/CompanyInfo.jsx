@@ -30,7 +30,7 @@ export default function CompanyInfo() {
     const [logoPreview, setLogoPreview] = useState('');
 
     // Fetch company info
-    const { data: companyData, isLoading } = useQuery({
+    const { data: companyData, isLoading, refetch } = useQuery({
         queryKey: ['companyInfo'],
         queryFn: async () => {
             const res = await axiosInstance.get('/admin/company-info');
@@ -81,6 +81,7 @@ export default function CompanyInfo() {
         onSuccess: () => {
             toast.success(isArabic ? 'تم تحديث البيانات بنجاح!' : 'Company settings updated successfully!');
             queryClient.invalidateQueries({ queryKey: ['companyInfo'] });
+            refetch();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث البيانات' : 'Failed to update settings'));

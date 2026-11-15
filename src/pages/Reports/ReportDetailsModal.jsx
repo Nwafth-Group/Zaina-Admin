@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/axios.js';
 
-export default function ReportDetailsModal({ reportId, onClose }) {
+export default function ReportDetailsModal({ reportId, onClose, onSuccess }) {
     const { t, i18n } = useTranslation('reports');
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();
@@ -14,7 +14,7 @@ export default function ReportDetailsModal({ reportId, onClose }) {
     const [assignedAdminId, setAssignedAdminId] = useState('');
 
     // Fetch report details
-    const { data: report, isLoading, isError } = useQuery({
+    const { data: report, isLoading, isError, refetch } = useQuery({
         queryKey: ['reportDetails', reportId],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/reports/${reportId}`);
@@ -45,8 +45,10 @@ export default function ReportDetailsModal({ reportId, onClose }) {
         },
         onSuccess: (res) => {
             toast.success(isArabic ? 'تم تعيين البلاغ بنجاح' : 'Report assigned successfully');
-            queryClient.invalidateQueries(['reportDetails', reportId]);
-            queryClient.invalidateQueries(['reports']);
+            queryClient.invalidateQueries({ queryKey: ['reportDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['reports'] });
+            refetch();
+            onSuccess?.();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || 'Error assigning report');
@@ -61,7 +63,9 @@ export default function ReportDetailsModal({ reportId, onClose }) {
         onSuccess: () => {
             toast.success(isArabic ? 'تمت إضافة الملاحظة الداخلية بنجاح' : 'Internal notes added successfully');
             setAdminNoteInput('');
-            queryClient.invalidateQueries(['reportDetails', reportId]);
+            queryClient.invalidateQueries({ queryKey: ['reportDetails'] });
+            refetch();
+            onSuccess?.();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || 'Error adding notes');
@@ -76,8 +80,10 @@ export default function ReportDetailsModal({ reportId, onClose }) {
         onSuccess: () => {
             toast.success(isArabic ? 'تم تحديث حالة البلاغ وإشعار العميل' : 'Report status updated and customer notified');
             setStatusTransitionNote('');
-            queryClient.invalidateQueries(['reportDetails', reportId]);
-            queryClient.invalidateQueries(['reports']);
+            queryClient.invalidateQueries({ queryKey: ['reportDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['reports'] });
+            refetch();
+            onSuccess?.();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || 'Error updating status');

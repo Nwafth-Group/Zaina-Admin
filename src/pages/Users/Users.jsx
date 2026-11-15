@@ -105,7 +105,7 @@ export default function Users() {
         (filters.role ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
-    const { data, isLoading, isError, error } = useQuery({
+    const { data, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['users', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/users?${queryString}`)).data.data,
         keepPreviousData: true,
@@ -118,7 +118,10 @@ export default function Users() {
 
     const toggleStatusMutation = useMutation({
         mutationFn: (userId) => axiosInstance.patch(`/admin/users/${userId}/toggle-status`),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            refetch();
+        },
         onError: () => alert('حدث خطأ أثناء تغيير الحالة.'),
     });
 
@@ -329,7 +332,7 @@ export default function Users() {
                 </aside>
             </div>
 
-            {selectedUserId && <UserActionModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />}
+            {selectedUserId && <UserActionModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} onSuccess={() => refetch()} />}
             {resetPasswordUserId && <ResetPasswordModal userId={resetPasswordUserId} onClose={() => setResetPasswordUserId(null)} />}
 
         </div>

@@ -98,7 +98,7 @@ export default function Workers() {
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
     // 1. جلب العمال مع الفلاتر وترقيم الصفحات
-    const { data: paginatedData, isLoading, isError, error } = useQuery({
+    const { data: paginatedData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['workers', queryString],
         queryFn: async () => {
             const response = await axiosInstance.get(`/admin/workers?${queryString}`);
@@ -125,6 +125,7 @@ export default function Workers() {
         onSuccess: (response) => {
             toast.success(response.data?.message || 'تم تغيير الحالة بنجاح');
             queryClient.invalidateQueries({ queryKey: ['workers'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء العملية.' : 'An error occurred during the process.'), { duration: 6000 });
@@ -136,6 +137,7 @@ export default function Workers() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حذف العامل بنجاح' : 'Worker deleted successfully'));
             queryClient.invalidateQueries({ queryKey: ['workers'] });
+            refetch();
             setDeleteConfirm({ isOpen: false, workerId: null, workerName: '', hasBookings: false, bookingsCount: 0 });
         },
         onError: (error) => {
@@ -498,6 +500,7 @@ export default function Workers() {
                 <WorkerActionModal
                     workerToEdit={actionModal.workerToEdit}
                     onClose={() => setActionModal({ isOpen: false, workerToEdit: null })}
+                    onSuccess={() => refetch()}
                 />
             )}
 

@@ -29,7 +29,7 @@ export default function BannerDetails() {
     const queryClient = useQueryClient();
 
     // Fetch banner detail query
-    const { data: banner, isLoading, isError } = useQuery({
+    const { data: banner, isLoading, isError, refetch } = useQuery({
         queryKey: ['bannerDetail', bannerId],
         queryFn: async () => (await axiosInstance.get(`/admin/ads/${bannerId}`)).data.data,
         enabled: !!bannerId,
@@ -47,7 +47,8 @@ export default function BannerDetails() {
         },
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم تغيير حالة الإعلان' : 'Banner status updated'));
-            queryClient.invalidateQueries({ queryKey: ['bannerDetail', bannerId] });
+            queryClient.invalidateQueries({ queryKey: ['bannerDetail'] });
+            refetch();
             queryClient.invalidateQueries({ queryKey: ['banners'] });
         },
         onError: (error) => {

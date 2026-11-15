@@ -17,7 +17,7 @@ export default function LegalDocuments() {
     const lastCountsRef = useRef({ all: 0, terms: 0, privacy: 0, about_us: 0 });
 
     // Queries
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['legal-documents', selectedTab],
         queryFn: async () => {
             const url = selectedTab === 'all' ? '/admin/legal-documents' : `/admin/legal-documents?type=${selectedTab}`;

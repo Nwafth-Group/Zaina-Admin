@@ -75,7 +75,7 @@ export default function MobileNotifications() {
         (filters.audience ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
-    const { data: paginatedData, isLoading, isError, error } = useQuery({
+    const { data: paginatedData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['mobile-notifications', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/mobile-notifications?${queryString}`)).data.data,
         keepPreviousData: true,
@@ -95,6 +95,7 @@ export default function MobileNotifications() {
             toast.success(response.data?.message || (isArabic ? "تم إلغاء الإشعار بنجاح" : "Notification cancelled successfully"));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
             queryClient.refetchQueries({ queryKey: ['mobile-notifications'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء إلغاء الإشعار." : "Error cancelling notification."));
@@ -107,6 +108,7 @@ export default function MobileNotifications() {
             toast.success(response.data?.message || (isArabic ? "تم إرسال الإشعار بنجاح" : "Notification sent successfully"));
             queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
             queryClient.refetchQueries({ queryKey: ['mobile-notifications'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? "حدث خطأ أثناء إرسال الإشعار." : "Error sending notification."));

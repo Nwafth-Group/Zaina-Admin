@@ -94,7 +94,7 @@ export default function Employees() {
         (filters.created_to ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
-    const { data: paginatedData, isLoading, isError, error } = useQuery({
+    const { data: paginatedData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['employees', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/employees?${queryString}`)).data.data,
         keepPreviousData: true,
@@ -112,6 +112,7 @@ export default function Employees() {
         onSuccess: (response) => {
             toast.success(response.data?.message || "تم تغيير الحالة بنجاح");
             queryClient.invalidateQueries({ queryKey: ['employees'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "حدث خطأ أثناء العملية.");
@@ -123,6 +124,7 @@ export default function Employees() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? "تم حذف الموظف بنجاح" : "Employee deleted successfully"));
             queryClient.invalidateQueries({ queryKey: ['employees'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "حدث خطأ أثناء العملية.");
@@ -506,6 +508,7 @@ export default function Employees() {
                 <EmployeeActionModal
                     employeeToEdit={actionModal.employeeToEdit}
                     onClose={() => setActionModal({ isOpen: false, employeeToEdit: null })}
+                    onSuccess={() => refetch()}
                 />
             )}
         </div>

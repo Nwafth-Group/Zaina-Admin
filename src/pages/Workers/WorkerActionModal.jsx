@@ -91,7 +91,7 @@ export const isServiceAllowedForGender = (service, gender) => {
     return true;
 };
 
-export default function WorkerActionModal({ workerToEdit, onClose }) {
+export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) {
     const { t, i18n } = useTranslation('workers');
     const queryClient = useQueryClient();
     const isEditMode = !!workerToEdit;
@@ -329,6 +329,9 @@ export default function WorkerActionModal({ workerToEdit, onClose }) {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حفظ بيانات العامل بنجاح' : 'Worker details saved successfully'));
             queryClient.invalidateQueries({ queryKey: ['workers'] });
+            queryClient.invalidateQueries({ queryKey: ['worker-details'] });
+            queryClient.invalidateQueries({ queryKey: ['workerDetails'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

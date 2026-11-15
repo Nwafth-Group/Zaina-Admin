@@ -32,7 +32,7 @@ export default function ServiceZones() {
         return params.toString();
     }, [page, search]);
 
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['service-zones', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/service-zones?${queryString}`)).data,
         keepPreviousData: true,
@@ -46,6 +46,7 @@ export default function ServiceZones() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حذف منطقة التغطية بنجاح' : 'Zone deleted'));
             queryClient.invalidateQueries({ queryKey: ['service-zones'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? 'حدث خطأ أثناء الحذف' : 'Error deleting zone'));

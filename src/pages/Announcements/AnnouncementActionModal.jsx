@@ -10,7 +10,7 @@ import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, FormSection } from '../../components/form/FormKit';
 import CustomerSelect from './CustomerSelect';
 
-export default function AnnouncementActionModal({ announcementToEdit, onClose }) {
+export default function AnnouncementActionModal({ announcementToEdit, onClose, onSuccess }) {
     const { t } = useTranslation('announcements');
     const queryClient = useQueryClient();
     const isEditMode = !!announcementToEdit;
@@ -56,6 +56,8 @@ export default function AnnouncementActionModal({ announcementToEdit, onClose })
         onSuccess: (response) => {
             toast.success(response.data?.message || t('saved'));
             queryClient.invalidateQueries({ queryKey: ['announcements'] });
+            queryClient.invalidateQueries({ queryKey: ['announcementDetails'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

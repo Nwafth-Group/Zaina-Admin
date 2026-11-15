@@ -11,7 +11,7 @@ import { INPUT_CLASS, LABEL_CLASS, SelectField, OptionCards, FormSection } from 
 
 const DISABLED_INPUT = 'w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed outline-none';
 
-export default function UserActionModal({ userId, onClose }) {
+export default function UserActionModal({ userId, onClose, onSuccess }) {
     const { t } = useTranslation('users');
     const queryClient = useQueryClient();
 
@@ -53,6 +53,8 @@ export default function UserActionModal({ userId, onClose }) {
         onSuccess: (response) => {
             toast.success(response.data.message || 'تم تحديث بيانات المستخدم بنجاح');
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['user'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

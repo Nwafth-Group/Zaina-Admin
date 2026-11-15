@@ -9,7 +9,7 @@ import * as yup from 'yup';
 import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, FormSection, SelectField } from '../../components/form/FormKit';
 
-export default function MobileNotificationActionModal({ notificationToEdit, onClose }) {
+export default function MobileNotificationActionModal({ notificationToEdit, onClose, onSuccess }) {
     const { t, i18n } = useTranslation('notifications');
     const isArabic = i18n.language?.startsWith('ar');
     const queryClient = useQueryClient();

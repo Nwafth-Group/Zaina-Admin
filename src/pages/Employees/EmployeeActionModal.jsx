@@ -9,7 +9,7 @@ import * as yup from 'yup';
 import FullScreenFormModal from '../../components/form/FullScreenFormModal';
 import { INPUT_CLASS, LABEL_CLASS, SelectField, OptionCards, FormSection } from '../../components/form/FormKit';
 
-export default function EmployeeActionModal({ employeeToEdit, onClose }) {
+export default function EmployeeActionModal({ employeeToEdit, onClose, onSuccess }) {
     const { t } = useTranslation('employees');
     const queryClient = useQueryClient();
     const isEditMode = !!employeeToEdit;
@@ -112,6 +112,7 @@ export default function EmployeeActionModal({ employeeToEdit, onClose }) {
         onSuccess: (response) => {
             toast.success(response.data?.message || 'تم حفظ بيانات الموظف بنجاح');
             queryClient.invalidateQueries({ queryKey: ['employees'] });
+            onSuccess?.();
             onClose();
         },
         onError: (error) => {

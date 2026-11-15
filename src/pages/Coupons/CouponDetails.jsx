@@ -53,7 +53,7 @@ export default function CouponDetails() {
     const queryClient = useQueryClient();
 
     // Fetch coupon detail query
-    const { data: coupon, isLoading, isError } = useQuery({
+    const { data: coupon, isLoading, isError, refetch } = useQuery({
         queryKey: ['couponDetail', couponId],
         queryFn: async () => (await axiosInstance.get(`/admin/coupons/${couponId}`)).data.data,
         enabled: !!couponId,
@@ -97,8 +97,9 @@ export default function CouponDetails() {
         },
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم تغيير حالة الكوبون' : 'Coupon status updated'));
-            queryClient.invalidateQueries({ queryKey: ['couponDetail', couponId] });
+            queryClient.invalidateQueries({ queryKey: ['couponDetail'] });
             queryClient.invalidateQueries({ queryKey: ['coupons'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || (isArabic ? 'فشل تغيير الحالة' : 'Failed to update status'));

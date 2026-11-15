@@ -29,7 +29,7 @@ export default function Reviews() {
     const [selectedReview, setSelectedReview] = useState(null);
 
     // Fetch reviews query
-    const { data: responseData, isLoading, isError, error } = useQuery({
+    const { data: responseData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['adminReviews', activeTab, targetType, searchQuery, currentPage, perPage],
         queryFn: async () => {
             const params = new URLSearchParams({
@@ -65,6 +65,7 @@ export default function Reviews() {
         onSuccess: (data) => {
             toast.success(data.message || (isArabic ? 'تم اعتماد التقييم بنجاح' : 'Review approved successfully'));
             queryClient.invalidateQueries({ queryKey: ['adminReviews'] });
+            refetch();
             setSelectedReview(null);
         },
         onError: (err) => {
@@ -83,6 +84,7 @@ export default function Reviews() {
         onSuccess: (data) => {
             toast.success(data.message || (isArabic ? 'تم رفض التقييم بنجاح' : 'Review rejected successfully'));
             queryClient.invalidateQueries({ queryKey: ['adminReviews'] });
+            refetch();
             setSelectedReview(null);
         },
         onError: (err) => {

@@ -79,7 +79,7 @@ export default function Banners() {
         (filters.status ? 1 : 0) +
         (filters.sort_by !== DEFAULT_FILTERS.sort_by || filters.sort_dir !== DEFAULT_FILTERS.sort_dir ? 1 : 0);
 
-    const { data: paginatedData, isLoading, isError, error } = useQuery({
+    const { data: paginatedData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['banners', queryString],
         queryFn: async () => (await axiosInstance.get(`/admin/ads?${queryString}`)).data.data,
         keepPreviousData: true,
@@ -98,6 +98,7 @@ export default function Banners() {
         onSuccess: (response) => {
             toast.success(response.data?.message || t('toggled'));
             queryClient.invalidateQueries({ queryKey: ['banners'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('error'));
@@ -109,6 +110,7 @@ export default function Banners() {
         onSuccess: (response) => {
             toast.success(response.data?.message || (isArabic ? 'تم حذف الإعلان بنجاح' : 'Banner deleted successfully'));
             queryClient.invalidateQueries({ queryKey: ['banners'] });
+            refetch();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || t('error'));

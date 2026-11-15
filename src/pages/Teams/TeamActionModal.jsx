@@ -15,7 +15,7 @@ import {
     FormSection,
 } from '../../components/form/FormKit';
 
-export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
+export default function TeamActionModal({ teamToEdit, isOpen, onClose, onSuccess }) {
     const { i18n } = useTranslation();
     const queryClient = useQueryClient();
     const isEditMode = !!teamToEdit;
@@ -148,8 +148,10 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose }) {
         onSuccess: (res) => {
             toast.success(res.data?.message || (isArabic ? 'تم حفظ بيانات الفريق بنجاح' : 'Team saved successfully'));
             queryClient.invalidateQueries({ queryKey: ['teams'] });
+            queryClient.invalidateQueries({ queryKey: ['team-details'] });
             queryClient.invalidateQueries({ queryKey: ['workers'] });
             queryClient.invalidateQueries({ queryKey: ['services'] });
+            onSuccess?.();
             onClose();
         },
         onError: (err) => {

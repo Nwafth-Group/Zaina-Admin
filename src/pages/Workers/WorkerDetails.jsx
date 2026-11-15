@@ -81,7 +81,7 @@ export default function WorkerDetails() {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('profile'); // profile | bookings | reviews
 
-    const { data, isLoading, isError } = useQuery({
+    const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['worker-details', workerId],
         queryFn: async () => (await axiosInstance.get(`/admin/workers/${workerId}/details`)).data.data,
         enabled: !!workerId,
@@ -91,8 +91,10 @@ export default function WorkerDetails() {
         mutationFn: async () => axiosInstance.post(`/admin/workers/${workerId}/toggle-status`),
         onSuccess: (res) => {
             toast.success(res.data?.message || (isArabic ? 'تم تحديث حالة العامل بنجاح' : 'Worker status updated successfully'));
+            queryClient.invalidateQueries({ queryKey: ['worker-details'] });
             queryClient.invalidateQueries({ queryKey: ['worker-details', workerId] });
             queryClient.invalidateQueries({ queryKey: ['workers'] });
+            refetch();
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || (isArabic ? 'فشل تحديث حالة العامل' : 'Failed to update worker status'), { duration: 6000 });
