@@ -317,7 +317,7 @@ export default function BookingDetails() {
                         )}
 
                         {/* Update Status Dropdown */}
-                        {!isTerminal && hasPermission('bookings.edit') && (
+                        {status !== 'cancelled' && hasPermission('bookings.edit') && (
                             <div className="relative">
                                 <button
                                     type="button"
@@ -567,7 +567,7 @@ export default function BookingDetails() {
                                                 <span>{t('details.service')}</span>
                                             </h4>
 
-                                            {canModifyWorkersOrSchedule && hasPermission('bookings.edit') && (
+                                            {status !== 'cancelled' && hasPermission('bookings.edit') && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setRescheduleOpen(true)}

@@ -146,21 +146,22 @@ export default function Operations() {
         },
     });
 
-    // Mutation: Complete Service
+    // Mutation: Update Times & Complete Service (Both start & end on same day)
     const completeServiceMutation = useMutation({
-        mutationFn: async ({ bookingId, actual_end_time }) => {
-            return (await axiosInstance.post(`/admin/operations/bookings/${bookingId}/complete`, {
+        mutationFn: async ({ bookingId, actual_start_time, actual_end_time }) => {
+            return (await axiosInstance.post(`/admin/operations/bookings/${bookingId}/update-times`, {
+                actual_start_time,
                 actual_end_time,
                 date: selectedDate,
             })).data;
         },
         onSuccess: (res) => {
-            toast.success(res?.message || (isArabic ? 'تم إنهاء الخدمة بنجاح' : 'Service completed successfully'));
+            toast.success(res?.message || (isArabic ? 'تم تحديث أوقات الخدمة وإنهائها بنجاح' : 'Service times updated and completed successfully'));
             queryClient.invalidateQueries({ queryKey: ['daily-operations'] });
             setCompleteModalBooking(null);
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء إنهاء الخدمة' : 'Error completing service'));
+            toast.error(err.response?.data?.message || (isArabic ? 'حدث خطأ أثناء حفظ أوقات الخدمة' : 'Error updating service times'));
         },
     });
 
@@ -224,13 +225,23 @@ export default function Operations() {
     });
 
     const openStartModal = (booking) => {
+        if (!booking.transport?.driver_name) {
+            toast.error(isArabic ? 'لا يمكن بدء الخدمة قبل تعيين سائق لنقل العاملات في قسم الترحيل والنقل.' : 'Cannot start service until a driver is assigned for transport.');
+            return;
+        }
         setStartModalBooking(booking);
         const nowTime = new Date().toTimeString().substring(0, 5);
         setStartTimeInput(nowTime);
     };
 
     const openCompleteModal = (booking) => {
+        if (!booking.transport?.driver_name) {
+            toast.error(isArabic ? 'لا يمكن إنهاء الخدمة قبل تعيين سائق لنقل العاملات في قسم الترحيل والنقل.' : 'Cannot complete service until a driver is assigned for transport.');
+            return;
+        }
         setCompleteModalBooking(booking);
+        const existingStart = booking.actual_start_time || booking.planned_start_time || '08:00';
+        setStartTimeInput(existingStart.length >= 5 ? existingStart.substring(0, 5) : '08:00');
         const nowTime = new Date().toTimeString().substring(0, 5);
         setEndTimeInput(nowTime);
     };
@@ -769,31 +780,61 @@ export default function Operations() {
 
                                                     <td className="py-3.5 px-4 text-center">
                                                         <div className="flex flex-col gap-1 items-center justify-center">
-                                                            {b.status !== 'inService' && b.status !== 'completed' && b.status !== 'cancelled' && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => openStartModal(b)}
-                                                                    className="w-full px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-2xs"
-                                                                >
-                                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                                                                    </svg>
-                                                                    <span>{isArabic ? 'بدء الخدمة' : 'Start'}</span>
-                                                                </button>
-                                                            )}
+                                                            {(() => {
+                                                                const hasDriver = Boolean(b.transport?.driver_name);
 
-                                                            {b.status === 'inService' && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => openCompleteModal(b)}
-                                                                    className="w-full px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-2xs"
-                                                                >
-                                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                    </svg>
-                                                                    <span>{isArabic ? 'إنهاء الخدمة' : 'Complete'}</span>
-                                                                </button>
-                                                            )}
+                                                                return (
+                                                                    <>
+                                                                        {b.status !== 'inService' && b.status !== 'completed' && b.status !== 'cancelled' && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => openStartModal(b)}
+                                                                                className={`w-full px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-2xs ${
+                                                                                    hasDriver
+                                                                                        ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                                                                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                                                                                }`}
+                                                                                title={!hasDriver ? (isArabic ? 'لا يمكن بدء الخدمة قبل تعيين سائق للنقل' : 'Cannot start until driver is assigned') : ''}
+                                                                            >
+                                                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                                                                                </svg>
+                                                                                <span>{isArabic ? 'بدء الخدمة' : 'Start'}</span>
+                                                                            </button>
+                                                                        )}
+
+                                                                        {b.status === 'inService' && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => openCompleteModal(b)}
+                                                                                className={`w-full px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-2xs ${
+                                                                                    hasDriver
+                                                                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                                                                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                                                                                }`}
+                                                                                title={!hasDriver ? (isArabic ? 'لا يمكن إنهاء الخدمة قبل تعيين سائق للنقل' : 'Cannot complete until driver is assigned') : ''}
+                                                                            >
+                                                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                </svg>
+                                                                                <span>{isArabic ? 'إنهاء الخدمة' : 'Complete'}</span>
+                                                                            </button>
+                                                                        )}
+
+                                                                        {b.status === 'completed' && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => openCompleteModal(b)}
+                                                                                className="w-full px-2 py-0.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-[9px] font-bold transition flex items-center justify-center gap-1"
+                                                                                title={isArabic ? 'تعديل أوقات البدء والانتهاء معاً في نفس اليوم' : 'Edit execution times together on same day'}
+                                                                            >
+                                                                                <span>⏱️</span>
+                                                                                <span>{isArabic ? 'تعديل التوقيت' : 'Edit Times'}</span>
+                                                                            </button>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
 
                                                             {(b.is_at_risk || !b.team && !b.worker) && b.status !== 'completed' && b.status !== 'cancelled' && (
                                                                 <button
@@ -1220,26 +1261,41 @@ export default function Operations() {
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 space-y-1">
                             <div className="font-bold flex items-center gap-1.5">
                                 <span>⚡</span>
-                                <span>{isArabic ? 'محرك فحص المخاطر التلقائي (US-A36):' : 'Automatic Risk Cascade Engine:'}</span>
+                                <span>{isArabic ? 'قاعدة التوقيت ومحرك فحص المخاطر (US-A36):' : 'Same-Day Timing & Risk Cascade Engine:'}</span>
                             </div>
                             <p>
                                 {isArabic
-                                    ? 'عند تسجيل وقت الانتهاء، سيتحقق النظام تلقائياً من توفر فاصل انتقال لا يقل عن 60 دقيقة للحجز التالي لنفس المورد. في حال عدم كفاية الفاصل، سيتم وسم الحجز التالي بـ At Risk فوراً.'
-                                    : 'Submitting actual end time will verify the 60-min transition gap for the next scheduled booking. If deficit occurs, the next booking will automatically be marked At-Risk.'}
+                                    ? `تاريخ الخدمة: ${selectedDate}. يجب تحديد وقتي البدء والانتهاء معاً في نفس اليوم، ولا يمكن تحديث وقت واحد فقط. كما يُلزم تعيين سائق للنقل مسبقاً.`
+                                    : `Service Date: ${selectedDate}. Both start and end times must be defined together on the same day. Driver assignment is required.`}
                             </p>
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">
-                                {isArabic ? 'وقت الانتهاء الفعلي (HH:MM) *' : 'Actual End Time (HH:MM) *'}
-                            </label>
-                            <input
-                                type="time"
-                                required
-                                value={endTimeInput}
-                                onChange={(e) => setEndTimeInput(e.target.value)}
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono font-bold focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                    {isArabic ? 'وقت البدء الفعلي (HH:MM) *' : 'Actual Start Time (HH:MM) *'}
+                                </label>
+                                <input
+                                    type="time"
+                                    required
+                                    value={startTimeInput}
+                                    onChange={(e) => setStartTimeInput(e.target.value)}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono font-bold focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                    {isArabic ? 'وقت الانتهاء الفعلي (HH:MM) *' : 'Actual End Time (HH:MM) *'}
+                                </label>
+                                <input
+                                    type="time"
+                                    required
+                                    value={endTimeInput}
+                                    onChange={(e) => setEndTimeInput(e.target.value)}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono font-bold focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none"
+                                />
+                            </div>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
@@ -1253,12 +1309,21 @@ export default function Operations() {
                             <button
                                 type="button"
                                 disabled={completeServiceMutation.isLoading}
-                                onClick={() =>
+                                onClick={() => {
+                                    if (!startTimeInput || !endTimeInput) {
+                                        toast.error(isArabic ? 'يجب إدخال وقتي البدء والانتهاء معاً في نفس اليوم، لا يمكن إدخال وقت واحد فقط.' : 'Both start time and end time must be entered together on the same day.');
+                                        return;
+                                    }
+                                    if (endTimeInput <= startTimeInput) {
+                                        toast.error(isArabic ? 'وقت الانتهاء الفعلي يجب أن يكون بعد وقت البدء وفي نفس اليوم.' : 'End time must be after start time on the same day.');
+                                        return;
+                                    }
                                     completeServiceMutation.mutate({
                                         bookingId: completeModalBooking.id,
+                                        actual_start_time: startTimeInput,
                                         actual_end_time: endTimeInput,
-                                    })
-                                }
+                                    });
+                                }}
                                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
                             >
                                 {completeServiceMutation.isLoading ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : (isArabic ? 'تأكيد إنهاء الخدمة' : 'Confirm Complete')}
