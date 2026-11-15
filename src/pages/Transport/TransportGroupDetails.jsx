@@ -179,21 +179,82 @@ export default function TransportGroupDetails() {
         const maxMins = getMaxDepartureTimeMinutes(shiftFormatted);
         const defaultDepartureTime = formatMinutesTo24Hour(maxMins);
 
-        let existingDriverId = worker.assigned_driver?.id || '';
-        let existingDepPointId = worker.departure_point?.id || (departurePoints[0]?.id ?? '');
-        let existingDepTime = worker.departure_time ? worker.departure_time.substring(0, 5) : defaultDepartureTime;
+        let initialDriverId = worker.assigned_driver?.id || '';
+        let initialDepPointId = worker.departure_point?.id || '';
+        let initialDepTime = worker.departure_time ? worker.departure_time.substring(0, 5) : '';
 
-        if (!existingDriverId && drivers.length > 0) {
-            existingDriverId = drivers[0].id;
+        // If worker is unassigned, check if any sibling worker in the same booking has an assigned driver
+        if (!initialDriverId) {
+            const siblingWithDriver = booking.workers?.find((w) => w.is_assigned && w.assigned_driver?.id);
+            if (siblingWithDriver) {
+                initialDriverId = siblingWithDriver.assigned_driver.id;
+                initialDepPointId = siblingWithDriver.departure_point?.id || '';
+                initialDepTime = siblingWithDriver.departure_time ? siblingWithDriver.departure_time.substring(0, 5) : '';
+            } else if (drivers.length > 0) {
+                initialDriverId = drivers[0].id;
+            }
+        }
+
+        // If driver is determined, check if driver already has an active manifest for this booking's zone or shift
+        if (initialDriverId && (!initialDepPointId || !initialDepTime)) {
+            const driverManifest = details.driver_manifests?.find((m) =>
+                String(m.driver_id) === String(initialDriverId) &&
+                m.passengers?.some((p) => {
+                    const b = details.bookings?.find((bkg) => bkg.id === p.booking_id);
+                    return b && (b.area === booking.area || b.governorate === booking.governorate);
+                })
+            ) || details.driver_manifests?.find((m) => String(m.driver_id) === String(initialDriverId));
+
+            if (driverManifest) {
+                initialDepPointId = driverManifest.departure_point?.id || initialDepPointId;
+                initialDepTime = driverManifest.departure_time ? driverManifest.departure_time.substring(0, 5) : initialDepTime;
+            }
+        }
+
+        if (!initialDepPointId && departurePoints.length > 0) {
+            initialDepPointId = departurePoints[0].id;
+        }
+        if (!initialDepTime) {
+            initialDepTime = defaultDepartureTime;
         }
 
         setAssignForm({
-            driver_id: existingDriverId,
-            departure_point_id: existingDepPointId,
-            departure_time: existingDepTime,
+            driver_id: initialDriverId,
+            departure_point_id: initialDepPointId,
+            departure_time: initialDepTime,
             notes: '',
         });
         setIsAssignModalOpen(true);
+    };
+
+    const handleDriverSelectChange = (newDriverId) => {
+        if (!newDriverId) {
+            setAssignForm((prev) => ({ ...prev, driver_id: '' }));
+            return;
+        }
+
+        const currentBooking = selectedWorkerTarget?.booking;
+        const matchingManifest = details.driver_manifests?.find((m) =>
+            String(m.driver_id) === String(newDriverId) &&
+            m.passengers?.some((p) => {
+                const b = details.bookings?.find((bkg) => bkg.id === p.booking_id);
+                return b && (b.area === currentBooking?.area || b.governorate === currentBooking?.governorate);
+            })
+        ) || details.driver_manifests?.find((m) => String(m.driver_id) === String(newDriverId));
+
+        if (matchingManifest) {
+            setAssignForm((prev) => ({
+                ...prev,
+                driver_id: newDriverId,
+                departure_point_id: matchingManifest.departure_point?.id || prev.departure_point_id || (departurePoints[0]?.id ?? ''),
+                departure_time: matchingManifest.departure_time ? matchingManifest.departure_time.substring(0, 5) : prev.departure_time,
+            }));
+        } else {
+            setAssignForm((prev) => ({
+                ...prev,
+                driver_id: newDriverId,
+            }));
+        }
     };
 
     const handleAssignSubmit = (e) => {
@@ -809,7 +870,7 @@ export default function TransportGroupDetails() {
                                 <select
                                     required
                                     value={assignForm.driver_id}
-                                    onChange={(e) => setAssignForm({ ...assignForm, driver_id: e.target.value })}
+                                    onChange={(e) => handleDriverSelectChange(e.target.value)}
                                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63] outline-none bg-white font-medium"
                                 >
                                     <option value="">{isArabic ? '-- اختر سائقاً --' : '-- Select Driver --'}</option>
@@ -818,14 +879,56 @@ export default function TransportGroupDetails() {
                                         const currentLoad = manifest?.assigned_passengers_count || 0;
                                         const cap = d.vehicle_capacity || 5;
                                         const isFull = currentLoad >= cap;
+                                        const tripInfo = manifest?.departure_time ? ` [رحلة: ${format12Hour(manifest.departure_time)}]` : '';
 
                                         return (
                                             <option key={d.id} value={d.id}>
-                                                {d.name} — {d.vehicle_type || 'حافلة'} (الحمولة: {currentLoad}/{cap} مقاعد) {isFull ? '⚠️ [ممتلئة]' : ''}
+                                                {d.name} — {d.vehicle_type || 'حافلة'} (الحمولة: {currentLoad}/{cap} مقاعد){tripInfo} {isFull ? '⚠️ [ممتلئة]' : ''}
                                             </option>
                                         );
                                     })}
                                 </select>
+
+                                {/* Pre-scheduled Driver Trip Info Badge */}
+                                {(() => {
+                                    if (!assignForm.driver_id || !selectedWorkerTarget) return null;
+                                    const currentBkg = selectedWorkerTarget.booking;
+                                    const matchingManifest = details.driver_manifests?.find((m) =>
+                                        String(m.driver_id) === String(assignForm.driver_id) &&
+                                        m.passengers?.some((p) => {
+                                            const b = details.bookings?.find((bkg) => bkg.id === p.booking_id);
+                                            return b && (b.area === currentBkg?.area || b.governorate === currentBkg?.governorate);
+                                        })
+                                    ) || details.driver_manifests?.find((m) => String(m.driver_id) === String(assignForm.driver_id));
+
+                                    if (!matchingManifest) return null;
+
+                                    return (
+                                        <div className="mt-1.5 p-2 bg-emerald-50/80 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 flex items-center justify-between">
+                                            <span className="flex items-center gap-1.5 font-bold">
+                                                <span>🚐</span>
+                                                <span>
+                                                    {isArabic
+                                                        ? `رحلة السائق المجدولة: ${matchingManifest.departure_point?.name || 'سكن العاملات'} — ${format12Hour(matchingManifest.departure_time)}`
+                                                        : `Driver run: ${matchingManifest.departure_point?.name || 'Depot'} — ${format12Hour(matchingManifest.departure_time)}`}
+                                                </span>
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setAssignForm((prev) => ({
+                                                        ...prev,
+                                                        departure_point_id: matchingManifest.departure_point?.id || prev.departure_point_id,
+                                                        departure_time: matchingManifest.departure_time ? matchingManifest.departure_time.substring(0, 5) : prev.departure_time,
+                                                    }));
+                                                }}
+                                                className="text-[10px] font-black text-emerald-700 underline hover:text-emerald-900 cursor-pointer"
+                                            >
+                                                {isArabic ? 'مطابقة الرحلة' : 'Match Trip'}
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* Departure Point Select */}
