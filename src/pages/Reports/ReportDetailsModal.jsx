@@ -22,15 +22,24 @@ export default function ReportDetailsModal({ reportId, onClose, onSuccess }) {
         },
     });
 
-    // Fetch employees list for assignment dropdown
-    const { data: employeesPage } = useQuery({
-        queryKey: ['adminEmployeesList'],
+    // Fetch employees list for assignment dropdown (filtered strictly to employees with reports permission)
+    const { data: assignableEmployeesData, isLoading: isEmployeesLoading } = useQuery({
+        queryKey: ['reportAssignableEmployees'],
         queryFn: async () => {
-            const response = await axiosInstance.get('/admin/employees?per_page=100');
+            const response = await axiosInstance.get('/admin/reports/assignable-employees');
             return response.data.data;
         },
     });
-    const employees = employeesPage?.items || [];
+    const employees = Array.isArray(assignableEmployeesData) ? assignableEmployeesData : [];
+
+    // Ensure currently assigned admin is preserved in the list
+    const displayEmployees = React.useMemo(() => {
+        const list = [...employees];
+        if (report?.assigned_admin?.id && !list.some(e => e.id === report.assigned_admin.id)) {
+            list.unshift(report.assigned_admin);
+        }
+        return list;
+    }, [employees, report?.assigned_admin]);
 
     useEffect(() => {
         if (report?.assigned_admin?.id) {
@@ -289,19 +298,35 @@ export default function ReportDetailsModal({ reportId, onClose, onSuccess }) {
                         
                         {/* Assignment Section */}
                         <div className="bg-[#F8F9FA] p-5 rounded-2xl border border-gray-100 space-y-3">
-                            <h4 className="font-bold text-gray-800 text-sm">{t('details.assigned_admin_label')}</h4>
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-gray-800 text-sm">{t('details.assigned_admin_label')}</h4>
+                                {isEmployeesLoading && (
+                                    <span className="text-xs text-gray-400 animate-pulse">
+                                        {isArabic ? 'جاري التحميل...' : 'Loading...'}
+                                    </span>
+                                )}
+                            </div>
                             <select
                                 value={assignedAdminId}
                                 onChange={handleAssignChange}
+                                disabled={assignMutation.isLoading || isEmployeesLoading}
                                 className="w-full bg-white text-gray-800 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#E91E63] focus:border-[#E91E63]"
                             >
                                 <option value="">{t('details.assign_placeholder')}</option>
-                                {employees.map((emp) => (
+                                {displayEmployees.map((emp) => (
                                     <option key={emp.id} value={String(emp.id)} className="text-gray-800 bg-white">
-                                        {emp.full_name || `${emp.first_name} ${emp.last_name}`}
+                                        {emp.full_name || emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim()}
+                                        {emp.primary_role ? ` (${emp.primary_role})` : ''}
                                     </option>
                                 ))}
                             </select>
+                            {displayEmployees.length === 0 && !isEmployeesLoading && (
+                                <p className="text-xs text-amber-600 mt-1">
+                                    {isArabic
+                                        ? 'لا يوجد موظفون لديهم صلاحية متابعة التذاكر (reports.edit).'
+                                        : 'No employees found with reports permission (reports.edit).'}
+                                </p>
+                            )}
                         </div>
 
                         {report.status !== 'resolved' && (
