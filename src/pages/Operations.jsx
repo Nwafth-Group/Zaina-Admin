@@ -224,9 +224,44 @@ export default function Operations() {
         },
     });
 
+    const getOperationalReadiness = (booking) => {
+        const isTeam = Boolean(booking.service?.is_team_based);
+        const hasTeam = Boolean(booking.team?.id);
+        const assignedWorkersCount = (booking.crew?.length || 0) || (booking.workers?.length || 0) || (booking.worker ? 1 : 0);
+        const requiredWorkers = booking.service?.required_workers || 1;
+        const hasWorkers = !isTeam && assignedWorkersCount >= requiredWorkers && assignedWorkersCount > 0;
+        const hasResource = isTeam ? hasTeam : hasWorkers;
+        const hasDriver = Boolean(booking.transport?.driver_id && booking.transport?.driver_name);
+        const canStart = booking.can_start !== undefined ? Boolean(booking.can_start) : (hasDriver && hasResource);
+
+        let cannotStartReason = booking.cannot_start_reason;
+        if (!cannotStartReason && !canStart) {
+            const missing = [];
+            if (!hasDriver) missing.push(isArabic ? 'سائق النقل' : 'Transport Driver');
+            if (isTeam && !hasTeam) missing.push(isArabic ? 'فريق العمل' : 'Work Team');
+            if (!isTeam && !hasWorkers) missing.push(isArabic ? `العاملات المطلوبة (${assignedWorkersCount}/${requiredWorkers})` : `Workers (${assignedWorkersCount}/${requiredWorkers})`);
+            cannotStartReason = isArabic
+                ? `لا يمكن بدء الخدمة قبل تعيين: ${missing.join('، ')}`
+                : `Cannot start service until assigned: ${missing.join(', ')}`;
+        }
+
+        return {
+            isTeam,
+            hasTeam,
+            hasWorkers,
+            hasResource,
+            hasDriver,
+            canStart,
+            cannotStartReason,
+            assignedWorkersCount,
+            requiredWorkers,
+        };
+    };
+
     const openStartModal = (booking) => {
-        if (!booking.transport?.driver_name) {
-            toast.error(isArabic ? 'لا يمكن بدء الخدمة قبل تعيين سائق لنقل العاملات في قسم الترحيل والنقل.' : 'Cannot start service until a driver is assigned for transport.');
+        const readiness = getOperationalReadiness(booking);
+        if (!readiness.canStart) {
+            toast.error(readiness.cannotStartReason);
             return;
         }
         setStartModalBooking(booking);
@@ -235,9 +270,12 @@ export default function Operations() {
     };
 
     const openCompleteModal = (booking) => {
-        if (!booking.transport?.driver_name) {
-            toast.error(isArabic ? 'لا يمكن إنهاء الخدمة قبل تعيين سائق لنقل العاملات في قسم الترحيل والنقل.' : 'Cannot complete service until a driver is assigned for transport.');
-            return;
+        if (booking.status !== 'completed') {
+            const readiness = getOperationalReadiness(booking);
+            if (!readiness.canStart) {
+                toast.error(readiness.cannotStartReason);
+                return;
+            }
         }
         setCompleteModalBooking(booking);
         const existingStart = booking.actual_start_time || booking.planned_start_time || '08:00';
@@ -781,20 +819,21 @@ export default function Operations() {
                                                     <td className="py-3.5 px-4 text-center">
                                                         <div className="flex flex-col gap-1 items-center justify-center">
                                                             {(() => {
-                                                                const hasDriver = Boolean(b.transport?.driver_name);
+                                                                const readiness = getOperationalReadiness(b);
 
                                                                 return (
                                                                     <>
                                                                         {b.status !== 'inService' && b.status !== 'completed' && b.status !== 'cancelled' && (
                                                                             <button
                                                                                 type="button"
+                                                                                disabled={!readiness.canStart}
                                                                                 onClick={() => openStartModal(b)}
                                                                                 className={`w-full px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-2xs ${
-                                                                                    hasDriver
+                                                                                    readiness.canStart
                                                                                         ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
-                                                                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                                                                                        : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed hover:bg-gray-200'
                                                                                 }`}
-                                                                                title={!hasDriver ? (isArabic ? 'لا يمكن بدء الخدمة قبل تعيين سائق للنقل' : 'Cannot start until driver is assigned') : ''}
+                                                                                title={!readiness.canStart ? readiness.cannotStartReason : (isArabic ? 'بدء تنفيذ الخدمة' : 'Start Service Execution')}
                                                                             >
                                                                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
@@ -806,13 +845,14 @@ export default function Operations() {
                                                                         {b.status === 'inService' && (
                                                                             <button
                                                                                 type="button"
+                                                                                disabled={!readiness.canStart}
                                                                                 onClick={() => openCompleteModal(b)}
                                                                                 className={`w-full px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-2xs ${
-                                                                                    hasDriver
+                                                                                    readiness.canStart
                                                                                         ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
-                                                                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                                                                                        : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed hover:bg-gray-200'
                                                                                 }`}
-                                                                                title={!hasDriver ? (isArabic ? 'لا يمكن إنهاء الخدمة قبل تعيين سائق للنقل' : 'Cannot complete until driver is assigned') : ''}
+                                                                                title={!readiness.canStart ? readiness.cannotStartReason : (isArabic ? 'إنهاء الخدمة وتوثيق التوقيت الفعلي' : 'Complete Service Execution')}
                                                                             >
                                                                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1235,6 +1275,7 @@ export default function Operations() {
                                     startServiceMutation.mutate({
                                         bookingId: startModalBooking.id,
                                         actual_start_time: startTimeInput,
+                                        date: selectedDate,
                                     })
                                 }
                                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
@@ -1322,6 +1363,7 @@ export default function Operations() {
                                         bookingId: completeModalBooking.id,
                                         actual_start_time: startTimeInput,
                                         actual_end_time: endTimeInput,
+                                        date: selectedDate,
                                     });
                                 }}
                                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
