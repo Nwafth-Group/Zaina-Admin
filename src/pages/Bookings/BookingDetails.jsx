@@ -1170,13 +1170,14 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
         }
     });
 
+    const requiredLimit = Number(booking.number_of_workers || booking.service?.min_workers || booking.service?.max_workers || 1);
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        const limit = booking.number_of_workers || 1;
-        if (selectedIds.length !== limit) {
+        if (selectedIds.length !== requiredLimit) {
             toast.error(isArabic
-                ? `يجب اختيار ${limit} عامل(ة) بالضبط لهذا الحجز.`
-                : `You must select exactly ${limit} worker(s) for this booking.`
+                ? `يجب اختيار ${requiredLimit} عامل(ة) بالضبط لهذا الحجز (ليتطابق مع الحد الأدنى والأقصى).`
+                : `You must select exactly ${requiredLimit} worker(s) for this booking (matching min and max).`
             );
             return;
         }
@@ -1202,11 +1203,10 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
             if (prev.includes(id)) {
                 return prev.filter(wId => wId !== id);
             }
-            const limit = booking.number_of_workers || 1;
-            if (prev.length >= limit) {
+            if (prev.length >= requiredLimit) {
                 toast.error(isArabic
-                    ? `لا يمكنك اختيار أكثر من ${limit} عامل(ة) لهذا الحجز.`
-                    : `You cannot select more than ${limit} worker(s) for this booking.`
+                    ? `لا يمكنك اختيار أكثر من ${requiredLimit} عامل(ة) لهذا الحجز.`
+                    : `You cannot select more than ${requiredLimit} worker(s) for this booking.`
                 );
                 return prev;
             }
@@ -1229,15 +1229,24 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
 
                 <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-1">
                     <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                {isArabic ? 'العمال المتاحون والمؤهلون' : 'Eligible & Available Workers'}
-                            </label>
+                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                    {isArabic ? 'العمال المتاحون والمؤهلون' : 'Eligible & Available Workers'}
+                                </label>
+                                <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                                    selectedIds.length === requiredLimit
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}>
+                                    {isArabic ? `المطلوب: ${requiredLimit} عامل(ة) · تم تحديد: ${selectedIds.length}` : `Required: ${requiredLimit} · Selected: ${selectedIds.length}`}
+                                </span>
+                            </div>
                             {eligibleWorkers.length > 0 && (
                                 <div className="flex items-center gap-2 text-xs">
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedIds(eligibleWorkers.map(w => w.id))}
+                                        onClick={() => setSelectedIds(eligibleWorkers.slice(0, requiredLimit).map(w => w.id))}
                                         className="font-bold text-[#E91E63] hover:underline cursor-pointer"
                                     >
                                         {isArabic ? 'تحديد الكل' : 'Select All'}

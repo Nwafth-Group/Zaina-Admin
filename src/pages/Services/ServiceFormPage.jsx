@@ -322,7 +322,42 @@ export default function ServiceFormPage() {
         terms_ar: yup.string().nullable().max(5000),
         terms_en: yup.string().nullable().max(5000),
 
-        workers: yup.array().of(yup.string()),
+        workers: yup.array().of(yup.string())
+            .when('is_team_based', {
+                is: (val) => !val,
+                then: (s) => s.test('workers_match_min_max', function(val) {
+                    const { min_workers, max_workers } = this.parent;
+                    const count = Array.isArray(val) ? val.length : 0;
+                    if (count === 0) return true;
+                    const min = Number(min_workers || 0);
+                    const max = Number(max_workers || 0);
+                    if (min > 0 && max > 0 && min === max) {
+                        if (count !== min) {
+                            return this.createError({
+                                message: isArabic
+                                    ? `يجب إسناد ${min} عمال بالضبط ليتطابق مع الحد الأدنى والأقصى للعمال.`
+                                    : `Assigned workers count must be exactly ${min} to match min and max workers.`
+                            });
+                        }
+                    } else {
+                        if (min > 0 && count < min) {
+                            return this.createError({
+                                message: isArabic
+                                    ? `عدد العمال المسندين (${count}) أقل من الحد الأدنى للعمال (${min}).`
+                                    : `Assigned workers count (${count}) is less than minimum workers (${min}).`
+                            });
+                        }
+                        if (max > 0 && count > max) {
+                            return this.createError({
+                                message: isArabic
+                                    ? `عدد العمال المسندين (${count}) يتجاوز الحد الأقصى للعمال (${max}).`
+                                    : `Assigned workers count (${count}) exceeds maximum workers (${max}).`
+                            });
+                        }
+                    }
+                    return true;
+                }),
+            }),
         teams: yup.array().of(yup.string()).nullable(),
 
         rules: yup.object().shape({
@@ -589,9 +624,12 @@ export default function ServiceFormPage() {
     }, [workersList, selectedWorkerIds]);
 
     const handleSelectAllVisible = () => {
-        const visibleIds = workersList.map(w => String(w.id));
-        const newSelection = Array.from(new Set([...selectedWorkerIds, ...visibleIds]));
-        setValue('workers', newSelection, { shouldValidate: true, shouldDirty: true });
+        const targetCount = Number(watch('max_workers') || watch('min_workers') || 0);
+        let visibleIds = workersList.map(w => String(w.id));
+        if (targetCount > 0 && visibleIds.length > targetCount) {
+            visibleIds = visibleIds.slice(0, targetCount);
+        }
+        setValue('workers', visibleIds, { shouldValidate: true, shouldDirty: true });
     };
 
     const handleDeselectAllVisible = () => {
@@ -1781,11 +1819,9 @@ export default function ServiceFormPage() {
                                             type="number" 
                                             {...register('min_workers', {
                                                 onChange: (e) => {
-                                                    if (isDeepCleaning || isOtherService || isSpecializedService) {
-                                                        const val = Number(e.target.value);
-                                                        if (val > 0) {
-                                                            setValue('max_workers', val, { shouldValidate: true });
-                                                        }
+                                                    const val = Number(e.target.value);
+                                                    if (val > 0) {
+                                                        setValue('max_workers', val, { shouldValidate: true });
                                                     }
                                                 }
                                             })} 
@@ -1799,11 +1835,9 @@ export default function ServiceFormPage() {
                                             type="number" 
                                             {...register('max_workers', {
                                                 onChange: (e) => {
-                                                    if (isDeepCleaning || isOtherService || isSpecializedService) {
-                                                        const val = Number(e.target.value);
-                                                        if (val > 0) {
-                                                            setValue('min_workers', val, { shouldValidate: true });
-                                                        }
+                                                    const val = Number(e.target.value);
+                                                    if (val > 0) {
+                                                        setValue('min_workers', val, { shouldValidate: true });
                                                     }
                                                 }
                                             })} 
@@ -1812,13 +1846,11 @@ export default function ServiceFormPage() {
                                         <ErrorMsg name="max_workers" />
                                     </div>
                                 </div>
-                                {(isDeepCleaning || isOtherService || isSpecializedService) && (
-                                    <p className="text-xs text-[#E91E63] font-bold mt-1">
-                                        {isArabic 
-                                            ? '💡 يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
-                                            : '💡 Minimum and Maximum workers must always be the same number.'}
-                                    </p>
-                                )}
+                                <p className="text-xs text-[#E91E63] font-bold mt-1">
+                                    {isArabic 
+                                        ? '💡 يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً ويساوي عدد العمال المسندين للخدمة.' 
+                                        : '💡 Minimum and Maximum workers must always be equal and match the assigned workers count.'}
+                                </p>
                             </div>
                         )}
 
@@ -2423,12 +2455,25 @@ export default function ServiceFormPage() {
                                         </button>
                                     </div>
 
-                                    <div className="font-semibold text-gray-500 text-end">
-                                        {isArabic
-                                            ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${allWorkers.length} عامل`
-                                            : `Selected ${selectedWorkerIds.length} of ${allWorkers.length} workers`}
+                                    <div className="flex items-center gap-2 font-semibold text-xs text-end flex-wrap">
+                                        {watch('min_workers') && Number(watch('min_workers')) > 0 && (
+                                            <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] border ${
+                                                selectedWorkerIds.length === Number(watch('min_workers'))
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                            }`}>
+                                                {isArabic
+                                                    ? `المطلوب: ${watch('min_workers')} ${Number(watch('min_workers')) === 1 ? 'عامل' : 'عمال'}`
+                                                    : `Required: ${watch('min_workers')} workers`}
+                                            </span>
+                                        )}
+                                        <span className="text-gray-500">
+                                            {isArabic
+                                                ? `تم تحديد ${selectedWorkerIds.length} من إجمالي ${allWorkers.length} عامل`
+                                                : `Selected ${selectedWorkerIds.length} of ${allWorkers.length} workers`}
+                                        </span>
                                         {workersList.length !== allWorkers.length && (
-                                            <span className="text-gray-400 ms-1 font-normal">
+                                            <span className="text-gray-400 font-normal">
                                                 ({isArabic ? `المعروض: ${workersList.length}` : `Showing: ${workersList.length}`})
                                             </span>
                                         )}
