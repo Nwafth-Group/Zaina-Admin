@@ -183,31 +183,13 @@ export default function TransportGroupDetails() {
         let initialDepPointId = worker.departure_point?.id || '';
         let initialDepTime = worker.departure_time ? worker.departure_time.substring(0, 5) : '';
 
-        // If worker is unassigned, check if any sibling worker in the same booking has an assigned driver
+        // If worker is unassigned, suggest driver from sibling worker or first driver
         if (!initialDriverId) {
             const siblingWithDriver = booking.workers?.find((w) => w.is_assigned && w.assigned_driver?.id);
             if (siblingWithDriver) {
                 initialDriverId = siblingWithDriver.assigned_driver.id;
-                initialDepPointId = siblingWithDriver.departure_point?.id || '';
-                initialDepTime = siblingWithDriver.departure_time ? siblingWithDriver.departure_time.substring(0, 5) : '';
             } else if (drivers.length > 0) {
                 initialDriverId = drivers[0].id;
-            }
-        }
-
-        // If driver is determined, check if driver already has an active manifest for this booking's zone or shift
-        if (initialDriverId && (!initialDepPointId || !initialDepTime)) {
-            const driverManifest = details.driver_manifests?.find((m) =>
-                String(m.driver_id) === String(initialDriverId) &&
-                m.passengers?.some((p) => {
-                    const b = details.bookings?.find((bkg) => bkg.id === p.booking_id);
-                    return b && (b.area === booking.area || b.governorate === booking.governorate);
-                })
-            ) || details.driver_manifests?.find((m) => String(m.driver_id) === String(initialDriverId));
-
-            if (driverManifest) {
-                initialDepPointId = driverManifest.departure_point?.id || initialDepPointId;
-                initialDepTime = driverManifest.departure_time ? driverManifest.departure_time.substring(0, 5) : initialDepTime;
             }
         }
 
@@ -228,33 +210,10 @@ export default function TransportGroupDetails() {
     };
 
     const handleDriverSelectChange = (newDriverId) => {
-        if (!newDriverId) {
-            setAssignForm((prev) => ({ ...prev, driver_id: '' }));
-            return;
-        }
-
-        const currentBooking = selectedWorkerTarget?.booking;
-        const matchingManifest = details.driver_manifests?.find((m) =>
-            String(m.driver_id) === String(newDriverId) &&
-            m.passengers?.some((p) => {
-                const b = details.bookings?.find((bkg) => bkg.id === p.booking_id);
-                return b && (b.area === currentBooking?.area || b.governorate === currentBooking?.governorate);
-            })
-        ) || details.driver_manifests?.find((m) => String(m.driver_id) === String(newDriverId));
-
-        if (matchingManifest) {
-            setAssignForm((prev) => ({
-                ...prev,
-                driver_id: newDriverId,
-                departure_point_id: matchingManifest.departure_point?.id || prev.departure_point_id || (departurePoints[0]?.id ?? ''),
-                departure_time: matchingManifest.departure_time ? matchingManifest.departure_time.substring(0, 5) : prev.departure_time,
-            }));
-        } else {
-            setAssignForm((prev) => ({
-                ...prev,
-                driver_id: newDriverId,
-            }));
-        }
+        setAssignForm((prev) => ({
+            ...prev,
+            driver_id: newDriverId,
+        }));
     };
 
     const handleAssignSubmit = (e) => {
