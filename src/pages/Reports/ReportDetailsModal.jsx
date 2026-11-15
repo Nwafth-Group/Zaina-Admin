@@ -30,7 +30,9 @@ export default function ReportDetailsModal({ reportId, onClose, onSuccess }) {
             return response.data.data;
         },
     });
-    const employees = Array.isArray(assignableEmployeesData) ? assignableEmployeesData : [];
+    const employees = Array.isArray(assignableEmployeesData)
+        ? assignableEmployeesData
+        : (Array.isArray(assignableEmployeesData?.items) ? assignableEmployeesData.items : []);
 
     // Ensure currently assigned admin is preserved in the list
     const displayEmployees = React.useMemo(() => {
