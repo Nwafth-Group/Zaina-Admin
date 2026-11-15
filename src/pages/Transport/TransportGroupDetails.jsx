@@ -126,7 +126,10 @@ export default function TransportGroupDetails() {
             return (await axiosInstance.post('/admin/transport-dispatch/assign-worker', payload)).data;
         },
         onSuccess: (res) => {
-            toast.success(res?.message || (isArabic ? 'تم تعيين العاملة للسائق بنجاح' : 'Worker assigned to driver successfully'));
+            const successMsg = (res?.message && !res.message.startsWith('messages.'))
+                ? res.message
+                : (isArabic ? 'تم تعيين العاملة للسائق بنجاح' : 'Worker assigned to driver successfully');
+            toast.success(successMsg);
             queryClient.invalidateQueries({ queryKey: ['transport-shift-details'] });
             queryClient.invalidateQueries({ queryKey: ['transport-dispatch-shifts-overview'] });
             refetch();
@@ -149,7 +152,10 @@ export default function TransportGroupDetails() {
             return (await axiosInstance.post('/admin/transport-dispatch/unassign-worker', payload)).data;
         },
         onSuccess: (res) => {
-            toast.success(res?.message || (isArabic ? 'تم فك ارتباط العاملة بنجاح' : 'Worker unassigned successfully'));
+            const successMsg = (res?.message && !res.message.startsWith('messages.'))
+                ? res.message
+                : (isArabic ? 'تم فك ارتباط العاملة بنجاح' : 'Worker unassigned successfully');
+            toast.success(successMsg);
             queryClient.invalidateQueries({ queryKey: ['transport-shift-details'] });
             queryClient.invalidateQueries({ queryKey: ['transport-dispatch-shifts-overview'] });
             refetch();
