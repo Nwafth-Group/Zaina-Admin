@@ -128,11 +128,12 @@ export default function BookingDetails() {
     const hasWorkers = Array.isArray(booking?.workers) && booking.workers.length > 0;
     const isSpecializedService = Boolean(
         (booking?.service?.id >= 6 && booking?.service?.id <= 11) ||
-        ['SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH', 'MATTRESS_CLEANING', 'CURTAIN_CLEANING'].includes((booking?.service?.service_code || '').toUpperCase()) ||
-        booking?.service?.is_team_based ||
-        booking?.is_team_based
+        ['SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH', 'MATTRESS_CLEANING', 'CURTAIN_CLEANING'].includes((booking?.service?.service_code || '').toUpperCase())
     );
-    const isTeamService = hasTeam || isSpecializedService;
+    const isTeamBasedConfig = (booking?.service?.is_team_based !== undefined && booking?.service?.is_team_based !== null)
+        ? Boolean(booking.service.is_team_based)
+        : (booking?.is_team_based !== undefined && booking?.is_team_based !== null ? Boolean(booking.is_team_based) : isSpecializedService);
+    const isTeamService = hasTeam || isTeamBasedConfig;
     const busy = statusMutation.isPending;
 
     const getCairoDate = () => {
@@ -279,7 +280,7 @@ export default function BookingDetails() {
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2">
-                                    {isSpecializedService ? (
+                                    {isTeamBasedConfig ? (
                                         <>
                                             <button
                                                 type="button"
@@ -308,7 +309,7 @@ export default function BookingDetails() {
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                                             </svg>
-                                            <span>{isArabic ? 'تعيين عاملات' : 'Assign Workers'}</span>
+                                            <span>{isArabic ? 'تعيين العاملين' : 'Assign Workers'}</span>
                                         </button>
                                     )}
                                 </div>
@@ -743,7 +744,7 @@ export default function BookingDetails() {
                                     )}
 
                                     {/* 2.6 Unassigned Team Banner Card (When team service has no team assigned) */}
-                                    {isTeamService && !booking.team && (
+                                    {isTeamService && !booking.team && !hasWorkers && (
                                         <div className="bg-gradient-to-r from-amber-50 to-orange-50/40 border border-amber-200/80 rounded-3xl p-6 md:p-7 shadow-2xs">
                                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                 <div className="flex items-start gap-4">
@@ -846,7 +847,7 @@ export default function BookingDetails() {
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center gap-2">
-                                                        {isSpecializedService ? (
+                                                        {isTeamBasedConfig ? (
                                                             <>
                                                                 <button
                                                                     type="button"
@@ -869,7 +870,7 @@ export default function BookingDetails() {
                                                                 onClick={() => setAssignModalOpen(true)}
                                                                 className="text-xs font-bold text-[#E91E63] hover:underline outline-none"
                                                             >
-                                                                {isArabic ? 'إدارة / تعيين العاملات →' : 'Manage Workers →'}
+                                                                {isArabic ? 'إدارة / تعيين العاملين →' : 'Manage Workers →'}
                                                             </button>
                                                         )}
                                                     </div>
@@ -921,7 +922,7 @@ export default function BookingDetails() {
                                             <div className="py-8 text-center border border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs bg-gray-50/50">
                                                 {isTeamService
                                                     ? (isArabic ? 'لم يتم تعيين فريق عمل بعد. سيتم ربط العمالة تلقائياً بمجرد تعيين الفريق.' : 'No team assigned yet. Team workers will be linked upon team assignment.')
-                                                    : (isArabic ? 'لم يتم تعيين عاملات حتى الآن.' : 'No workers assigned yet.')}
+                                                    : (isArabic ? 'لم يتم تعيين عمال حتى الآن.' : 'No workers assigned yet.')}
                                             </div>
                                         )}
                                     </div>
