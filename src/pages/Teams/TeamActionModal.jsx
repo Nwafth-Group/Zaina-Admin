@@ -362,7 +362,26 @@ export default function TeamActionModal({ teamToEdit, isOpen, onClose, onSuccess
                                             <div className="min-w-0">
                                                 <p className="text-xs font-bold text-gray-900 truncate">{worker.name}</p>
                                                 <p className="text-[11px] text-gray-500 font-mono truncate">{worker.phone_number}</p>
-                                                <p className="text-[10px] text-gray-400 truncate">{worker.nationality || '—'}</p>
+                                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                    <span className="text-[10px] text-gray-400">{worker.nationality || '—'}</span>
+                                                    {(() => {
+                                                        const wServices = worker.assigned_services?.length
+                                                            ? worker.assigned_services
+                                                            : (worker.services?.length ? worker.services : (worker.assigned_service ? [worker.assigned_service] : []));
+                                                        if (wServices.length > 0) {
+                                                            return wServices.map(s => (
+                                                                <span key={s.id} className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                                                    {isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}
+                                                                </span>
+                                                            ));
+                                                        }
+                                                        return (
+                                                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                                                                {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </div>
                                             </div>
                                         </div>
                                         <input

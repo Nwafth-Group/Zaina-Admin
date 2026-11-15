@@ -1245,6 +1245,12 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[360px] overflow-y-auto p-2 border border-gray-100 rounded-2xl">
                                 {eligibleWorkers.map((w) => {
                                     const checked = selectedIds.includes(w.id);
+                                    const workerServices = (w.assigned_services?.length
+                                        ? w.assigned_services
+                                        : (w.services?.length
+                                            ? w.services
+                                            : (w.assigned_service ? [w.assigned_service] : [])));
+
                                     return (
                                         <div
                                             key={w.id}
@@ -1266,6 +1272,26 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
                                                                 : 'bg-sky-50 text-sky-700 border border-sky-200'
                                                         }`}>
                                                             {String(w.gender).toLowerCase() === 'female' ? (isArabic ? 'أنثى' : 'Female') : (isArabic ? 'ذكر' : 'Male')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {/* Service Badges */}
+                                                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                                    {workerServices.length > 0 ? (
+                                                        workerServices.map((s) => (
+                                                            <span
+                                                                key={s.id}
+                                                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200"
+                                                            >
+                                                                <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                </svg>
+                                                                <span>{isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}</span>
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                                                            {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
                                                         </span>
                                                     )}
                                                 </div>

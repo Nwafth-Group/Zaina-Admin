@@ -42,6 +42,7 @@ export default function ServiceFormPage() {
     const [workerSearchInput, setWorkerSearchInput] = useState('');
     const [workerSearch, setWorkerSearch] = useState('');
     const [workerGenderFilter, setWorkerGenderFilter] = useState('all');
+    const [workerFilterTab, setWorkerFilterTab] = useState('all');
     useEffect(() => {
         const timerId = setTimeout(() => setWorkerSearch(workerSearchInput), 400);
         return () => clearTimeout(timerId);
@@ -482,14 +483,16 @@ export default function ServiceFormPage() {
         hasNextPage: hasMoreWorkers,
         isFetchingNextPage: isFetchingMoreWorkers,
     } = useInfiniteQuery({
-        queryKey: ['page-workers', workerSearch, id, activeWorkerGenderParam, watchIsTeamBased],
+        queryKey: ['page-workers', workerSearch, id, activeWorkerGenderParam, watchIsTeamBased, workerFilterTab],
         queryFn: async ({ pageParam = 1 }) => {
             const params = new URLSearchParams({ 
                 page: String(pageParam), 
-                per_page: '15', 
+                per_page: '20', 
                 status: 'active',
-                unassigned_only: 'true'
             });
+            if (workerFilterTab === 'unassigned') {
+                params.append('unassigned_only', 'true');
+            }
             if (id) {
                 params.append('include_service_id', String(id));
             }
@@ -506,7 +509,32 @@ export default function ServiceFormPage() {
         },
     });
 
-    const workersList = useMemo(() => (workersData?.pages || []).flatMap((p) => p?.items || []), [workersData]);
+    const rawWorkersList = useMemo(() => (workersData?.pages || []).flatMap((p) => p?.items || []), [workersData]);
+
+    const watchedWorkers = watch('workers');
+    const selectedWorkerIds = useMemo(() => {
+        return Array.isArray(watchedWorkers) ? watchedWorkers.map(String) : [];
+    }, [watchedWorkers]);
+
+    const workersList = useMemo(() => {
+        let list = [...rawWorkersList];
+        if (fullServiceData?.workers && Array.isArray(fullServiceData.workers)) {
+            const existingIds = new Set(list.map(w => String(w.id)));
+            for (const sw of fullServiceData.workers) {
+                if (!existingIds.has(String(sw.id))) {
+                    list.unshift({
+                        ...sw,
+                        assigned_services: sw.assigned_services || [{ id: Number(id), name_ar: fullServiceData.name_ar, name_en: fullServiceData.name_en }]
+                    });
+                    existingIds.add(String(sw.id));
+                }
+            }
+        }
+        if (workerFilterTab === 'assigned') {
+            return list.filter(w => selectedWorkerIds.includes(String(w.id)));
+        }
+        return list;
+    }, [rawWorkersList, workerFilterTab, selectedWorkerIds, fullServiceData?.workers, id]);
 
     const workerScrollRef = useRef(null);
     const workerSentinelRef = useRef(null);
@@ -2225,20 +2253,58 @@ export default function ServiceFormPage() {
                                 </div>
                             ) : null}
 
-                            {/* Worker Search */}
-                            <div className="relative mb-3">
-                                <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </span>
-                                <input
-                                    type="text"
-                                    value={workerSearchInput}
-                                    onChange={(e) => setWorkerSearchInput(e.target.value)}
-                                    placeholder={t('form.search_workers')}
-                                    className={`${INPUT_CLASS} ps-9`}
-                                />
+                            {/* Worker Search & Filters */}
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 mb-3">
+                                <div className="relative flex-1">
+                                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        value={workerSearchInput}
+                                        onChange={(e) => setWorkerSearchInput(e.target.value)}
+                                        placeholder={t('form.search_workers')}
+                                        className={`${INPUT_CLASS} ps-9`}
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl border border-gray-200/60 self-start sm:self-auto shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setWorkerFilterTab('all')}
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            workerFilterTab === 'all'
+                                                ? 'bg-white text-gray-900 shadow-2xs'
+                                                : 'text-gray-500 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        {isArabic ? 'جميع العمال' : 'All Workers'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWorkerFilterTab('unassigned')}
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            workerFilterTab === 'unassigned'
+                                                ? 'bg-white text-gray-900 shadow-2xs'
+                                                : 'text-gray-500 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        {isArabic ? 'غير مسندين' : 'Unassigned'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWorkerFilterTab('assigned')}
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            workerFilterTab === 'assigned'
+                                                ? 'bg-white text-[#E91E63] shadow-2xs'
+                                                : 'text-gray-500 hover:text-[#E91E63]'
+                                        }`}
+                                    >
+                                        {isArabic ? `المسندين (${selectedWorkerIds.length})` : `Assigned (${selectedWorkerIds.length})`}
+                                    </button>
+                                </div>
                             </div>
 
                             <div ref={workerScrollRef} className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4 max-h-80 overflow-y-auto bg-gray-50/50">
@@ -2250,12 +2316,60 @@ export default function ServiceFormPage() {
                                     <>
                                         {workersList.map((worker) => {
                                             const isFemale = String(worker.gender).toLowerCase() === 'female';
+                                            const isChecked = selectedWorkerIds.includes(String(worker.id));
+                                            const workerServices = (worker.assigned_services?.length
+                                                ? worker.assigned_services
+                                                : (worker.services?.length
+                                                    ? worker.services
+                                                    : (worker.assigned_service ? [worker.assigned_service] : [])));
+
                                             return (
-                                                <label key={worker.id} className="flex items-center justify-between gap-3 bg-white p-3 border border-gray-100 rounded-lg hover:border-[#E91E63]/30 hover:bg-[#FDF0F3]/10 cursor-pointer transition-colors">
+                                                <label
+                                                    key={worker.id}
+                                                    className={`flex items-center justify-between gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
+                                                        isChecked
+                                                            ? 'bg-pink-50/40 border-[#E91E63]/50 shadow-2xs'
+                                                            : 'bg-white border-gray-200/80 hover:border-gray-300 hover:bg-gray-50/50'
+                                                    }`}
+                                                >
                                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        <input type="checkbox" value={String(worker.id)} {...register('workers')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
+                                                        <input
+                                                            type="checkbox"
+                                                            value={String(worker.id)}
+                                                            {...register('workers')}
+                                                            className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63] shrink-0"
+                                                        />
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="text-sm font-bold text-gray-700 truncate">{worker.name}</p>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <p className="text-sm font-bold text-gray-900 truncate">{worker.name}</p>
+
+                                                                {/* Service Badges */}
+                                                                {workerServices.length > 0 ? (
+                                                                    workerServices.map((s) => {
+                                                                        const isCurrent = id && Number(s.id) === Number(id);
+                                                                        return (
+                                                                            <span
+                                                                                key={s.id}
+                                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                                                    isCurrent
+                                                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                                        : 'bg-purple-50 text-purple-700 border-purple-200'
+                                                                                }`}
+                                                                            >
+                                                                                <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                                </svg>
+                                                                                <span>{isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}</span>
+                                                                                {isCurrent && <span className="text-[9px] font-normal text-emerald-600">({isArabic ? 'هذه الخدمة' : 'Current'})</span>}
+                                                                            </span>
+                                                                        );
+                                                                    })
+                                                                ) : (
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                                                                        {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <p className="text-xs text-gray-400 mt-0.5">{worker.nationality || '—'} · ★ {worker.rating || '0.00'}</p>
                                                         </div>
                                                     </div>
