@@ -317,6 +317,69 @@ export default function WorkerDetails() {
                                             <p className="text-xs text-gray-400 py-2">{t('details.services_empty')}</p>
                                         )}
                                     </div>
+
+                                    {/* 3. Weekly Work Schedule & Vacation Days Card */}
+                                    <div className="bg-white rounded-3xl shadow-2xs border border-gray-100 p-6 md:p-7">
+                                        <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-5 flex-wrap gap-2">
+                                            <h4 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-[#E91E63]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>{isArabic ? 'جدول أيام العمل والإجازات الأسبوعية' : 'Weekly Work Schedule & Vacation Days'}</span>
+                                            </h4>
+                                            <div className="flex items-center gap-3 text-xs">
+                                                <span className="flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    <span>{isArabic ? `${worker.work_days?.length ?? 7} أيام عمل` : `${worker.work_days?.length ?? 7} Work Days`}</span>
+                                                </span>
+                                                <span className="flex items-center gap-1.5 font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                                                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                                    <span>{isArabic ? `${7 - (worker.work_days?.length ?? 7)} أيام إجازة` : `${7 - (worker.work_days?.length ?? 7)} Days Off`}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+                                            {[
+                                                { key: 'saturday', labelAr: 'السبت', labelEn: 'Sat' },
+                                                { key: 'sunday', labelAr: 'الأحد', labelEn: 'Sun' },
+                                                { key: 'monday', labelAr: 'الاثنين', labelEn: 'Mon' },
+                                                { key: 'tuesday', labelAr: 'الثلاثاء', labelEn: 'Tue' },
+                                                { key: 'wednesday', labelAr: 'الأربعاء', labelEn: 'Wed' },
+                                                { key: 'thursday', labelAr: 'الخميس', labelEn: 'Thu' },
+                                                { key: 'friday', labelAr: 'الجمعة', labelEn: 'Fri' },
+                                            ].map((day) => {
+                                                const effectiveWorkDays = Array.isArray(worker.work_days) && worker.work_days.length > 0
+                                                    ? worker.work_days.map(d => String(d).toLowerCase())
+                                                    : ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+                                                const isWorking = effectiveWorkDays.includes(day.key);
+
+                                                return (
+                                                    <div
+                                                        key={day.key}
+                                                        className={`p-3 rounded-2xl border text-center flex flex-col items-center justify-between gap-2 ${
+                                                            isWorking
+                                                                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 shadow-2xs'
+                                                                : 'bg-rose-50/60 border-rose-200 text-rose-800'
+                                                        }`}
+                                                    >
+                                                        <span className="text-xs font-black">
+                                                            {isArabic ? day.labelAr : day.labelEn}
+                                                        </span>
+                                                        <span
+                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                                isWorking
+                                                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                                    : 'bg-rose-100 text-rose-700 border-rose-300'
+                                                            }`}
+                                                        >
+                                                            {isWorking ? (isArabic ? '✓ يعمل' : 'Working') : (isArabic ? '🏖️ إجازة' : 'Day Off')}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

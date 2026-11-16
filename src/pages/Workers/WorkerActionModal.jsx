@@ -31,7 +31,16 @@ const ARAB_COUNTRIES = [
     { code: 'Somalia', nameAr: 'الصومال', nameEn: 'Somalia', phoneCode: '+252', digits: 9, flag: '🇸🇴', sample: 'XXXXXXXXX' },
     { code: 'Djibouti', nameAr: 'جيبوتي', nameEn: 'Djibouti', phoneCode: '+253', digits: 8, flag: '🇩🇯', sample: '77XXXXXX' },
     { code: 'Comoros', nameAr: 'جزر القمر', nameEn: 'Comoros', phoneCode: '+269', digits: 7, flag: '🇰🇲', sample: '3XXXXXX' },
+];
 
+export const DAYS_OF_WEEK = [
+    { key: 'saturday', labelAr: 'السبت', labelEn: 'Saturday' },
+    { key: 'sunday', labelAr: 'الأحد', labelEn: 'Sunday' },
+    { key: 'monday', labelAr: 'الاثنين', labelEn: 'Monday' },
+    { key: 'tuesday', labelAr: 'الثلاثاء', labelEn: 'Tuesday' },
+    { key: 'wednesday', labelAr: 'الأربعاء', labelEn: 'Wednesday' },
+    { key: 'thursday', labelAr: 'الخميس', labelEn: 'Thursday' },
+    { key: 'friday', labelAr: 'الجمعة', labelEn: 'Friday' },
 ];
 
 const parsePhone = (rawPhone, nationality) => {
@@ -163,6 +172,7 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
                 return true;
             }),
         team_id: yup.string().nullable().notRequired(),
+        work_days: yup.array().of(yup.string()).min(1, isArabic ? 'يجب اختيار يوم عمل واحد على الأقل للعامل' : 'Select at least one work day'),
         service_ids: yup.array().of(yup.string()).nullable().notRequired()
             .test('gender_matches_services', isArabic ? 'بعض الخدمات المحددة لا تتطابق مع جنس العامل' : 'Some selected services do not match worker gender', function(serviceIds) {
                 if (!Array.isArray(serviceIds) || serviceIds.length === 0) return true;
@@ -191,6 +201,7 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
             address: '',
             team_id: '',
             service_ids: [],
+            work_days: DAYS_OF_WEEK.map((d) => d.key),
         },
     });
 
@@ -198,9 +209,33 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
     const image = watch('image');
     const watchGender = watch('gender');
     const selectedServiceIds = watch('service_ids') || [];
+    const selectedWorkDays = watch('work_days') || [];
     const watchPhoneCode = watch('phone_code') || '+966';
     const selectedCountry = ARAB_COUNTRIES.find((c) => c.phoneCode === watchPhoneCode) || ARAB_COUNTRIES[0];
     const [serviceGenderFilter, setServiceGenderFilter] = useState('compatible');
+
+    const toggleWorkDay = (dayKey) => {
+        const current = selectedWorkDays;
+        let next;
+        if (current.includes(dayKey)) {
+            if (current.length === 1) {
+                toast.error(isArabic ? 'يجب الإبقاء على يوم عمل واحد على الأقل للعامل!' : 'Worker must have at least one working day!');
+                return;
+            }
+            next = current.filter((d) => d !== dayKey);
+        } else {
+            next = [...current, dayKey];
+        }
+        setValue('work_days', next, { shouldValidate: true });
+    };
+
+    const selectAllDays = () => {
+        setValue('work_days', DAYS_OF_WEEK.map((d) => d.key), { shouldValidate: true });
+    };
+
+    const setStandardWorkWeek = () => {
+        setValue('work_days', ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'], { shouldValidate: true });
+    };
 
     const filteredServicesList = useMemo(() => {
         return (servicesList || []).filter((service) => {
@@ -220,6 +255,9 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
     useEffect(() => {
         if (isEditMode && fullWorkerData) {
             const rawServices = fullWorkerData.assigned_services || fullWorkerData.services || [];
+            const rawWorkDays = Array.isArray(fullWorkerData.work_days) && fullWorkerData.work_days.length > 0
+                ? fullWorkerData.work_days.map((d) => String(d).toLowerCase())
+                : DAYS_OF_WEEK.map((d) => d.key);
             const parsed = parsePhone(fullWorkerData.phone_number, fullWorkerData.nationality);
             reset({
                 name: fullWorkerData.name || '',
@@ -232,6 +270,7 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
                 status: fullWorkerData.status || 'active',
                 team_id: fullWorkerData.team_id ? String(fullWorkerData.team_id) : (fullWorkerData.team?.id ? String(fullWorkerData.team.id) : ''),
                 service_ids: rawServices.map((s) => String(s.id)),
+                work_days: rawWorkDays,
             });
         }
     }, [fullWorkerData, isEditMode, reset]);
@@ -321,6 +360,12 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
                 });
             } else {
                 payload.append('services', '');
+            }
+
+            if (data.work_days && data.work_days.length > 0) {
+                data.work_days.forEach((day) => {
+                    payload.append('work_days[]', day);
+                });
             }
 
             const url = isEditMode ? `/admin/workers/${workerToEdit.id}` : '/admin/workers';
@@ -634,6 +679,91 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
                     </div>
                     <ErrorMsg name="services" />
                     <ErrorMsg name="service_ids" />
+                </div>
+            </FormSection>
+
+            {/* Work Days & Vacation Schedule */}
+            <FormSection
+                icon="clock"
+                title={isArabic ? 'جدول أيام العمل والإجازات الأسبوعية' : 'Weekly Work Schedule & Vacation Days'}
+                description={
+                    isArabic
+                        ? 'الأيام المحددة هي أيام دوام العامل، والأيام غير المحددة تُعتبر تلقائياً أيام إجازته الأسبوعية (يتم استبعاده ومنع اختياره في الحجوزات المطابقة ليوم إجازته).'
+                        : 'Selected days are work days. Unselected days are weekly vacation days (the worker will be excluded and blocked from bookings on their vacation days).'
+                }
+                action={
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={selectAllDays}
+                            className="text-xs font-bold text-[#E91E63] hover:underline cursor-pointer"
+                        >
+                            {isArabic ? 'تحديد كل الأيام (بدون إجازة)' : 'Select All (No Off)'}
+                        </button>
+                        <span className="text-gray-300">|</span>
+                        <button
+                            type="button"
+                            onClick={setStandardWorkWeek}
+                            className="text-xs font-bold text-gray-600 hover:text-gray-900 cursor-pointer"
+                        >
+                            {isArabic ? 'إجازة الجمعة والسبت' : 'Fri & Sat Off'}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+                        {DAYS_OF_WEEK.map((day) => {
+                            const isWorking = selectedWorkDays.includes(day.key);
+                            return (
+                                <button
+                                    key={day.key}
+                                    type="button"
+                                    onClick={() => toggleWorkDay(day.key)}
+                                    className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-between gap-2 cursor-pointer select-none ${
+                                        isWorking
+                                            ? 'bg-emerald-50/70 border-emerald-300 text-emerald-900 shadow-2xs hover:bg-emerald-100/60'
+                                            : 'bg-rose-50/50 border-rose-200 text-rose-800 hover:bg-rose-100/60'
+                                    }`}
+                                >
+                                    <span className="text-xs font-black">
+                                        {isArabic ? day.labelAr : day.labelEn}
+                                    </span>
+                                    <span
+                                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                            isWorking
+                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                : 'bg-rose-100 text-rose-700 border-rose-300'
+                                        }`}
+                                    >
+                                        {isWorking
+                                            ? (isArabic ? '✓ يعمل' : 'Working')
+                                            : (isArabic ? '🏖️ إجازة' : 'Vacation')}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span className="font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span>
+                                {isArabic
+                                    ? `أيام العمل: ${selectedWorkDays.length} أيام`
+                                    : `Work Days: ${selectedWorkDays.length} days`}
+                            </span>
+                        </span>
+                        <span className="font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-rose-500" />
+                            <span>
+                                {isArabic
+                                    ? `أيام الإجازة: ${7 - selectedWorkDays.length} أيام`
+                                    : `Vacation Days: ${7 - selectedWorkDays.length} days`}
+                            </span>
+                        </span>
+                    </div>
+                    <ErrorMsg name="work_days" />
                 </div>
             </FormSection>
         </FullScreenFormModal>

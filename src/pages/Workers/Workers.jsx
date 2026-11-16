@@ -280,6 +280,7 @@ export default function Workers() {
                                 <th className="py-3.5 px-4">{t('table.name')}</th>
                                 <th className="py-3.5 px-4">{t('table.nationality')}</th>
                                 <th className="py-3.5 px-4">{isArabic ? 'الخدمة المعينة' : 'Assigned Service'}</th>
+                                <th className="py-3.5 px-4">{isArabic ? 'أيام العمل' : 'Work Schedule'}</th>
                                 <th className="py-3.5 px-4">{t('table.rating')}</th>
                                 <th className="py-3.5 px-4">{t('table.status')}</th>
                                 <th className="py-3.5 px-4">{t('table.actions')}</th>
@@ -288,7 +289,7 @@ export default function Workers() {
                         <tbody className="divide-y divide-gray-100 text-xs">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-gray-400">
+                                    <td colSpan="8" className="py-12 text-gray-400">
                                         <div className="flex justify-center items-center gap-2">
                                             <svg className="animate-spin h-5 w-5 text-[#E91E63]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>
                                             <span className="font-bold text-gray-500">{t('loading')}</span>
@@ -297,7 +298,7 @@ export default function Workers() {
                                 </tr>
                             ) : workers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-gray-400 font-bold">{t('no_data')}</td>
+                                    <td colSpan="8" className="py-12 text-gray-400 font-bold">{t('no_data')}</td>
                                 </tr>
                             ) : (
                                 workers.map((worker) => (
@@ -327,6 +328,26 @@ export default function Workers() {
                                             ) : (
                                                 <span className="text-gray-400 font-medium">—</span>
                                             )}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {(() => {
+                                                const count = Array.isArray(worker.work_days) && worker.work_days.length > 0 ? worker.work_days.length : 7;
+                                                const offCount = 7 - count;
+                                                if (offCount === 0) {
+                                                    return (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                                            <span>🗓️</span>
+                                                            <span>{isArabic ? '7 أيام (بدون إجازة)' : 'All 7 Days'}</span>
+                                                        </span>
+                                                    );
+                                                }
+                                                return (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap">
+                                                        <span>🗓️</span>
+                                                        <span>{isArabic ? `${count} أيام (${offCount} إجازة)` : `${count} days (${offCount} off)`}</span>
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="inline-flex items-center justify-center gap-1 bg-amber-50 border border-amber-200/60 rounded-lg py-0.5 px-2">
