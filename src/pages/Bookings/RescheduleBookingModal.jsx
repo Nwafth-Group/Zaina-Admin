@@ -159,16 +159,19 @@ export default function RescheduleBookingModal({ booking, onClose, onSuccess }) 
             return;
         }
 
-        // Validate 3-visit Saturday-to-Friday week constraints
+        // Validate 3-visit week constraints (within 7 days starting from first visit)
         if (isThreeVisits) {
-            const satStart1 = getSaturdayStartStr(dates[0]);
-            const satStart2 = getSaturdayStartStr(dates[1]);
-            const satStart3 = getSaturdayStartStr(dates[2]);
+            const sortedDates = [...dates].map(d => parseLocalDate(d)).sort((a, b) => a - b);
+            const firstDate = sortedDates[0];
+            const lastDate = sortedDates[sortedDates.length - 1];
 
-            if (satStart1 !== satStart2 || satStart1 !== satStart3) {
+            const diffTime = lastDate.getTime() - firstDate.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 7) {
                 setValidationError(isArabic 
-                    ? 'يجب أن تقع جميع الزيارات الثلاث في نفس الأسبوع (من السبت إلى الجمعة).' 
-                    : 'All three visits must belong to the same calendar week (Saturday to Friday).'
+                    ? 'يجب أن تقع جميع الزيارات الثلاث خلال أسبوع واحد بدءاً من تاريخ الزيارة الأولى (بحد أقصى 7 أيام من تاريخ أول زيارة).' 
+                    : 'All three visits must occur within one week starting from the first visit (maximum 7 days from the first visit).'
                 );
                 return;
             }
