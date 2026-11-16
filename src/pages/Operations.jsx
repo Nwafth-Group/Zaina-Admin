@@ -220,7 +220,8 @@ export default function Operations() {
         const assignedWorkersCount = (booking.crew?.length || 0) || (booking.workers?.length || 0) || (booking.worker ? 1 : 0);
         const requiredWorkers = booking.service?.required_workers || 1;
         const hasWorkers = !isTeam && assignedWorkersCount >= requiredWorkers && assignedWorkersCount > 0;
-        const hasResource = isTeam ? hasTeam : hasWorkers;
+        // Resource check (Team/Workers) commented out to allow booking operations without workers/team
+        const hasResource = true;
         const hasDriver = Boolean(booking.transport?.driver_id && booking.transport?.driver_name);
         const canStart = booking.can_start !== undefined ? Boolean(booking.can_start) : (hasDriver && hasResource);
 
@@ -228,8 +229,10 @@ export default function Operations() {
         if (!cannotStartReason && !canStart) {
             const missing = [];
             if (!hasDriver) missing.push(isArabic ? 'سائق النقل' : 'Transport Driver');
+            /*
             if (isTeam && !hasTeam) missing.push(isArabic ? 'فريق العمل' : 'Work Team');
             if (!isTeam && !hasWorkers) missing.push(isArabic ? `العاملات المطلوبة (${assignedWorkersCount}/${requiredWorkers})` : `Workers (${assignedWorkersCount}/${requiredWorkers})`);
+            */
             cannotStartReason = isArabic
                 ? `لا يمكن بدء الخدمة قبل تعيين: ${missing.join('، ')}`
                 : `Cannot start service until assigned: ${missing.join(', ')}`;
