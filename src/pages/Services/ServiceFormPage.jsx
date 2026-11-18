@@ -34,7 +34,7 @@ export default function ServiceFormPage() {
     const queryClient = useQueryClient();
     const { t, i18n } = useTranslation('services');
     const isEditMode = !!id;
-    const isArabic = i18n.language === 'ar';
+    const isArabic = (i18n.language || '').startsWith('ar');
     const [activeTab, setActiveTab] = useState('basic');
     const [selectedZoneIds, setSelectedZoneIds] = useState([]);
 
@@ -156,6 +156,11 @@ export default function ServiceFormPage() {
                 return true;
             }),
         end_time: yup.string().nullable()
+            .test('end_time_after_start', isArabic ? 'وقت الانتهاء يجب أن يكون بعد وقت البدء' : 'End time must be after start time', function(value) {
+                const { start_time } = this.parent;
+                if (!value || !start_time) return true;
+                return value > start_time;
+            })
             .test('end_time_hosp', isArabic ? 'وقت الانتهاء يجب أن يكون بين 8:00 ص و 8:00 م' : 'End time must be between 8:00 AM and 8:00 PM for Hospitality Services', function(value) {
                 if (!value) return true;
                 const categoryId = this.parent.category_id;
@@ -188,9 +193,9 @@ export default function ServiceFormPage() {
                     if (isHospitality && value > 6) return false;
                     return true;
                 })
-                .test('max_greater', 'Max must be >= Min', function(value) {
+                .test('max_greater', isArabic ? 'الحد الأقصى للمدة يجب أن يكون أكبر من أو يساوي الحد الأدنى' : 'Max duration must be >= Min duration', function(value) {
                     const { min_duration } = this.parent;
-                    return value >= min_duration;
+                    return !min_duration || !value || value >= min_duration;
                 }),
             otherwise: (s) => s.nullable(),
         }),
@@ -214,9 +219,9 @@ export default function ServiceFormPage() {
                         if (isHospitality && value > 12) return false;
                         return true;
                     })
-                    .test('max_workers_greater', 'Max workers must be >= Min workers', function(value) {
+                    .test('max_workers_greater', isArabic ? 'الحد الأقصى لعدد العمال يجب أن يكون أكبر من أو يساوي الحد الأدنى' : 'Max workers must be >= Min workers', function(value) {
                         const { min_workers } = this.parent;
-                        return !min_workers || value >= min_workers;
+                        return !min_workers || !value || value >= min_workers;
                     }),
             }),
         covered_persons_per_worker: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(1),
@@ -668,12 +673,12 @@ export default function ServiceFormPage() {
 
             // Map working days from schedules or available_days
             let workingDaysSet = [];
-            if (fullServiceData.available_days && fullServiceData.available_days.length > 0) {
-                workingDaysSet = fullServiceData.available_days;
-            } else {
-                const workingDays = (fullServiceData.schedules || [])
+            if (Array.isArray(fullServiceData.available_days) && fullServiceData.available_days.length > 0) {
+                workingDaysSet = fullServiceData.available_days.map(d => String(d).toLowerCase());
+            } else if (Array.isArray(fullServiceData.schedules) && fullServiceData.schedules.length > 0) {
+                const workingDays = fullServiceData.schedules
                     .filter((s) => s.is_active)
-                    .map((s) => s.day);
+                    .map((s) => String(s.day).toLowerCase());
                 workingDaysSet = Array.from(new Set(workingDays));
             }
 
@@ -896,9 +901,13 @@ export default function ServiceFormPage() {
             }
 
             // Working Days
-            (data.working_days || []).forEach((day) => {
-                payload.append('working_days[]', day);
-            });
+            if (!data.working_days || data.working_days.length === 0) {
+                payload.append('working_days', '');
+            } else {
+                data.working_days.forEach((day) => {
+                    payload.append('working_days[]', day);
+                });
+            }
 
             // Shifts (Only send for services that use discrete shifts)
             if (!isHospitality && !isBabysitting && !isPedicureManicure) {
@@ -970,14 +979,38 @@ export default function ServiceFormPage() {
             return axiosInstance.post(url, payload, { headers: { 'Content-Type': 'multipart/form-data' } });
         },
         onSuccess: (response) => {
-            toast.success(response.data?.message || 'تمت العملية بنجاح');
+            toast.success(response.data?.message || (isArabic ? 'تم حفظ الخدمة بنجاح.' : 'Service saved successfully.'));
             queryClient.invalidateQueries({ queryKey: ['services'] });
             queryClient.invalidateQueries({ queryKey: ['serviceDetailsPage'] });
+            if (id) {
+                queryClient.removeQueries({ queryKey: ['serviceDetailsPage', id] });
+            }
             navigate('/services');
         },
         onError: (error) => {
             const respData = error.response?.data;
             const validationErrors = respData?.errors || respData?.params;
+
+            const translateServerError = (msg) => {
+                if (!msg || typeof msg !== 'string') return msg;
+                if (!isArabic) return msg;
+                if (msg.includes('must be a date after start time') || msg.includes('after start_time') || msg.includes('end_time.after')) {
+                    return 'وقت الانتهاء يجب أن يكون بعد وقت البدء.';
+                }
+                if (msg.includes('greater than or equal to min_workers') || msg.includes('gte:min_workers') || msg.includes('max_workers.gte')) {
+                    return 'الحد الأقصى لعدد العمال يجب أن يكون أكبر من أو يساوي الحد الأدنى.';
+                }
+                if (msg.includes('greater than or equal to min_duration') || msg.includes('gte:min_duration') || msg.includes('max_duration.gte')) {
+                    return 'الحد الأقصى للمدة يجب أن يكون أكبر من أو يساوي الحد الأدنى.';
+                }
+                if (msg.includes('The shifts field is required') || msg.includes('shifts.required')) {
+                    return 'يرجى تحديد فترة عمل واحدة على الأقل.';
+                }
+                if (msg.includes('The working days field is required') || msg.includes('working_days.required')) {
+                    return 'يرجى اختيار يوم عمل واحد على الأقل.';
+                }
+                return msg;
+            };
 
             const fieldToTabMap = {
                 name_ar: 'basic',
@@ -987,6 +1020,8 @@ export default function ServiceFormPage() {
                 type: 'basic',
                 worker_gender_options: 'basic',
                 base_price: 'locations',
+                start_time: 'durations',
+                end_time: 'durations',
                 default_duration: 'durations',
                 min_duration: 'durations',
                 max_duration: 'durations',
@@ -995,6 +1030,7 @@ export default function ServiceFormPage() {
                 min_children: 'durations',
                 max_children: 'durations',
                 child_age_groups: 'durations',
+                working_days: 'shifts',
                 shifts: 'shifts',
                 rules: 'rules',
                 workers: 'workers',
@@ -1005,18 +1041,21 @@ export default function ServiceFormPage() {
             if (validationErrors) {
                 // Set the errors in react-hook-form
                 Object.entries(validationErrors).forEach(([key, messages]) => {
-                    const message = Array.isArray(messages) ? messages[0] : messages;
+                    const rawMsg = Array.isArray(messages) ? messages[0] : messages;
+                    const message = translateServerError(rawMsg);
                     setError(key, { type: 'server', message });
                 });
 
                 // Show specific detailed error in toast
-                const specificError = validationErrors.workers
+                const rawSpecificError = validationErrors.workers
                     ? (Array.isArray(validationErrors.workers) ? validationErrors.workers[0] : validationErrors.workers)
                     : (validationErrors.worker_gender_options
                         ? (Array.isArray(validationErrors.worker_gender_options) ? validationErrors.worker_gender_options[0] : validationErrors.worker_gender_options)
                         : (validationErrors.child_age_groups
                             ? (Array.isArray(validationErrors.child_age_groups) ? validationErrors.child_age_groups[0] : validationErrors.child_age_groups)
                             : (Array.isArray(Object.values(validationErrors)[0]) ? Object.values(validationErrors)[0][0] : Object.values(validationErrors)[0])));
+
+                const specificError = translateServerError(rawSpecificError);
 
                 toast.error(specificError || respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'), { duration: 6000 });
 
@@ -1030,7 +1069,7 @@ export default function ServiceFormPage() {
                     setActiveTab(targetTab);
                 }
             } else {
-                toast.error(respData?.message || (isArabic ? 'حدث خطأ أثناء حفظ البيانات.' : 'An error occurred while saving.'));
+                toast.error(translateServerError(respData?.message) || (isArabic ? 'حدث خطأ أثناء حفظ البيانات.' : 'An error occurred while saving.'));
             }
         },
     });
@@ -1047,6 +1086,8 @@ export default function ServiceFormPage() {
             type: 'basic',
             worker_gender_options: 'basic',
             base_price: 'locations',
+            start_time: 'durations',
+            end_time: 'durations',
             default_duration: 'durations',
             min_duration: 'durations',
             max_duration: 'durations',
@@ -1055,6 +1096,7 @@ export default function ServiceFormPage() {
             min_children: 'durations',
             max_children: 'durations',
             child_age_groups: 'durations',
+            working_days: 'shifts',
             shifts: 'shifts',
             rules: 'rules',
             workers: 'workers',
@@ -1093,7 +1135,24 @@ export default function ServiceFormPage() {
     };
 
     const onSubmit = (data) => submitMutation.mutate(data);
-    const ErrorMsg = ({ name }) => errors[name] ? <p className="text-red-500 text-xs mt-1">{errors[name].message}</p> : null;
+    const ErrorMsg = ({ name }) => {
+        if (!errors[name]) return null;
+        let msg = errors[name].message;
+        if (isArabic && typeof msg === 'string') {
+            if (msg.includes('must be a date after start time') || msg.includes('after start_time') || msg.includes('end_time.after')) {
+                msg = 'وقت الانتهاء يجب أن يكون بعد وقت البدء.';
+            } else if (msg.includes('greater than or equal to min_workers') || msg.includes('gte:min_workers') || msg.includes('max_workers.gte')) {
+                msg = 'الحد الأقصى لعدد العمال يجب أن يكون أكبر من أو يساوي الحد الأدنى.';
+            } else if (msg.includes('greater than or equal to min_duration') || msg.includes('gte:min_duration') || msg.includes('max_duration.gte')) {
+                msg = 'الحد الأقصى للمدة يجب أن يكون أكبر من أو يساوي الحد الأدنى.';
+            } else if (msg.includes('The shifts field is required') || msg.includes('shifts.required')) {
+                msg = 'يرجى تحديد فترة عمل واحدة على الأقل.';
+            } else if (msg.includes('The working days field is required') || msg.includes('working_days.required')) {
+                msg = 'يرجى اختيار يوم عمل واحد على الأقل.';
+            }
+        }
+        return <p className="text-red-500 text-xs mt-1">{msg}</p>;
+    };
     const displayImage = imagePreview || (isEditMode ? fullServiceData?.image : null);
 
     const tabs = [
@@ -1173,7 +1232,7 @@ export default function ServiceFormPage() {
                     const active = activeTab === tab.id;
                     const hasErr = (tab.id === 'basic' && (errors.name_ar || errors.name_en || errors.description_ar || errors.description_en || errors.type)) ||
                                    (tab.id === 'locations' && (errors.base_price || errors.visit_types)) ||
-                                   (tab.id === 'durations' && (errors.default_duration || errors.min_duration || errors.max_duration || errors.min_workers || errors.max_workers || errors.covered_persons_per_worker || errors.min_children || errors.max_children || errors.child_age_groups)) ||
+                                   (tab.id === 'durations' && (errors.start_time || errors.end_time || errors.default_duration || errors.min_duration || errors.max_duration || errors.min_workers || errors.max_workers || errors.covered_persons_per_worker || errors.min_children || errors.max_children || errors.child_age_groups)) ||
                                    (tab.id === 'shifts' && (errors.working_days || errors.shifts)) ||
                                    (tab.id === 'rules' && (errors.rules || errors.terms_ar || errors.terms_en)) ||
                                    (tab.id === 'workers' && (errors.workers || errors.teams));
@@ -1217,7 +1276,7 @@ export default function ServiceFormPage() {
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                             </svg>
                                             <span className="text-[10px] font-semibold text-[#E91E63]">{t('form.upload_image')}</span>
-                                            <span className="text-[9px] text-gray-400">SVG Only</span>
+                                            <span className="text-[9px] text-gray-400">{isArabic ? 'صيغة SVG فقط' : 'SVG Only'}</span>
                                         </span>
                                     )}
                                 </label>
@@ -1785,7 +1844,9 @@ export default function ServiceFormPage() {
                                             const currentMin = watch('min_workers');
                                             const val = (currentMin && Number(currentMin) > 0) ? Number(currentMin) : 1;
                                             setValue('min_workers', val, { shouldValidate: true });
-                                            setValue('max_workers', val, { shouldValidate: true });
+                                            if (isDeepCleaning) {
+                                                setValue('max_workers', val, { shouldValidate: true });
+                                            }
                                         }}
                                         className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-start transition-all cursor-pointer ${
                                             !watchIsTeamBased
@@ -1821,9 +1882,11 @@ export default function ServiceFormPage() {
                                             type="number" 
                                             {...register('min_workers', {
                                                 onChange: (e) => {
-                                                    const val = Number(e.target.value);
-                                                    if (val > 0) {
-                                                        setValue('max_workers', val, { shouldValidate: true });
+                                                    if (isDeepCleaning) {
+                                                        const val = Number(e.target.value);
+                                                        if (val > 0) {
+                                                            setValue('max_workers', val, { shouldValidate: true });
+                                                        }
                                                     }
                                                 }
                                             })} 
@@ -1837,9 +1900,11 @@ export default function ServiceFormPage() {
                                             type="number" 
                                             {...register('max_workers', {
                                                 onChange: (e) => {
-                                                    const val = Number(e.target.value);
-                                                    if (val > 0) {
-                                                        setValue('min_workers', val, { shouldValidate: true });
+                                                    if (isDeepCleaning) {
+                                                        const val = Number(e.target.value);
+                                                        if (val > 0) {
+                                                            setValue('min_workers', val, { shouldValidate: true });
+                                                        }
                                                     }
                                                 }
                                             })} 
@@ -1848,11 +1913,13 @@ export default function ServiceFormPage() {
                                         <ErrorMsg name="max_workers" />
                                     </div>
                                 </div>
-                                <p className="text-xs text-[#E91E63] font-bold mt-1">
-                                    {isArabic 
-                                        ? '💡 يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً ويساوي عدد العمال المسندين للخدمة.' 
-                                        : '💡 Minimum and Maximum workers must always be equal and match the assigned workers count.'}
-                                </p>
+                                {isDeepCleaning && (
+                                    <p className="text-xs text-[#E91E63] font-bold mt-1">
+                                        {isArabic 
+                                            ? '💡 لخدمة النظافة العميقة، يجب أن يكون الحد الأدنى والحد الأقصى لعدد العمال متطابقين دائماً.' 
+                                            : '💡 For Deep Cleaning Service, Minimum and Maximum workers must always be the same number.'}
+                                    </p>
+                                )}
                             </div>
                         )}
 
