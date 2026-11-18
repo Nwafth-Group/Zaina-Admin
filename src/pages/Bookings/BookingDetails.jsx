@@ -1299,53 +1299,57 @@ function AssignWorkersModal({ booking, isArabic, t, onClose, onSuccess }) {
                                         <div
                                             key={w.id}
                                             onClick={() => toggleWorker(w.id)}
-                                            className={`p-3 border rounded-2xl cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                                            className={`p-3 border rounded-2xl cursor-pointer transition-all duration-200 flex flex-col gap-1.5 ${
                                                 checked
-                                                ? 'border-[#E91E63] bg-[#FDF0F3]/50 shadow-2xs'
+                                                ? 'border-[#E91E63] bg-[#FDF0F3]/50 shadow-2xs ring-1 ring-[#E91E63]/30'
                                                 : 'border-gray-100 hover:bg-gray-50'
                                             }`}
                                         >
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
-                                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                                    <span className="text-[11px] font-medium text-gray-400">{w.nationality || '—'} · ⭐ {w.avg_rating || '5.0'}</span>
-                                                    {w.gender && (
-                                                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                                            String(w.gender).toLowerCase() === 'female'
-                                                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                                                : 'bg-sky-50 text-sky-700 border border-sky-200'
-                                                        }`}>
-                                                            {String(w.gender).toLowerCase() === 'female' ? (isArabic ? 'أنثى' : 'Female') : (isArabic ? 'ذكر' : 'Male')}
-                                                        </span>
-                                                    )}
+                                            <div className="flex items-center justify-between gap-2 min-w-0">
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={() => {}}
+                                                        className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63] accent-[#E91E63] cursor-pointer shrink-0"
+                                                    />
+                                                    <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
                                                 </div>
-                                                {/* Service Badges */}
-                                                <div className="flex items-center gap-1 mt-1 flex-wrap">
-                                                    {workerServices.length > 0 ? (
-                                                        workerServices.map((s) => (
-                                                            <span
-                                                                key={s.id}
-                                                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200"
-                                                            >
-                                                                <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                </svg>
-                                                                <span>{isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}</span>
-                                                            </span>
-                                                        ))
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
-                                                            {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                {w.gender && (
+                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                                                        String(w.gender).toLowerCase() === 'female'
+                                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                            : 'bg-sky-50 text-sky-700 border border-sky-200'
+                                                    }`}>
+                                                        {String(w.gender).toLowerCase() === 'female' ? (isArabic ? 'أنثى' : 'Female') : (isArabic ? 'ذكر' : 'Male')}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={checked}
-                                                onChange={() => {}}
-                                                className="w-4 h-4 rounded text-[#E91E63] border-gray-300 focus:ring-[#E91E63] cursor-pointer"
-                                            />
+
+                                            <div className="flex items-center gap-1.5 ps-6 text-[11px] font-medium text-gray-400 flex-wrap">
+                                                <span>{w.nationality || '—'} · ⭐ {w.avg_rating || '5.0'}</span>
+                                            </div>
+
+                                            {/* Service Badges */}
+                                            <div className="flex items-center gap-1 ps-6 flex-wrap mt-0.5">
+                                                {workerServices.length > 0 ? (
+                                                    workerServices.map((s) => (
+                                                        <span
+                                                            key={s.id}
+                                                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200"
+                                                        >
+                                                            <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <span>{isArabic ? (s.name_ar || s.name_en) : (s.name_en || s.name_ar)}</span>
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                                                        {isArabic ? 'غير مسند لخدمة' : 'Unassigned'}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -1571,26 +1575,36 @@ function ReplaceWorkerModal({ booking, worker, isArabic, onClose, onOpenAssignTe
                                         <div
                                             key={w.id}
                                             onClick={() => setSelectedWorkerId(w.id)}
-                                            className={`p-3 border rounded-2xl cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                                            className={`p-3 border rounded-2xl cursor-pointer transition-all duration-200 flex flex-col gap-1.5 ${
                                                 selected
                                                     ? 'border-[#E91E63] bg-[#FDF0F3]/60 shadow-2xs ring-1 ring-[#E91E63]'
                                                     : 'border-gray-100 hover:bg-gray-50'
                                             }`}
                                         >
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
-                                                <span className="text-[11px] font-medium text-gray-400 mt-0.5">
-                                                    {w.nationality || '—'} · ⭐ {w.avg_rating || '5.0'}
-                                                    {w.gender && ` (${w.gender === 'male' || w.gender === 'Male' ? (isArabic ? 'ذكر' : 'Male') : (isArabic ? 'أنثى' : 'Female')})`}
-                                                </span>
+                                            <div className="flex items-center justify-between gap-2 min-w-0">
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <input
+                                                        type="radio"
+                                                        name="replacement_worker"
+                                                        checked={selected}
+                                                        onChange={() => setSelectedWorkerId(w.id)}
+                                                        className="w-4 h-4 text-[#E91E63] border-gray-300 focus:ring-[#E91E63] accent-[#E91E63] cursor-pointer shrink-0"
+                                                    />
+                                                    <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
+                                                </div>
+                                                {w.gender && (
+                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                                                        String(w.gender).toLowerCase() === 'female'
+                                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                            : 'bg-sky-50 text-sky-700 border border-sky-200'
+                                                    }`}>
+                                                        {String(w.gender).toLowerCase() === 'female' ? (isArabic ? 'أنثى' : 'Female') : (isArabic ? 'ذكر' : 'Male')}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <input
-                                                type="radio"
-                                                name="replacement_worker"
-                                                checked={selected}
-                                                onChange={() => setSelectedWorkerId(w.id)}
-                                                className="w-4 h-4 text-[#E91E63] border-gray-300 focus:ring-[#E91E63] cursor-pointer"
-                                            />
+                                            <div className="flex items-center gap-1.5 ps-6 text-[11px] font-medium text-gray-400">
+                                                <span>{w.nationality || '—'} · ⭐ {w.avg_rating || '5.0'}</span>
+                                            </div>
                                         </div>
                                     );
                                 })}
