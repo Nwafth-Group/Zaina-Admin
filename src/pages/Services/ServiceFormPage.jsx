@@ -339,6 +339,8 @@ export default function ServiceFormPage() {
                 otherwise: (s) => s.nullable(),
             }),
             allow_same_day: yup.boolean(),
+            same_day_lead_time_hours: yup.number().transform((val) => (isNaN(val) ? undefined : val)).nullable().min(0),
+            same_day_cutoff_time: yup.string().nullable(),
             max_advance_booking_days: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
             arrival_buffer_minutes: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
             late_arrival_grace_minutes: yup.number().transform((value) => (isNaN(value) ? undefined : value)).nullable().min(0),
@@ -391,6 +393,8 @@ export default function ServiceFormPage() {
                 allow_reschedule: false,
                 reschedule_cutoff_hours: '',
                 allow_same_day: false,
+                same_day_lead_time_hours: 3,
+                same_day_cutoff_time: '10:00',
                 max_advance_booking_days: '',
                 arrival_buffer_minutes: 15,
                 late_arrival_grace_minutes: 15,
@@ -425,6 +429,7 @@ export default function ServiceFormPage() {
     const isPedicureManicure = (watchServiceCode === 'PEDICURE_MANICURE') || (String(id) === '4') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('pedicure') || selectedCategory.name_ar?.includes('أقدام')));
     const isHospitality = (watchServiceCode === 'HOSPITALITY_WORKER_HOURLY') || (String(id) === '2') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('hospitality') || selectedCategory.name_ar?.includes('ضيافة')));
     const isDeepCleaning = (watchServiceCode === 'DEEP_CLEANING') || (String(id) === '5') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق')));
+    const isOfficeClinic = (watchServiceCode === 'OFFICE_CLINIC_CLEANING') || (String(id) === '12');
     const isOtherService = !isCoreService && !isPedicureManicure && !isHospitality && !isBabysitting && ((watchType === 'other') || (selectedCategory && (selectedCategory.name_en?.toLowerCase().includes('other') || selectedCategory.name_ar?.includes('أخرى') || selectedCategory.name_en?.toLowerCase().includes('deep') || selectedCategory.name_ar?.includes('عميق'))));
     const isSecondOrThirdService = isHospitality || isBabysitting || isPedicureManicure || isOtherService;
     const isSpecializedService = (Number(id) >= 6 && Number(id) <= 11) || (
@@ -759,6 +764,8 @@ export default function ServiceFormPage() {
                     allow_reschedule: !!fullServiceData.rules?.allow_reschedule,
                     reschedule_cutoff_hours: fullServiceData.rules?.reschedule_cutoff_hours ?? '',
                     allow_same_day: !!fullServiceData.rules?.allow_same_day,
+                    same_day_lead_time_hours: fullServiceData.rules?.same_day_lead_time_hours ?? 3,
+                    same_day_cutoff_time: fullServiceData.rules?.same_day_cutoff_time ? String(fullServiceData.rules.same_day_cutoff_time).substring(0, 5) : '10:00',
                     max_advance_booking_days: fullServiceData.rules?.max_advance_booking_days ?? '',
                     arrival_buffer_minutes: fullServiceData.rules?.arrival_buffer_minutes ?? 15,
                     late_arrival_grace_minutes: fullServiceData.rules?.late_arrival_grace_minutes ?? 15,
@@ -877,8 +884,12 @@ export default function ServiceFormPage() {
                     payload.append(`options[${index}][name_ar]`, opt.name_ar || '');
                     payload.append(`options[${index}][name_en]`, opt.name_en || '');
                     payload.append(`options[${index}][unit_price]`, String(opt.unit_price ?? 0));
-                    payload.append(`options[${index}][min_qty]`, String(opt.min_qty ?? 1));
-                    payload.append(`options[${index}][max_qty]`, String(opt.max_qty ?? 10));
+                    if (!isOfficeClinic && opt.min_qty !== undefined && opt.min_qty !== null && opt.min_qty !== '') {
+                    payload.append(`options[${index}][min_qty]`, String(opt.min_qty));
+                }
+                if (!isOfficeClinic && opt.max_qty !== undefined && opt.max_qty !== null && opt.max_qty !== '') {
+                    payload.append(`options[${index}][max_qty]`, String(opt.max_qty));
+                }
                     payload.append(`options[${index}][status]`, opt.status || 'active');
                 });
             }
@@ -942,6 +953,12 @@ export default function ServiceFormPage() {
             payload.append('rules[allow_reschedule]', data.rules?.allow_reschedule ? '1' : '0');
             appendRule('reschedule_cutoff_hours', data.rules?.reschedule_cutoff_hours);
             payload.append('rules[allow_same_day]', data.rules?.allow_same_day ? '1' : '0');
+            if (data.rules?.same_day_lead_time_hours !== undefined && data.rules?.same_day_lead_time_hours !== null && data.rules?.same_day_lead_time_hours !== '') {
+                payload.append('rules[same_day_lead_time_hours]', String(data.rules.same_day_lead_time_hours));
+            }
+            if (data.rules?.same_day_cutoff_time) {
+                payload.append('rules[same_day_cutoff_time]', String(data.rules.same_day_cutoff_time));
+            }
             appendRule('max_advance_booking_days', data.rules?.max_advance_booking_days);
             appendRule('arrival_buffer_minutes', data.rules?.arrival_buffer_minutes);
             appendRule('late_arrival_grace_minutes', data.rules?.late_arrival_grace_minutes);
@@ -1428,7 +1445,7 @@ export default function ServiceFormPage() {
                                             </p>
                                             <button
                                                 type="button"
-                                                onClick={() => appendOption({ name_ar: '', name_en: '', unit_price: '', min_qty: 1, max_qty: 10, status: 'active' })}
+                                                onClick={() => appendOption({ name_ar: '', name_en: '', unit_price: '', min_qty: isOfficeClinic ? null : 1, max_qty: isOfficeClinic ? null : 10, status: 'active' })}
                                                 className="mt-3 text-xs font-bold text-[#E91E63] hover:bg-[#FDF0F3] px-3 py-1.5 rounded-xl border border-[#E91E63]/30 transition-colors"
                                             >
                                                 + {isArabic ? 'إضافة خيار جديد' : 'Add Option'}
@@ -1440,9 +1457,13 @@ export default function ServiceFormPage() {
                                                 <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 font-bold uppercase tracking-wider">
                                                     <tr>
                                                         <th className="p-3 text-start">{isArabic ? 'اسم الخيار (عربي / انجليزي)' : 'Option Name (AR / EN)'}</th>
-                                                        <th className="p-3 text-start w-36">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
-                                                        <th className="p-3 text-center w-24">{isArabic ? 'أقل كمية' : 'Min Qty'}</th>
-                                                        <th className="p-3 text-center w-24">{isArabic ? 'أقصى كمية' : 'Max Qty'}</th>
+                                                        <th className="p-3 text-start w-36">{isOfficeClinic ? (isArabic ? 'السعر' : 'Price') : (isArabic ? 'سعر الوحدة' : 'Unit Price')}</th>
+                                                        {!isOfficeClinic && (
+                                                            <>
+                                                                <th className="p-3 text-center w-24">{isArabic ? 'أقل كمية' : 'Min Qty'}</th>
+                                                                <th className="p-3 text-center w-24">{isArabic ? 'أقصى كمية' : 'Max Qty'}</th>
+                                                            </>
+                                                        )}
                                                         <th className="p-3 text-center w-28">{isArabic ? 'الحالة' : 'Status'}</th>
                                                         <th className="p-3 text-center w-16">{isArabic ? 'إجراء' : 'Action'}</th>
                                                     </tr>
@@ -1477,22 +1498,26 @@ export default function ServiceFormPage() {
                                                                     />
                                                                 </div>
                                                             </td>
-                                                            <td className="p-3 align-top">
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    {...register(`options.${index}.min_qty`)}
-                                                                    className={`${INPUT_CLASS} !py-1.5 text-xs text-center font-semibold`}
-                                                                />
-                                                            </td>
-                                                            <td className="p-3 align-top">
-                                                                <input
-                                                                    type="number"
-                                                                    min="1"
-                                                                    {...register(`options.${index}.max_qty`)}
-                                                                    className={`${INPUT_CLASS} !py-1.5 text-xs text-center font-semibold`}
-                                                                />
-                                                            </td>
+{!isOfficeClinic && (
+                                                                <>
+                                                                    <td className="p-3 align-top">
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            {...register(`options.${index}.min_qty`)}
+                                                                            className={`${INPUT_CLASS} !py-1.5 text-xs text-center font-semibold`}
+                                                                        />
+                                                                    </td>
+                                                                    <td className="p-3 align-top">
+                                                                        <input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            {...register(`options.${index}.max_qty`)}
+                                                                            className={`${INPUT_CLASS} !py-1.5 text-xs text-center font-semibold`}
+                                                                        />
+                                                                    </td>
+                                                                </>
+                                                            )}
                                                             <td className="p-3 align-top text-center">
                                                                 <select
                                                                     {...register(`options.${index}.status`)}
@@ -1521,7 +1546,7 @@ export default function ServiceFormPage() {
                                             <div className="p-3 bg-gray-50/50 border-t border-gray-200 flex justify-start">
                                                 <button
                                                     type="button"
-                                                    onClick={() => appendOption({ name_ar: '', name_en: '', unit_price: '', min_qty: 1, max_qty: 10, status: 'active' })}
+                                                    onClick={() => appendOption({ name_ar: '', name_en: '', unit_price: '', min_qty: isOfficeClinic ? null : 1, max_qty: isOfficeClinic ? null : 10, status: 'active' })}
                                                     className="text-xs font-bold text-[#E91E63] hover:bg-[#FDF0F3] px-3 py-1.5 rounded-xl border border-[#E91E63]/30 transition-colors flex items-center gap-1.5"
                                                 >
                                                     <span>+</span>
@@ -2122,12 +2147,22 @@ export default function ServiceFormPage() {
 
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
                                 <div className="p-4 border border-gray-100 rounded-lg bg-gray-50/50 flex items-center h-full">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox" {...register('rules.allow_same_day')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
                                         <span className="text-sm font-semibold text-gray-700">{t('form.allow_same_day')}</span>
                                     </label>
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{isArabic ? 'مهلة حجز نفس اليوم (ساعات قبل الشفت)' : t('form.same_day_lead_time_hours')}</label>
+                                    <input type="number" min="0" step="1" placeholder="3" {...register('rules.same_day_lead_time_hours')} className={INPUT_CLASS} />
+                                    {errors.rules?.same_day_lead_time_hours && <p className="text-red-500 text-xs mt-1">{errors.rules.same_day_lead_time_hours.message}</p>}
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS}>{isArabic ? 'الحد الأقصى لتوقيت حجز نفس اليوم (Cutoff)' : t('form.same_day_cutoff_time')}</label>
+                                    <input type="time" {...register('rules.same_day_cutoff_time')} className={INPUT_CLASS} />
+                                    {errors.rules?.same_day_cutoff_time && <p className="text-red-500 text-xs mt-1">{errors.rules.same_day_cutoff_time.message}</p>}
                                 </div>
                                 <div>
                                     <label className={LABEL_CLASS}>{t('form.max_advance_booking_days')}</label>

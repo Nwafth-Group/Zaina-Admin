@@ -191,6 +191,8 @@
     "allow_cancel": "Allow Cancellation",
     "allow_reschedule": "Allow Rescheduling",
     "allow_same_day": "Allow Same-Day Booking",
+    "same_day_lead_time_hours": "Same-Day Lead Time (Hours before shift)",
+    "same_day_cutoff_time": "Same-Day Cutoff Time",
     "max_advance_booking_days": "Max Advance Booking Days",
     "acceptance_required": "Acceptance Required",
     "coverages": "Geographic Coverages",

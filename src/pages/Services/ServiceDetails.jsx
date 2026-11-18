@@ -103,6 +103,7 @@ export default function ServiceDetails() {
 
     const hasOptions = !!(service?.options && service.options.length > 0);
     const isDeepCleaning = service?.service_code === 'DEEP_CLEANING';
+    const isOfficeClinic = service?.service_code === 'OFFICE_CLINIC_CLEANING' || String(service?.id) === '12';
 
     const sideMenuItem = (key, label, iconPath, count = null) => {
         const active = activeTab === key;
@@ -369,9 +370,13 @@ export default function ServiceDetails() {
                                                      <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold border-b border-gray-100 text-[11px]">
                                                          <tr>
                                                              <th className="p-4 text-start">{isArabic ? 'الخيار' : 'Option'}</th>
-                                                             <th className="p-4 text-start">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
-                                                             <th className="p-4 text-center">{isArabic ? 'أقل كمية' : 'Min Qty'}</th>
-                                                             <th className="p-4 text-center">{isArabic ? 'أقصى كمية' : 'Max Qty'}</th>
+                                                             <th className="p-4 text-start">{isOfficeClinic ? (isArabic ? 'السعر' : 'Price') : (isArabic ? 'سعر الوحدة' : 'Unit Price')}</th>
+                                                              {!isOfficeClinic && (
+                                                                  <>
+                                                                      <th className="p-4 text-center">{isArabic ? 'أقل كمية' : 'Min Qty'}</th>
+                                                                      <th className="p-4 text-center">{isArabic ? 'أقصى كمية' : 'Max Qty'}</th>
+                                                                  </>
+                                                              )}
                                                              <th className="p-4 text-center">{isArabic ? 'الحالة' : 'Status'}</th>
                                                          </tr>
                                                      </thead>
@@ -385,8 +390,12 @@ export default function ServiceDetails() {
                                                                  <td className="p-4 font-black text-gray-900 text-sm whitespace-nowrap">
                                                                      {opt.unit_price} <span className="text-xs font-bold text-gray-500">{service.price_details?.currency || 'EGP'}</span>
                                                                  </td>
-                                                                 <td className="p-4 text-center font-bold text-gray-700">{opt.min_qty ?? 1}</td>
-                                                                 <td className="p-4 text-center font-bold text-gray-700">{opt.max_qty ?? 10}</td>
+                                                                 {!isOfficeClinic && (
+                                                                      <>
+                                                                          <td className="p-4 text-center font-bold text-gray-700">{opt.min_qty ?? 1}</td>
+                                                                          <td className="p-4 text-center font-bold text-gray-700">{opt.max_qty ?? 10}</td>
+                                                                      </>
+                                                                  )}
                                                                  <td className="p-4 text-center">
                                                                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                                                                          opt.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600'
@@ -635,6 +644,8 @@ export default function ServiceDetails() {
                                                 <InfoItem label={isArabic ? 'إمكانية إعادة الجدولة' : 'Allow Reschedule'} value={service.rules.allow_reschedule ? (isArabic ? 'مسموح' : 'Allowed') : (isArabic ? 'غير مسموح' : 'Not Allowed')} highlight />
                                                 <InfoItem label={isArabic ? 'مهلة إعادة الجدولة' : 'Reschedule Window'} value={`${service.rules.reschedule_cutoff_hours ?? 12} ${isArabic ? 'ساعة قبل الموعد' : 'hours before'}`} />
                                                 <InfoItem label={isArabic ? 'الحجز في نفس اليوم' : 'Same Day Booking'} value={service.rules.allow_same_day ? (isArabic ? 'متاح' : 'Allowed') : (isArabic ? 'غير متاح' : 'Not Allowed')} />
+                                                <InfoItem label={isArabic ? 'مهلة حجز نفس اليوم' : 'Same Day Lead Time'} value={`${service.rules.same_day_lead_time_hours ?? 3} ${isArabic ? 'ساعات قبل بداية الشفت' : 'hours before shift'}`} />
+                                                <InfoItem label={isArabic ? 'الحد الأقصى لتوقيت نفس اليوم' : 'Same Day Cutoff Time'} value={service.rules.same_day_cutoff_time ? (isArabic ? `${String(service.rules.same_day_cutoff_time).substring(0, 5)} (الحد الأقصى)` : `${String(service.rules.same_day_cutoff_time).substring(0, 5)} Cutoff`) : (isArabic ? '10:00 صباحاً' : '10:00 AM')} />
                                                 <InfoItem label={isArabic ? 'أقصى أيام للحجز المسبق' : 'Max Advance Booking'} value={`${service.rules.max_advance_booking_days ?? 30} ${isArabic ? 'يوم' : 'days'}`} />
                                                 <InfoItem label={isArabic ? 'مهلة الوصول (دقائق)' : 'Arrival Buffer'} value={`${service.rules.arrival_buffer_minutes ?? 15} ${isArabic ? 'دقيقة' : 'min'}`} />
                                                 <InfoItem label={isArabic ? 'فترة السماح للتأخير' : 'Late Arrival Grace'} value={`${service.rules.late_arrival_grace_minutes ?? 15} ${isArabic ? 'دقيقة' : 'min'}`} />

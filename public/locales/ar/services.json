@@ -193,6 +193,8 @@
     "allow_cancel": "السماح بالإلغاء",
     "allow_reschedule": "السماح بإعادة الجدولة",
     "allow_same_day": "السماح بالحجز في نفس اليوم",
+    "same_day_lead_time_hours": "مهلة حجز نفس اليوم (ساعات قبل بداية الشفت)",
+    "same_day_cutoff_time": "الحد الأقصى لتوقيت حجز نفس اليوم",
     "max_advance_booking_days": "أقصى أيام للحجز المسبق",
     "acceptance_required": "موافقة العميل مطلوبة",
     "add_coverage": "إضافة نطاق تغطية",
