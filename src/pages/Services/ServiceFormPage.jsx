@@ -411,6 +411,7 @@ export default function ServiceFormPage() {
     const watchHasDurationRange = watch('has_duration_range');
     const watchAllowCancel = watch('rules.allow_cancel');
     const watchAllowReschedule = watch('rules.allow_reschedule');
+    const watchAllowSameDay = watch('rules.allow_same_day');
     const watchSingleVisitChecked = watch('single_visit_checked');
     const watchThreeDaysChecked = watch('three_days_checked');
     const statusValue = watch('status');
@@ -953,11 +954,13 @@ export default function ServiceFormPage() {
             payload.append('rules[allow_reschedule]', data.rules?.allow_reschedule ? '1' : '0');
             appendRule('reschedule_cutoff_hours', data.rules?.reschedule_cutoff_hours);
             payload.append('rules[allow_same_day]', data.rules?.allow_same_day ? '1' : '0');
-            if (data.rules?.same_day_lead_time_hours !== undefined && data.rules?.same_day_lead_time_hours !== null && data.rules?.same_day_lead_time_hours !== '') {
-                payload.append('rules[same_day_lead_time_hours]', String(data.rules.same_day_lead_time_hours));
-            }
-            if (data.rules?.same_day_cutoff_time) {
-                payload.append('rules[same_day_cutoff_time]', String(data.rules.same_day_cutoff_time));
+            if (data.rules?.allow_same_day) {
+                if (data.rules?.same_day_lead_time_hours !== undefined && data.rules?.same_day_lead_time_hours !== null && data.rules?.same_day_lead_time_hours !== '') {
+                    payload.append('rules[same_day_lead_time_hours]', String(data.rules.same_day_lead_time_hours));
+                }
+                if (data.rules?.same_day_cutoff_time) {
+                    payload.append('rules[same_day_cutoff_time]', String(data.rules.same_day_cutoff_time));
+                }
             }
             appendRule('max_advance_booking_days', data.rules?.max_advance_booking_days);
             appendRule('arrival_buffer_minutes', data.rules?.arrival_buffer_minutes);
@@ -2147,28 +2150,35 @@ export default function ServiceFormPage() {
 
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
-                                <div className="p-4 border border-gray-100 rounded-lg bg-gray-50/50 flex items-center h-full">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" {...register('rules.allow_same_day')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
-                                        <span className="text-sm font-semibold text-gray-700">{t('form.allow_same_day')}</span>
-                                    </label>
+                            <div className="pt-3 border-t border-gray-100 space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 border border-gray-100 rounded-lg bg-gray-50/50 flex items-center h-full">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" {...register('rules.allow_same_day')} className="w-4 h-4 text-[#E91E63] border-gray-300 rounded focus:ring-[#E91E63] accent-[#E91E63]" />
+                                            <span className="text-sm font-semibold text-gray-700">{t('form.allow_same_day')}</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label className={LABEL_CLASS}>{t('form.max_advance_booking_days')}</label>
+                                        <input type="number" {...register('rules.max_advance_booking_days')} className={INPUT_CLASS} />
+                                        {errors.rules?.max_advance_booking_days && <p className="text-red-500 text-xs mt-1">{errors.rules.max_advance_booking_days.message}</p>}
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{isArabic ? 'مهلة حجز نفس اليوم (ساعات قبل الشفت)' : t('form.same_day_lead_time_hours')}</label>
-                                    <input type="number" min="0" step="1" placeholder="3" {...register('rules.same_day_lead_time_hours')} className={INPUT_CLASS} />
-                                    {errors.rules?.same_day_lead_time_hours && <p className="text-red-500 text-xs mt-1">{errors.rules.same_day_lead_time_hours.message}</p>}
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{isArabic ? 'الحد الأقصى لتوقيت حجز نفس اليوم (Cutoff)' : t('form.same_day_cutoff_time')}</label>
-                                    <input type="time" {...register('rules.same_day_cutoff_time')} className={INPUT_CLASS} />
-                                    {errors.rules?.same_day_cutoff_time && <p className="text-red-500 text-xs mt-1">{errors.rules.same_day_cutoff_time.message}</p>}
-                                </div>
-                                <div>
-                                    <label className={LABEL_CLASS}>{t('form.max_advance_booking_days')}</label>
-                                    <input type="number" {...register('rules.max_advance_booking_days')} className={INPUT_CLASS} />
-                                    {errors.rules?.max_advance_booking_days && <p className="text-red-500 text-xs mt-1">{errors.rules.max_advance_booking_days.message}</p>}
-                                </div>
+
+                                {watchAllowSameDay && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-pink-100 rounded-xl bg-pink-50/30">
+                                        <div>
+                                            <label className={LABEL_CLASS}>{isArabic ? 'مهلة حجز نفس اليوم (ساعات قبل الشفت)' : t('form.same_day_lead_time_hours')}</label>
+                                            <input type="number" min="0" step="1" placeholder="3" {...register('rules.same_day_lead_time_hours')} className={INPUT_CLASS} />
+                                            {errors.rules?.same_day_lead_time_hours && <p className="text-red-500 text-xs mt-1">{errors.rules.same_day_lead_time_hours.message}</p>}
+                                        </div>
+                                        <div>
+                                            <label className={LABEL_CLASS}>{isArabic ? 'الحد الأقصى لتوقيت حجز نفس اليوم (Cutoff)' : t('form.same_day_cutoff_time')}</label>
+                                            <input type="time" {...register('rules.same_day_cutoff_time')} className={INPUT_CLASS} />
+                                            {errors.rules?.same_day_cutoff_time && <p className="text-red-500 text-xs mt-1">{errors.rules.same_day_cutoff_time.message}</p>}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">

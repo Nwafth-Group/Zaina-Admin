@@ -644,8 +644,12 @@ export default function ServiceDetails() {
                                                 <InfoItem label={isArabic ? 'إمكانية إعادة الجدولة' : 'Allow Reschedule'} value={service.rules.allow_reschedule ? (isArabic ? 'مسموح' : 'Allowed') : (isArabic ? 'غير مسموح' : 'Not Allowed')} highlight />
                                                 <InfoItem label={isArabic ? 'مهلة إعادة الجدولة' : 'Reschedule Window'} value={`${service.rules.reschedule_cutoff_hours ?? 12} ${isArabic ? 'ساعة قبل الموعد' : 'hours before'}`} />
                                                 <InfoItem label={isArabic ? 'الحجز في نفس اليوم' : 'Same Day Booking'} value={service.rules.allow_same_day ? (isArabic ? 'متاح' : 'Allowed') : (isArabic ? 'غير متاح' : 'Not Allowed')} />
-                                                <InfoItem label={isArabic ? 'مهلة حجز نفس اليوم' : 'Same Day Lead Time'} value={`${service.rules.same_day_lead_time_hours ?? 3} ${isArabic ? 'ساعات قبل بداية الشفت' : 'hours before shift'}`} />
-                                                <InfoItem label={isArabic ? 'الحد الأقصى لتوقيت نفس اليوم' : 'Same Day Cutoff Time'} value={service.rules.same_day_cutoff_time ? (isArabic ? `${String(service.rules.same_day_cutoff_time).substring(0, 5)} (الحد الأقصى)` : `${String(service.rules.same_day_cutoff_time).substring(0, 5)} Cutoff`) : (isArabic ? '10:00 صباحاً' : '10:00 AM')} />
+                                                {!!service.rules.allow_same_day && (
+                                                    <>
+                                                        <InfoItem label={isArabic ? 'مهلة حجز نفس اليوم' : 'Same Day Lead Time'} value={`${service.rules.same_day_lead_time_hours ?? 3} ${isArabic ? 'ساعات قبل بداية الشفت' : 'hours before shift'}`} />
+                                                        <InfoItem label={isArabic ? 'الحد الأقصى لتوقيت نفس اليوم' : 'Same Day Cutoff Time'} value={service.rules.same_day_cutoff_time ? (isArabic ? `${String(service.rules.same_day_cutoff_time).substring(0, 5)} (الحد الأقصى)` : `${String(service.rules.same_day_cutoff_time).substring(0, 5)} Cutoff`) : (isArabic ? '10:00 صباحاً' : '10:00 AM')} />
+                                                    </>
+                                                )}
                                                 <InfoItem label={isArabic ? 'أقصى أيام للحجز المسبق' : 'Max Advance Booking'} value={`${service.rules.max_advance_booking_days ?? 30} ${isArabic ? 'يوم' : 'days'}`} />
                                                 <InfoItem label={isArabic ? 'مهلة الوصول (دقائق)' : 'Arrival Buffer'} value={`${service.rules.arrival_buffer_minutes ?? 15} ${isArabic ? 'دقيقة' : 'min'}`} />
                                                 <InfoItem label={isArabic ? 'فترة السماح للتأخير' : 'Late Arrival Grace'} value={`${service.rules.late_arrival_grace_minutes ?? 15} ${isArabic ? 'دقيقة' : 'min'}`} />
