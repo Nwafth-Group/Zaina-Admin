@@ -23,20 +23,25 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
 
       <Toaster 
-        position="top-center" // بتقدر تغيرها لـ top-right أو bottom-right
+        position="top-center"
         toastOptions={{
-          duration: 3000, // يختفي بعد 3 ثواني
+          duration: 3500,
           style: {
-            fontFamily: 'inherit', // عشان ياخذ نفس خط التطبيق
-            borderRadius: '10px',
-            background: '#333',
+            fontFamily: 'inherit',
+            borderRadius: '12px',
+            background: '#1F2937',
             color: '#fff',
+            maxWidth: '540px',
+            fontSize: '13px',
+            lineHeight: '1.5',
+            padding: '12px 16px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
           },
           // تصميم خاص لرسائل النجاح
           success: {
             style: {
-              background: '#ecfdf5', // أخضر فاتح
-              color: '#047857', // أخضر غامق
+              background: '#ecfdf5',
+              color: '#047857',
               border: '1px solid #a7f3d0',
             },
             iconTheme: {

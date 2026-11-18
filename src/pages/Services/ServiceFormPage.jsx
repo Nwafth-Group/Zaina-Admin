@@ -26,6 +26,32 @@ const calculateEndTime = (startTimeStr, durationHours) => {
     }
 };
 
+const parseWorkerConflictError = (errorMessage) => {
+    if (!errorMessage || typeof errorMessage !== 'string') return null;
+    const isConflict = errorMessage.includes('مسند') || errorMessage.includes('assigned to');
+    if (!isConflict) return null;
+
+    // Matches «Name» (مسند لخدمة: s1, s2) or «Name» (مسند إلى: s1, s2) or "Name" (assigned to: s1, s2)
+    const regex = /[«"]([^»"]+)[»"]\s*\((?:مسند ل(?:خدمة)?|مسند إلى|assigned to):\s*([^)]+)\)/g;
+    const map = new Map();
+    let match;
+    while ((match = regex.exec(errorMessage)) !== null) {
+        const name = match[1].trim();
+        const svcs = match[2].split(/[,،]+/).map(s => s.trim()).filter(Boolean);
+        if (map.has(name)) {
+            const existing = map.get(name);
+            svcs.forEach(s => {
+                if (!existing.includes(s)) existing.push(s);
+            });
+        } else {
+            map.set(name, svcs);
+        }
+    }
+
+    if (map.size === 0) return null;
+    return Array.from(map.entries()).map(([name, services]) => ({ name, services }));
+};
+
 
 
 export default function ServiceFormPage() {
@@ -360,7 +386,7 @@ export default function ServiceFormPage() {
         return true;
     });
 
-    const { register, handleSubmit, watch, reset, setValue, setError, control, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, reset, setValue, setError, clearErrors, control, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             status: 'active',
@@ -621,6 +647,52 @@ export default function ServiceFormPage() {
         const visibleIdSet = new Set(workersList.map(w => String(w.id)));
         const newSelection = selectedWorkerIds.filter(id => !visibleIdSet.has(id));
         setValue('workers', newSelection, { shouldValidate: true, shouldDirty: true });
+    };
+
+    const parsedWorkerConflicts = useMemo(() => {
+        return parseWorkerConflictError(errors.workers?.message);
+    }, [errors.workers?.message]);
+
+    const conflictingWorkerNames = useMemo(() => {
+        return (parsedWorkerConflicts || []).map(c => c.name);
+    }, [parsedWorkerConflicts]);
+
+    const handleDeselectConflictingWorkers = () => {
+        if (!parsedWorkerConflicts || parsedWorkerConflicts.length === 0) return;
+        const currentSelected = watch('workers') || [];
+        const namesToRemove = new Set(parsedWorkerConflicts.map(c => c.name));
+        const idsToRemove = new Set(
+            (allWorkers || [])
+                .filter(w => namesToRemove.has(w.name))
+                .map(w => String(w.id))
+        );
+
+        const newSelected = currentSelected.filter(id => !idsToRemove.has(String(id)));
+        setValue('workers', newSelected, { shouldValidate: true, shouldDirty: true });
+        clearErrors('workers');
+        toast.success(
+            isArabic
+                ? `تم إلغاء تحديد ${idsToRemove.size || parsedWorkerConflicts.length} من العمال المتعارضين بنجاح.`
+                : `Deselected ${idsToRemove.size || parsedWorkerConflicts.length} conflicting workers.`
+        );
+    };
+
+    const handleDeselectSingleWorker = (workerName) => {
+        const worker = (allWorkers || []).find(w => w.name === workerName);
+        const currentSelected = watch('workers') || [];
+        const newSelected = worker
+            ? currentSelected.filter(id => String(id) !== String(worker.id))
+            : currentSelected;
+
+        setValue('workers', newSelected, { shouldValidate: true, shouldDirty: true });
+        if (parsedWorkerConflicts && parsedWorkerConflicts.length <= 1) {
+            clearErrors('workers');
+        }
+        toast.success(
+            isArabic
+                ? `تم إلغاء تحديد «${workerName}».`
+                : `Deselected "${workerName}".`
+        );
     };
 
     useEffect(() => {
@@ -1046,18 +1118,26 @@ export default function ServiceFormPage() {
                     setError(key, { type: 'server', message });
                 });
 
-                // Show specific detailed error in toast
-                const rawSpecificError = validationErrors.workers
-                    ? (Array.isArray(validationErrors.workers) ? validationErrors.workers[0] : validationErrors.workers)
-                    : (validationErrors.worker_gender_options
+                // Show clean, concise toast notification without overwhelming the viewport
+                if (validationErrors.workers) {
+                    const toastMsg = isArabic
+                        ? 'تعذر الحفظ: يوجد تعارض في إسناد بعض العمال لخدمات أخرى. يرجى مراجعة تبويب العمال.'
+                        : 'Cannot save: worker assignment conflict with other services. Please check the Workers tab.';
+                    toast.error(toastMsg, { duration: 5000 });
+                } else {
+                    const rawSpecificError = validationErrors.worker_gender_options
                         ? (Array.isArray(validationErrors.worker_gender_options) ? validationErrors.worker_gender_options[0] : validationErrors.worker_gender_options)
                         : (validationErrors.child_age_groups
                             ? (Array.isArray(validationErrors.child_age_groups) ? validationErrors.child_age_groups[0] : validationErrors.child_age_groups)
-                            : (Array.isArray(Object.values(validationErrors)[0]) ? Object.values(validationErrors)[0][0] : Object.values(validationErrors)[0])));
+                            : (Array.isArray(Object.values(validationErrors)[0]) ? Object.values(validationErrors)[0][0] : Object.values(validationErrors)[0]));
 
-                const specificError = translateServerError(rawSpecificError);
+                    const specificError = translateServerError(rawSpecificError);
+                    const displayError = (specificError && specificError.length > 120)
+                        ? (isArabic ? 'يرجى مراجعة وتصحيح الحقول المشار إليها باللون الأحمر.' : 'Please review and fix highlighted fields.')
+                        : (specificError || respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'));
 
-                toast.error(specificError || respData?.message || (isArabic ? 'فشل التحقق من البيانات' : 'Validation failed'), { duration: 6000 });
+                    toast.error(displayError, { duration: 5000 });
+                }
 
                 // Switch to error tab
                 const firstErrKey = Object.keys(validationErrors)[0];
@@ -2385,12 +2465,77 @@ export default function ServiceFormPage() {
                         >
                             {/* Prominent error alert if worker assignment conflict exists */}
                             {errors.workers && (
-                                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
-                                    <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    <div className="flex-1 font-semibold leading-relaxed">{errors.workers.message}</div>
-                                </div>
+                                (parsedWorkerConflicts && parsedWorkerConflicts.length > 0) ? (
+                                    <div className="mb-4 bg-gradient-to-br from-red-50 via-rose-50/50 to-orange-50/30 border border-red-200 rounded-2xl p-4 shadow-xs">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-red-200/70">
+                                            <div className="flex items-start sm:items-center gap-2.5">
+                                                <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-red-900">
+                                                        {isArabic ? 'تعارض في إسناد العمال لخدمات أخرى' : 'Worker Assignment Conflict'}
+                                                    </h4>
+                                                    <p className="text-xs text-red-700/80 mt-0.5">
+                                                        {isArabic 
+                                                            ? 'في الخدمات العادية، يمكن إسناد العامل لخدمة واحدة فقط. هؤلاء العمال مسندون لخدمات أخرى بالفعل:' 
+                                                            : 'In standard services, each worker can only belong to one service. The following workers are already assigned to other services:'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={handleDeselectConflictingWorkers}
+                                                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                <span>{isArabic ? 'إلغاء تحديد المتعارضين فقط' : 'Deselect Conflicting Workers'}</span>
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-3">
+                                            {parsedWorkerConflicts.map((cw, idx) => (
+                                                <div key={idx} className="flex items-start justify-between gap-2.5 p-2.5 bg-white/95 border border-red-200/90 rounded-xl shadow-2xs">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                                                            <span className="text-xs font-bold text-gray-900 truncate">{cw.name}</span>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                                            {cw.services.map((svc, sIdx) => (
+                                                                <span key={sIdx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">
+                                                                    {svc}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeselectSingleWorker(cw.name)}
+                                                        className="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                                                        title={isArabic ? 'إلغاء تحديد هذا العامل' : 'Deselect this worker'}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <div className="flex-1 font-semibold leading-relaxed whitespace-pre-line">{errors.workers.message}</div>
+                                    </div>
+                                )
                             )}
 
                             {/* Service Gender Restriction / Filter Bar (No icons, text titles only) */}
@@ -2595,6 +2740,7 @@ export default function ServiceFormPage() {
                                     workersList.map((worker) => {
                                         const isFemale = String(worker.gender).toLowerCase() === 'female';
                                         const isChecked = selectedWorkerIds.includes(String(worker.id));
+                                        const isConflicting = conflictingWorkerNames.includes(worker.name);
                                         const workerServices = (worker.assigned_services?.length
                                             ? worker.assigned_services
                                             : (worker.services?.length
@@ -2605,9 +2751,11 @@ export default function ServiceFormPage() {
                                             <label
                                                 key={worker.id}
                                                 className={`flex items-center justify-between gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
-                                                    isChecked
-                                                        ? 'bg-pink-50/40 border-[#E91E63]/50 shadow-2xs'
-                                                        : 'bg-white border-gray-200/80 hover:border-gray-300 hover:bg-gray-50/50'
+                                                    isConflicting
+                                                        ? 'bg-red-50/70 border-red-300 ring-2 ring-red-200/80 shadow-2xs'
+                                                        : isChecked
+                                                            ? 'bg-pink-50/40 border-[#E91E63]/50 shadow-2xs'
+                                                            : 'bg-white border-gray-200/80 hover:border-gray-300 hover:bg-gray-50/50'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -2620,6 +2768,13 @@ export default function ServiceFormPage() {
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <p className="text-sm font-bold text-gray-900 truncate">{worker.name}</p>
+
+                                                            {/* Conflicting warning badge */}
+                                                            {isConflicting && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-700 border border-red-300">
+                                                                    ⚠️ {isArabic ? 'مسند لخدمات أخرى (تعارض)' : 'Conflict (assigned elsewhere)'}
+                                                                </span>
+                                                            )}
 
                                                             {/* Service Badges */}
                                                             {workerServices.length > 0 ? (
