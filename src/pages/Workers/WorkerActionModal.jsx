@@ -156,21 +156,7 @@ export default function WorkerActionModal({ workerToEdit, onClose, onSuccess }) 
         id_number: yup.string().required(t('validation.required')),
         address: yup.string().required(t('validation.required')),
         gender: yup.string().oneOf(['male', 'female']).required(t('validation.required')),
-        status: yup.string().oneOf(['active', 'inactive', 'suspended']).required(t('validation.required'))
-            .test('not_assigned_if_inactive', isArabic ? 'لا يمكن تغيير حالة العامل إلى غير نشط لأنه مسند إلى خدمة. يرجى إلغاء تحديد الخدمات أولاً.' : 'Cannot deactivate worker because they are assigned to a service. Please unassign services first.', function(statusVal) {
-                if (statusVal === 'active') return true;
-                const { service_ids, team_id, gender } = this.parent || {};
-                if (Array.isArray(service_ids) && service_ids.length > 0) {
-                    return false;
-                }
-                if (gender === 'male' && team_id) {
-                    const assignedTeam = (teamsList || []).find(t => String(t.id) === String(team_id));
-                    if (assignedTeam && (assignedTeam.services_count > 0 || (Array.isArray(assignedTeam.services) && assignedTeam.services.length > 0))) {
-                        return false;
-                    }
-                }
-                return true;
-            }),
+        status: yup.string().oneOf(['active', 'inactive', 'suspended']).required(t('validation.required')),
         team_id: yup.string().nullable().notRequired(),
         work_days: yup.array().of(yup.string()).min(1, isArabic ? 'يجب اختيار يوم عمل واحد على الأقل للعامل' : 'Select at least one work day'),
         service_ids: yup.array().of(yup.string()).nullable().notRequired()

@@ -158,9 +158,12 @@ export default function WorkerDetails() {
                         <button
                             type="button"
                             onClick={() => toggleStatusMutation.mutate()}
-                            disabled={toggleStatusMutation.isPending}
+                            disabled={toggleStatusMutation.isPending || (worker.status === 'active' && worker.has_active_bookings)}
+                            title={(worker.status === 'active' && worker.has_active_bookings) ? (isArabic ? 'لا يمكن تغيير حالة العامل لوجود خدمات قادمة أو قيد التنفيذ مسندة إليه' : 'Cannot change status with upcoming or in-progress services') : ''}
                             className={`px-4 h-10 rounded-xl text-xs font-bold border active:scale-95 transition-all flex items-center gap-2 outline-none ${
-                                worker.status === 'active'
+                                worker.status === 'active' && worker.has_active_bookings
+                                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                    : worker.status === 'active'
                                     ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
                                     : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                             }`}

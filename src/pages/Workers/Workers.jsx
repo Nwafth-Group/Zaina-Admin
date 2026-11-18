@@ -387,7 +387,8 @@ export default function Workers() {
                                                             label: t('actions.toggle_status'),
                                                             icon: <ToggleIcon />,
                                                             onClick: () => toggleStatusMutation.mutate(worker.id),
-                                                            disabled: toggleStatusMutation.isPending,
+                                                            disabled: toggleStatusMutation.isPending || (worker.status === 'active' && worker.has_active_bookings),
+                                                            title: (worker.status === 'active' && worker.has_active_bookings) ? (isArabic ? 'لا يمكن تغيير حالة العامل لوجود خدمات قادمة أو قيد التنفيذ مسندة إليه' : 'Cannot change status with upcoming or in-progress services') : '',
                                                         },
                                                         hasPermission('workers.delete') && {
                                                             key: 'delete',
