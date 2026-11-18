@@ -127,8 +127,14 @@ export default function BookingDetails() {
     const hasTeam = Boolean(booking?.team_id || booking?.team);
     const hasWorkers = Array.isArray(booking?.workers) && booking.workers.length > 0;
     const isSpecializedService = Boolean(
-        (booking?.service?.id >= 6 && booking?.service?.id <= 11) ||
-        ['SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH', 'MATTRESS_CLEANING', 'CURTAIN_CLEANING'].includes((booking?.service?.service_code || '').toUpperCase())
+        (booking?.service?.id >= 6 && booking?.service?.id <= 12) ||
+        Number(booking?.service_id) === 12 ||
+        ['SOFA_CLEANING', 'WATER_TANK_CLEANING', 'STAIRS_SURFACES_CLEANING', 'AC_CLEANING', 'CARPET_CLEANING', 'CAR_WASH', 'MATTRESS_CLEANING', 'CURTAIN_CLEANING', 'OFFICE_CLINIC_CLEANING'].includes((booking?.service?.service_code || '').toUpperCase())
+    );
+    const isOfficeClinic = Boolean(
+        (booking?.service?.service_code || '').toUpperCase() === 'OFFICE_CLINIC_CLEANING' ||
+        Number(booking?.service?.id) === 12 ||
+        Number(booking?.service_id) === 12
     );
     const isTeamBasedConfig = (booking?.service?.is_team_based !== undefined && booking?.service?.is_team_based !== null)
         ? Boolean(booking.service.is_team_based)
@@ -642,9 +648,13 @@ export default function BookingDetails() {
                                                         <tr className="border-b border-gray-100 text-gray-400 font-bold uppercase tracking-wider">
                                                             <th className="py-2.5 px-3 text-start">#</th>
                                                             <th className="py-2.5 px-3 text-start">{isArabic ? 'اسم البند / الخيار' : 'Item / Option'}</th>
-                                                            <th className="py-2.5 px-3 text-center">{isArabic ? 'الكمية' : 'Quantity'}</th>
-                                                            <th className="py-2.5 px-3 text-end">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
-                                                            <th className="py-2.5 px-3 text-end">{isArabic ? 'الإجمالي' : 'Total'}</th>
+                                                            {!isOfficeClinic && (
+                                                                <>
+                                                                    <th className="py-2.5 px-3 text-center">{isArabic ? 'الكمية' : 'Quantity'}</th>
+                                                                    <th className="py-2.5 px-3 text-end">{isArabic ? 'سعر الوحدة' : 'Unit Price'}</th>
+                                                                </>
+                                                            )}
+                                                            <th className="py-2.5 px-3 text-end">{isOfficeClinic ? (isArabic ? 'السعر' : 'Price') : (isArabic ? 'الإجمالي' : 'Total')}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-50">
@@ -659,14 +669,18 @@ export default function BookingDetails() {
                                                                 <tr key={opt.id || idx} className="hover:bg-gray-50/60 transition-colors">
                                                                     <td className="py-3 px-3 font-mono text-gray-400">{idx + 1}</td>
                                                                     <td className="py-3 px-3 font-extrabold text-gray-800">{optName}</td>
-                                                                    <td className="py-3 px-3 text-center">
-                                                                        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md bg-gray-100 text-gray-700 font-black text-xs">
-                                                                            {qty}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="py-3 px-3 text-end text-gray-600 font-medium">
-                                                                        {unitPrice.toFixed(2)} {currency}
-                                                                    </td>
+                                                                    {!isOfficeClinic && (
+                                                                        <>
+                                                                            <td className="py-3 px-3 text-center">
+                                                                                <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md bg-gray-100 text-gray-700 font-black text-xs">
+                                                                                    {qty}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="py-3 px-3 text-end text-gray-600 font-medium">
+                                                                                {unitPrice.toFixed(2)} {currency}
+                                                                            </td>
+                                                                        </>
+                                                                    )}
                                                                     <td className="py-3 px-3 text-end font-black text-gray-900">
                                                                         {totalPrice.toFixed(2)} {currency}
                                                                     </td>
